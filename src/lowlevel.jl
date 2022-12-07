@@ -2,9 +2,17 @@
 ##### low-level commands
 #####
 
+export writing_tex_stream, pgfpoint
+
 mutable struct TeXStream{T<:IO}
     io::T
     indentation::Int
+end
+
+function writing_tex_stream(f, filename)
+    open(filename, "w") do io
+        f(TeXStream(io, 0))
+    end
 end
 
 function change_indentation!(ts::TeXStream, Δ::Int)
@@ -35,24 +43,34 @@ function tex_print_iln(ts::TeXStream, args...)
     for arg in args
         tex_print(ts, arg)
     end
-    tex_print('\n')
+    tex_print(ts, '\n')
 end
 
+"""
+$(TYPEDEF)
+
+A pair of coordinates, represented internally in `bp` (Postscript point, 1/72in) units.
+
+The preferred constructor is [`pgfpoint`](@ref), using `Unitful.Length` units.
+"""
 struct PGFPoint
     x::Float64
     y::Float64
-    function Point(x::Float64, y::Float64)
+    function PGFPoint(x::Float64, y::Float64)
         @argcheck isfinite(x)
         @argcheck isfinite(y)
         new(x, y)
     end
 end
 
-pgfpoint(x::Real, y::Real) = PGFPoint(Float64(x), Float64(y))
+function pgfpoint(x::Length, y::Length)
+    to_bp(x) = Float64(uconvert(Unitful.NoUnits, x / ((1/72)inch)))
+    PGFPoint(to_bp(x), to_bp(y))
+end
 
 function tex_print(ts::TeXStream, point::PGFPoint)
     @unpack x, y = point
-    tex_print(ts, raw"\pgfpoint{", x, "}{", y, "}")
+    tex_print(ts, raw"\pgfqpoint{", x, "bp}{", y, "bp}")
 end
 
 function pgfpathmoveto(ts::TeXStream, point::PGFPoint)
@@ -70,6 +88,7 @@ function pgfusepath(ts::TeXStream, actions...)
     had_stroke = false
     had_clip = false
     is_first = true
+    tex_indent(ts)
     tex_print(ts, raw"\pgfusepath{")
     for action in actions
         if is_first
@@ -98,6 +117,7 @@ function pgfusepath(ts::TeXStream, actions...)
             throw(ArgumentError("Unknown action $(action)."))
         end
     end
+    tex_print(ts, "}\n")
 end
 
 function tex_preamble(ts::TeXStream)
@@ -107,11 +127,11 @@ function tex_preamble(ts::TeXStream)
 \begin{document}
 \begin{pgfpicture}
 """)
-    change_indentation!(1)
+    change_indentation!(ts, 1)
 end
 
 function tex_postamble(ts::TeXStream)
-    change_indentation!(-1)
+    change_indentation!(ts, -1)
     tex_print(ts, raw"""
 \end{pgfpicture}
 \end{document}
