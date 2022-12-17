@@ -2,7 +2,9 @@
 ##### low-level commands
 #####
 
-export writing_tex_stream, pgfpoint
+export writing_tex_stream
+
+_backslash(s::Symbol) = "\\" * string(s)
 
 mutable struct TeXStream{T<:IO}
     io::T
@@ -46,32 +48,30 @@ function tex_print_iln(ts::TeXStream, args...)
     tex_print(ts, '\n')
 end
 
-"""
-$(TYPEDEF)
-
-A pair of coordinates, represented internally in `bp` (Postscript point, 1/72in) units.
-
-The preferred constructor is [`pgfpoint`](@ref), using `Unitful.Length` units.
-"""
-struct PGFPoint
-    x::Float64
-    y::Float64
-    function PGFPoint(x::Float64, y::Float64)
-        @argcheck isfinite(x)
-        @argcheck isfinite(y)
-        new(x, y)
-    end
-end
-
-function pgfpoint(x::Length, y::Length)
-    to_bp(x) = Float64(uconvert(Unitful.NoUnits, x / ((1/72)inch)))
-    PGFPoint(to_bp(x), to_bp(y))
-end
-
 function tex_print(ts::TeXStream, point::PGFPoint)
     @unpack x, y = point
     tex_print(ts, raw"\pgfqpoint{", x, "bp}{", y, "bp}")
 end
+
+###
+### colors
+###
+
+function tex_print(ts::TeXStream, color::AbstractRGB)
+    tex_print(ts, "rgb,1:red,", Float64(red(color)),
+              ";green,", Float64(green(color)),
+              ";blue,", Float64(blue(color)))
+end
+
+for command in (:pgfsetfillcolor, :pgfsetstrokecolor, :pgfsetcolor)
+    @eval function $command(ts, color)
+        tex_print_iln(ts, $(_backslash(command)), '{', color, '}')
+    end
+end
+
+###
+### path manipulation
+###
 
 function pgfpathmoveto(ts::TeXStream, point::PGFPoint)
     tex_print_iln(ts, raw"\pgfpathmoveto{", point, "}")
@@ -81,7 +81,18 @@ function pgfpathlineto(ts::TeXStream, point::PGFPoint)
     tex_print_iln(ts, raw"\pgfpathlineto{", point, "}")
 end
 
-pgfpathclose(ts::TeXStream) = tex_print_iln(ts, raw"\pgfpathclose")
+# commands without arguments
+for command in (:pgfpathclose, :pgfusepathqfill, :pgfusepathqstroke,
+          :pgfusepathqfillstroke, :pgfusepathqclip)
+    @eval function $command(ts::TeXStream)
+        tex_print_iln(ts, $(_backslash(command)))
+    end
+end
+
+function pgfpath(ts::TeXStream, rectangle::PGFRectangle)
+    @unpack bottom_left, top_right = rectangle
+    tex_print_iln(ts, raw"\pgfpathrectanglecorners{", bottom_left, "}{", top_right, "}")
+end
 
 function pgfusepath(ts::TeXStream, actions...)
     had_fill = false
