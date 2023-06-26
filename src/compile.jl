@@ -1,22 +1,49 @@
-#####
-##### compile
-#####
+module Compile
+
+using ArgCheck: @argcheck
+using DocStringExtensions: SIGNATURES
+using Poppler_jll: pdftocairo
+using tectonic_jll: tectonic
 
 """
 $(SIGNATURES)
 
-Call `f(io)` to write LaTeX code, then compile to a PDF at `output_path`. If anything goes
-wrong, throw an error.
+When `dir` is a string, run `f(dir)`, otherwise call `mktempdir(f)`.
 """
-function _compile(f, output_path)
+function maybe_tmpdir(f, dir::Union{Nothing,AbstractString})
+    dir ≡ nothing ? mktempdir(f) : f(dir)
+end
+
+"""
+$(SIGNATURES)
+
+Call `f(io)` to write LaTeX code, then compile to a PDF at `output_path`. If anything
+goes wrong, throw an error.
+"""
+function pdf(f, output_path::AbstractString; tmp_dir = nothing)
     out_dir, out_file = splitdir(output_path)
     out_basename, out_ext = splitext(out_file)
     @argcheck out_ext == ".pdf" "You need to use a PDF extension for output paths."
-    mktempdir() do dir
+    maybe_tmpdir(tmp_dir) do dir
         tex_file = joinpath(dir, out_basename .* ".tex")
         open(f, tex_file, "w")
         run(`$(tectonic()) -X compile $(tex_file) -o $(out_dir)`)
-        rm(dir; recursive = true)
     end
     output_path
+end
+
+"""
+$(SIGNATURES)
+
+Call `f(io)` to write TeX code, compile, and send the SVG output to `io`.
+"""
+function svg(f, io::IO; tmp_dir = nothing)
+    maybe_tmpdir(tmp_dir) do dir
+        pdf_path = joinpath(dir, "miter.pdf")
+        pdf(f, pdf_path; tmp_dir = dir)
+        @show isfile(pdf_path)
+        run(pipeline(`$(pdftocairo()) -svg $(pdf_path) -`; stdout = io))
+    end
+end
+
 end

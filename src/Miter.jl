@@ -3,17 +3,12 @@ A Julia plotting package using the PGF Basic Layer Core.
 """
 module Miter
 
-using ArgCheck: @argcheck
-using ColorTypes: AbstractRGB, red, green, blue, RGB
-using DocStringExtensions: SIGNATURES, TYPEDEF
-using tectonic_jll: tectonic
-using Unitful: Unitful, uconvert, Length, inch
-using UnPack: @unpack
+using Colors: @colorant_str, RGB
+using Unitful: @u_str
 
 include("compile.jl")
-include("primitives.jl")
-include("tex_output.jl")
-include("plotarea.jl")
-
+include("pgf.jl")
+include("utilities.jl")
+include("axis.jl")
 
 end # module
