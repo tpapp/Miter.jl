@@ -117,7 +117,7 @@ struct Rectangle
         @argcheck result.left ≤ result.right
         @argcheck result.bottom ≤ result.top
         result
-cb    end
+    end
 end
 
 Rectangle(; left, right, bottom, top) = Rectangle(left, right, bottom, top)

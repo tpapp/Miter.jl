@@ -1,59 +1,73 @@
-####
-#### axis
-####
+module Axis
 
-# struct LinearAxis
-#     left::Float64
-#     right::Float64
-#     # FIXME argcheck left ≠ right
-# end
+using ArgCheck: @argcheck
+using ..PGF: Rectangle, Point
 
-# linear_axis(left, right) = LinearAxis(left, right)
-
-# function project_to(lower::Float64, upper::Float64, src::LinearAxis, x::Real)
-#     α = (x - src.left) / (src.right - src.left)
-#     (1 - α) * lower + α * upper
-# end
-
-export axis
-
-Base.@kwdef struct Axis
-end
-
-axis() = Axis()
-
-function render(io::IO, rectangle::PGF.Rectangle, axis::Axis)
-    m = PGF.split_matrix(rectangle, 20u"mm", 20u"mm")
-    fill_rectangle(io, m[1, 2], RGB(1, 0.5, 0.5))
-    fill_rectangle(io, m[2, 1], RGB(0.5, 1, 0.5))
-    fill_rectangle(io, m[2, 2], RGB(0.5, 0.5, 1))
-end
-
-function print_tex(io::IO, axis::Axis; standalone::Bool = false)
-    standalone || PGF.preamble(io)
-    render(io, PGF.canvas(10u"cm", 8u"cm"), axis)
-    standalone || PGF.postamble(io)
-end
-
-function print_tex(filename::AbstractString, object; standalone::Bool = false)
-    open(filename, "w") do io
-        print_tex(io, object; standalone)
+struct Interval
+    min::Float64
+    max::Float64
+    function Interval(min, max)
+        @argcheck isfinite(min) && isfinite(max)
+        @argcheck min ≤ max
+        new(Float64(min), Float64(max))
     end
+    Interval() = new(Inf, -Inf) # sentinel for empty interval
 end
 
-function Base.show(svg_io::IO, ::MIME"image/svg+xml", axis::Axis)
-    Compile.svg(svg_io) do io
-        print_tex(io, axis)
-    end
+is_nonempty(a::Interval) = a.min ≤ a.max
+
+function extend(a::Interval, b::Real)
+    @argcheck isfinite(b)
+    Interval(min(a.min, b), max(a.max, b))
 end
 
-function save(filename::AbstractString, object)
-    ext = splitext(filename)[2]
-    if ext == ".pdf"
-        Compile.pdf(filename) do io
-            print_tex(io, object)
-        end
+function extend(a::Interval, b::Interval)
+    @argcheck is_nonempty(b)
+    Interval(min(a.min, b.min), max(a.max, b.max))
+end
+
+function extend_xy((ax, ay)::Tuple{Interval,Interval},
+                 (bx, by)::Tuple{Interval,Interval})
+    (extend(ax, bx), extend(ay, by))
+end
+
+bounds(f, itr) = Interval(extrema(f, itr)...)
+
+bounds_xy(itr) = mapreduce(bounds_xy, extend_xy, itr; init = (Interval(), Interval()))
+
+struct Linear end
+
+struct LinearFinalized
+    interval::Interval
+end
+
+function finalize(axis::Linear, interval::Interval)
+    if interval.min < interval.max
+        LinearFinalized(interval)
     else
-        error("don't know to handle extension $(ext)")
+        error("FIXME write code to handle points")
     end
+end
+
+function coordinate_to_unit(finalized_axis::LinearFinalized, x::Real)
+    (; min, max) = finalized_axis.interval
+    (x - min) / (max - min)
+end
+
+Base.@kwdef struct DrawingArea{TX,TY}
+    finalized_x_axis::TX
+    finalized_y_axis::TY
+    rectangle::Rectangle
+end
+
+function coordinates_to_point(drawing_area::DrawingArea, (x, y))
+    @argcheck isfinite(x) && isfinite(y) "Non-finite coordinates."
+    (; finalized_x_axis, finalized_y_axis, rectangle) = drawing_area
+    x_u = coordinate_to_unit(finalized_x_axis, x)
+    y_u = coordinate_to_unit(finalized_y_axis, y)
+    _f(z, min, max) = z * (max - min) + min
+    Point(_f(x_u, rectangle.left, rectangle.right),
+          _f(y_u, rectangle.bottom, rectangle.top))
+end
+
 end
