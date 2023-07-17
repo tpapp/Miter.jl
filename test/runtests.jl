@@ -57,14 +57,14 @@ end
 using Miter.Ticks
 using Miter.Ticks: format_ticks
 
-@testset "nonempty linear ticks" begin
-    @test @inferred nonempty_linear_ticks(Interval(0, 10)) ==
+@testset "nontrivial linear ticks" begin
+    @test @inferred nontrivial_linear_ticks(Interval(0, 10)) ==
         [(significands = 0:1:10, exponent = 0),
          (significands = 0:2:10, exponent = 0),
          (significands = 0:5:10, exponent = 0),
          (significands = 0:1:1, exponent = 1)]
 
-    @test @inferred nonempty_linear_ticks(Interval(-2.1, 7.3)) ==
+    @test @inferred nontrivial_linear_ticks(Interval(-2.1, 7.3)) ==
         [(significands = -21:1:73, exponent = -1),
          (significands = -20:2:72, exponent = -1),
          (significands = -20:5:70, exponent = -1),
@@ -72,9 +72,9 @@ using Miter.Ticks: format_ticks
          (significands = -2:2:6, exponent = 0),
          (significands = 0:5:5, exponent = 0)]
 
-    @test @inferred nonempty_linear_ticks(Interval(-0.021, 0.073)) ==
+    @test @inferred nontrivial_linear_ticks(Interval(-0.021, 0.073)) ==
         map(((; significands, exponent),) -> (; significands, exponent = exponent -2),
-            nonempty_linear_ticks(Interval(-2.1, 7.3)))
+            nontrivial_linear_ticks(Interval(-2.1, 7.3)))
 end
 
 @testset "format ticks" begin

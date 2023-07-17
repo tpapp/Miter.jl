@@ -1,6 +1,6 @@
 module Intervals
 
-export Interval, is_nonempty, is_nonzero, hull, hull_xy
+export Interval, ∅, is_nonzero, hull, hull_xy
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -12,30 +12,22 @@ struct Interval{T}
     $(SIGNATURES)
 
     A representation of the numbers `[min, max]`. It is required that `min ≤ max`, but
-    `min == max` is allowed. All other combinations represent the empty set and require the
-    `Interval{T}()` constructor.
+    `min == max` is allowed.
     """
     function Interval(min::T, max::T) where T
         @argcheck isfinite(min) && isfinite(max)
         @argcheck min ≤ max
         new{T}(min, max)
     end
-    @doc """
-    $(SIGNATURES)
-
-    Represent the empty set ``∅``. Test with [`is_nonempty`](@ref).
-    """
-    Interval{T}() where T = new{T}(typemax(T), typemin(T))
 end
 
 Interval(a, b) = Interval(promote(a, b)...)
 
-"""
-$(SIGNATURES)
+"The empty set, use `∅` for a value."
+struct EmptySet end
 
-Test whether the interval is the empty set.
-"""
-is_nonempty(a::Interval) = a.min ≤ a.max
+"Singleton for the empty set."
+const ∅ = EmptySet()
 
 """
 $(SIGNATURES)
@@ -49,9 +41,15 @@ $(SIGNATURES)
 
 The convex hull, ie the narrowest interval that contains all arguments.
 """
-function hull(a::Interval{T}, b::Interval{T}) where T
+function hull(a::Interval, b::Interval)
     Interval(min(a.min, b.min), max(a.max, b.max))
 end
+
+hull(::EmptySet, a::Interval) = a
+
+hull(a::Interval, ::EmptySet) = b
+
+hull(::EmptySet, ::EmptySet) = ∅
 
 """
 $(SIGNATURES)

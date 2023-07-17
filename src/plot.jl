@@ -4,8 +4,10 @@
 
 export Plot, Lines
 
+using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
 import ..Axis: bounds_xy
+using ..Intervals
 
 struct Plot
     contents
@@ -26,6 +28,8 @@ function render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     (_, x_axis_rectangle, y_axis_rectangle,
      plot_rectangle) = PGF.split_matrix(rectangle, 20u"mm", 20u"mm")
     x_interval, y_interval = Axis.bounds_xy(contents)
+    @argcheck x_interval ≢ ∅ "empty x range"
+    @argcheck y_interval ≢ ∅ "empty y range"
     finalized_x_axis = Axis.finalize(x_axis, x_interval)
     finalized_y_axis = Axis.finalize(y_axis, y_interval)
     fill_rectangle(io, x_axis_rectangle, colorant"blue")

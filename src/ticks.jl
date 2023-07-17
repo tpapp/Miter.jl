@@ -9,7 +9,7 @@ etc are considered exotic and avoided on purpose.
 """
 module Ticks
 
-export nonempty_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
+export nontrivial_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -72,7 +72,7 @@ step.
     Any `a < b` is accepted, but the algorithm is not designed to give good results for `a ≈
     b`. You may want to use a different method for that.
 """
-function nonempty_linear_ticks(interval::Interval{<:Real}; log10_widening::Int = 1)
+function nontrivial_linear_ticks(interval::Interval{<:Real}; log10_widening::Int = 1)
     is_nontrivial(x) = length(x) ≥ 2
     (; min, max) = interval
     Δ = max - min
@@ -181,9 +181,8 @@ $(SIGNATURES)
 """
 function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickFormat,
                                tick_selection::TickSelection)
-    @argcheck is_nonempty(interval)
     if is_nonzero(interval)
-        ticks = nonempty_linear_ticks(interval; tick_selection.log10_widening)
+        ticks = nontrivial_linear_ticks(interval; tick_selection.log10_widening)
         formatted_ticks = map(((s, e),) -> (s, e, format_ticks(s, e, tick_format)), ticks)
         significand, exponent, formatted = select_ticks(formatted_ticks, tick_selection)
         E = exp10(exponent)
