@@ -12,6 +12,8 @@ using Unitful: @u_str
 include("compile.jl")
 include("pgf.jl")
 include("utilities.jl")
+include("intervals.jl")
+include("ticks.jl")
 include("axis.jl")
 include("plot.jl")
 

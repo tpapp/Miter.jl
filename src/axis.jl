@@ -15,66 +15,7 @@ module Axis
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using ..PGF: Rectangle, Point
-
-####
-#### Interval arithmetic
-####
-
-struct Interval
-    min::Float64
-    max::Float64
-    @doc """
-    $(SIGNATURES)
-
-    A representation of the numbers `[min, max]`. It is required that `min ≤ max`, but `min
-    == max` is allowed.
-    """
-    function Interval(min, max)
-        @argcheck isfinite(min) && isfinite(max)
-        @argcheck min ≤ max
-        new(Float64(min), Float64(max))
-    end
-    @doc """
-    $(SIGNATURES)
-
-    Represent the empty set ``∅``. Test with [`is_nonempty`](@ref).
-    """
-    Interval() = new(Inf, -Inf) # sentinel for empty interval
-end
-
-"""
-$(SIGNATURES)
-
-Test whether the interval is the empty set.
-"""
-is_nonempty(a::Interval) = a.min ≤ a.max
-
-"""
-$(SIGNATURES)
-
-The convex hull, ie the narrowest interval that contains both intervals.
-"""
-function hull(a::Interval, b::Interval)
-    Interval(min(a.min, b.min), max(a.max, b.max))
-end
-
-"""
-$(SIGNATURES)
-
-Convex hull for a 2-tuple of intervals.
-"""
-function hull_xy((ax, ay)::T, (bx, by)::T) where {T<:Tuple{Interval,Interval}}
-    (hull(ax, bx), hull(ay, by))
-end
-
-"""
-$(SIGNATURES)
-
-A helper function that wraps `extrema(f, itr)` in an `Interval`.
-"""
-bounds(f, itr) = isempty(itr) ? Interval() : Interval(extrema(f, itr)...)
-
-bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr; init = (Interval(), Interval()))
+using ..Intervals
 
 ####
 #### Axis
@@ -83,6 +24,13 @@ bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr; init = (Interval(), Interval
 ###
 ### Generic axis API
 ###
+
+bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, itr)...)
+
+"""
+$(SIGNATURES)
+"""
+bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr; init = (Interval(), Interval()))
 
 function finalize end
 
@@ -113,6 +61,11 @@ struct Linear end
 struct LinearFinalized
     interval::Interval
 end
+
+
+
+
+
 
 function finalize(axis::Linear, interval::Interval)
     if interval.min < interval.max

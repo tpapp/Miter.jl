@@ -1,4 +1,4 @@
-using Miter
+using Miter, Miter.Intervals, Miter.Ticks
 using Test
 using Unitful.DefaultSymbols
 using ColorTypes
@@ -49,3 +49,45 @@ end
 #     render(ts, pa, lp)
 #     Miter.tex_postamble(ts)
 # end
+
+####
+#### test ticks
+####
+
+using Miter.Ticks
+using Miter.Ticks: format_ticks
+
+@testset "nonempty linear ticks" begin
+    @test @inferred nonempty_linear_ticks(Interval(0, 10)) ==
+        [(significands = 0:1:10, exponent = 0),
+         (significands = 0:2:10, exponent = 0),
+         (significands = 0:5:10, exponent = 0),
+         (significands = 0:1:1, exponent = 1)]
+
+    @test @inferred nonempty_linear_ticks(Interval(-2.1, 7.3)) ==
+        [(significands = -21:1:73, exponent = -1),
+         (significands = -20:2:72, exponent = -1),
+         (significands = -20:5:70, exponent = -1),
+         (significands = -2:1:6, exponent = 0),
+         (significands = -2:2:6, exponent = 0),
+         (significands = 0:5:5, exponent = 0)]
+
+    @test @inferred nonempty_linear_ticks(Interval(-0.021, 0.073)) ==
+        map(((; significands, exponent),) -> (; significands, exponent = exponent -2),
+            nonempty_linear_ticks(Interval(-2.1, 7.3)))
+end
+
+@testset "format ticks" begin
+    @test format_ticks(-1:2, 0, TickFormat()) == ["\$-1\$", "\$0\$", "\$1\$", "\$2\$"]
+    @test format_ticks(-1:2, 3, TickFormat()) == ["\$-1000\$", "\$0\$", "\$1000\$", "\$2000\$"]
+    @test format_ticks(-1:2, 4, TickFormat()) == ["\$-1 \\times 10^{4}\$", "\$0 \\times 10^{4}\$", "\$1 \\times 10^{4}\$", "\$2 \\times 10^{4}\$"]
+    @test format_ticks(-1:2, 4, TickFormat(; thousands = true)) == ["\$-10 \\times 10^{3}\$", "\$0 \\times 10^{3}\$", "\$10 \\times 10^{3}\$", "\$20 \\times 10^{3}\$"]
+    @test format_ticks(-1:2, -4, TickFormat()) == ["\$-1 \\times 10^{-4}\$", "\$0 \\times 10^{-4}\$", "\$1 \\times 10^{-4}\$", "\$2 \\times 10^{-4}\$"]
+    @test format_ticks(-1:2, -4, TickFormat(; thousands = true)) == ["\$-100 \\times 10^{-6}\$", "\$0 \\times 10^{-6}\$", "\$100 \\times 10^{-6}\$", "\$200 \\times 10^{-6}\$"]
+    @test format_ticks(0:2:10, -1, TickFormat()) == ["\$0.0\$", "\$0.2\$", "\$0.4\$", "\$0.6\$", "\$0.8\$", "\$1.0\$"]
+end
+
+@testset "sensible linear ticks" begin
+    @test sensible_linear_ticks(Interval(0, 1), TickFormat(), TickSelection()) ==
+        [0.0 => "\$0.0\$", 0.2 => "\$0.2\$", 0.4 => "\$0.4\$", 0.6000000000000001 => "\$0.6\$", 0.8 => "\$0.8\$", 1.0 => "\$1.0\$"]
+end
