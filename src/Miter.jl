@@ -15,6 +15,7 @@ include("utilities.jl")
 include("intervals.jl")
 include("ticks.jl")
 include("axis.jl")
+include("output.jl")
 include("plot.jl")
 
 end # module

@@ -159,10 +159,11 @@ Base.@kwdef struct TickSelection
     fives_penalty::Float64 = 0.0
 end
 
-function select_ticks(significand_exponent_formatted, tick_selection)
+function select_ticks(significand_exponent_formatted, tick_selection::TickSelection)
     (; target_count, label_penalty, twos_penalty, fives_penalty) = tick_selection
     function _score((significand, exponent, formatted))
-        score = 1.0 * abs2(length(significand) - target_count) + sum(length, formatted) * label_penalty
+        score = 1.0 * abs2(length(significand) - target_count) +
+            sum(length, formatted) * label_penalty
         k = step(significand)
         if k == 2
             score += twos_penalty
@@ -178,7 +179,8 @@ end
 """
 $(SIGNATURES)
 """
-function sensible_linear_ticks(interval::Interval{<:Real}, tick_format, tick_selection)
+function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickFormat,
+                               tick_selection::TickSelection)
     @argcheck is_nonempty(interval)
     if is_nonzero(interval)
         ticks = nonempty_linear_ticks(interval; tick_selection.log10_widening)

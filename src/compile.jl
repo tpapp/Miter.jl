@@ -41,9 +41,12 @@ function svg(f, io::IO; tmp_dir = nothing)
     maybe_tmpdir(tmp_dir) do dir
         pdf_path = joinpath(dir, "miter.pdf")
         pdf(f, pdf_path; tmp_dir = dir)
-        @show isfile(pdf_path)
         run(pipeline(`$(pdftocairo()) -svg $(pdf_path) -`; stdout = io))
     end
+end
+
+function svg(f, output_path::AbstractString; tmp_dir = nothing)
+    open(io -> svg(f, io; tmp_dir), output_path, "w")
 end
 
 end

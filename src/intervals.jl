@@ -49,7 +49,7 @@ $(SIGNATURES)
 
 The convex hull, ie the narrowest interval that contains all arguments.
 """
-function hull(a::Interval, b::Interval)
+function hull(a::Interval{T}, b::Interval{T}) where T
     Interval(min(a.min, b.min), max(a.max, b.max))
 end
 
@@ -58,7 +58,7 @@ $(SIGNATURES)
 
 Convex hull for a 2-tuple of intervals.
 """
-function hull_xy((ax, ay)::T, (bx, by)::T) where {T<:Tuple{Interval,Interval}}
+function hull_xy((ax, ay), (bx, by))
     (hull(ax, bx), hull(ay, by))
 end
 

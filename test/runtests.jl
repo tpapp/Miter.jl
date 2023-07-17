@@ -91,3 +91,8 @@ end
     @test sensible_linear_ticks(Interval(0, 1), TickFormat(), TickSelection()) ==
         [0.0 => "\$0.0\$", 0.2 => "\$0.2\$", 0.4 => "\$0.4\$", 0.6000000000000001 => "\$0.6\$", 0.8 => "\$0.8\$", 1.0 => "\$1.0\$"]
 end
+
+plot = Plot([Lines((x, abs2(x)) for x in -1:0.1:1)])
+filename = tempname() * ".pdf"
+Miter.save(filename, plot)
+@test is_pdf(filename)

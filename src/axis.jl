@@ -3,7 +3,7 @@ FIXME document
 
 # The user interface
 
-[`Interval`](@ref), [`bounds`](@ref), [`Linear`](@ref)
+[`bounds`](@ref), [`Linear`](@ref)
 
 # Within-package API
 
@@ -16,21 +16,18 @@ using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using ..PGF: Rectangle, Point
 using ..Intervals
+using ..Ticks
 
 ####
 #### Axis
 ####
-
-###
-### Generic axis API
-###
 
 bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, itr)...)
 
 """
 $(SIGNATURES)
 """
-bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr; init = (Interval(), Interval()))
+bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr)
 
 function finalize end
 
@@ -56,26 +53,23 @@ end
 ### Linear axis
 ###
 
-struct Linear end
-
-struct LinearFinalized
-    interval::Interval
+Base.@kwdef struct Linear
+    tick_selection::TickSelection = TickSelection()
+    tick_format::TickFormat = TickFormat()
 end
 
-
-
-
-
+Base.@kwdef struct FinalizedLinear{TT}
+    interval::Interval
+    ticks::TT
+end
 
 function finalize(axis::Linear, interval::Interval)
-    if interval.min < interval.max
-        LinearFinalized(interval)
-    else
-        error("FIXME write code to handle points")
-    end
+    (; tick_selection, tick_format) = axis
+    ticks = sensible_linear_ticks(interval, tick_format, tick_selection)
+    FinalizedLinear(; interval, ticks)
 end
 
-function coordinate_to_unit(finalized_axis::LinearFinalized, x::Real)
+function coordinate_to_unit(finalized_axis::FinalizedLinear, x::Real)
     (; min, max) = finalized_axis.interval
     (x - min) / (max - min)
 end

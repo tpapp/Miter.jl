@@ -2,6 +2,8 @@
 #### plot
 ####
 
+export Plot, Lines
+
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
 import ..Axis: bounds_xy
 
@@ -16,6 +18,8 @@ struct Plot
         new(contents, x_axis, y_axis)
     end
 end
+
+Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, plot)
 
 function render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents) = plot
@@ -56,27 +60,4 @@ function print_tex(io::IO, plot::Plot; standalone::Bool = false)
     standalone || PGF.preamble(io)
     render(io, PGF.canvas(10u"cm", 8u"cm"), plot)
     standalone || PGF.postamble(io)
-end
-
-function print_tex(filename::AbstractString, object; standalone::Bool = false)
-    open(filename, "w") do io
-        print_tex(io, object; standalone)
-    end
-end
-
-function Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot)
-    Compile.svg(svg_io) do io
-        print_tex(io, plot)
-    end
-end
-
-function save(filename::AbstractString, object)
-    ext = splitext(filename)[2]
-    if ext == ".pdf"
-        Compile.pdf(filename) do io
-            print_tex(io, object)
-        end
-    else
-        error("don't know to handle extension $(ext)")
-    end
 end
