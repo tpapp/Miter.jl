@@ -55,8 +55,8 @@ end
 ###
 
 Base.@kwdef struct Style
-    "stroke width"
-    stroke_width::PGF.LENGTH = 0.3mm
+    "line width"
+    line_width::PGF.LENGTH = 0.3mm
     "gap between the plotting area and the axis line"
     line_gap::PGF.LENGTH = 2.0mm
     "tick length"
@@ -93,11 +93,11 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
     !is_x && @argcheck orientation == :y "orientation has to be :x or :y"
     (; interval, ticks, style) = axis
     gap(l) = is_x ? PGF.Point(0, l) : PGF.Point(l, 0)
-    (; line_gap, ) = style
+    (; line_gap, line_width) = style
     a = is_x ? PGF.Point(rectangle.left, rectangle.top) : PGF.Point(rectangle.right, rectangle.bottom)
     b = is_x ? PGF.Point(rectangle.right, rectangle.top) : PGF.Point(rectangle.right, rectangle.top)
     PGF.setstrokecolor(io, PGF.BLACK)
-    # FIXME set stroke width
+    PGF.setlinewidth(io, line_width)
     PGF.pathmoveto(io, a - gap(line_gap))
     PGF.pathlineto(io, b - gap(line_gap))
     PGF.usepathqstroke(io)
