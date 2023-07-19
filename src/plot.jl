@@ -63,6 +63,6 @@ end
 function print_tex(io::IO, plot::Plot; standalone::Bool = false)
     canvas = PGF.canvas(10u"cm", 8u"cm")
     PGF.preamble(io, canvas; standalone)
-    PGF.render(io, PGF.canvas(10u"cm", 8u"cm"), plot)
+    PGF.render(io, canvas, plot)
     PGF.postamble(io; standalone)
 end

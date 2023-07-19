@@ -34,6 +34,10 @@ function save(filename::AbstractString, object)
         Compile.svg(filename) do io
             print_tex(io, object)
         end
+    elseif ext == ".tex"
+        open(io -> print_tex(io, object), filename, "w")
+    elseif ext == ".tikz"
+        open(io -> print_tex(io, object; standalone = true), filename, "w")
     else
         error("don't know to handle extension $(ext)")
     end

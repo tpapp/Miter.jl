@@ -220,6 +220,73 @@ function usepath(io::IO, actions...)
     _print(io, "}\n")
 end
 
+# NOTE: we don't make this <: AbstracString, as it is only used as a wrapped, and only within
+# this package, as an input.
+struct LaTeX{T<:AbstractString}
+    latex::T
+    @doc """
+    $(SIGNATURES)
+
+    A wrapper that allows its contents to be passed to LaTeX directly.
+
+    It is the responsibility of the user to ensure that this is valid LaTeX code within the
+    document.
+    """
+    LaTeX(latex::T) where T = new{T}(latex) # FIXME checks
+end
+
+Base.length(str::LaTeX) = length(str.latex)
+
+"""
+$(SIGNATURES)
+
+Put \$'s around the string, and wrap in `LaTeX`, to pass directly.
+"""
+math(str::AbstractString) = LaTeX("\$" * str * "\$")
+
+_print_escaped(io::IO, str::LaTeX) = print(io, str.latex)
+
+"""
+$(SIGNATURES)
+
+Outputs a version of `str` to `io` so that special characters (in LaTeX) are escaped to
+produce the expected output.
+"""
+function _print_escaped(io::IO, str::AbstractString)
+    for c in str
+        if c == '\\'
+            print(io, raw"\textbackslash")
+        else
+            c ∈ raw"#$%&~_^{}" && print(io, '\\')
+            print(io, c)
+        end
+    end
+end
+
+"""
+$(SIGNATURES)
+
+Text output. Strings are escaped
+"""
+function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
+              left::Bool = false, right::Bool = false,
+              top::Bool = false, bottom::Bool = false, base::Bool = false,
+              rotate = 0)
+    @argcheck top + bottom + base ≤ 1
+    @argcheck left + right ≤ 1
+    (; x, y) = at
+    _print(io, raw"\pgftext[x=", x, ",y=", y)
+    left && _print(io, ",left")
+    right && _print(io, ",right")
+    top && _print(io, ",top")
+    bottom && _print(io, ",bottom")
+    base && _print(io, ",base")
+    iszero(rotate) && _print(io, ",rotate=", rotate)
+    _print(io, "]{")
+    _print_escaped(io, str)
+    _println(io, "}")
+end
+
 ####
 #### splitting
 ####

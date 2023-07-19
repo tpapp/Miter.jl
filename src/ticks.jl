@@ -14,6 +14,7 @@ export nontrivial_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using ..Intervals
+using ..PGF
 
 """
 $(SIGNATURES)
@@ -96,8 +97,6 @@ function nontrivial_linear_ticks(interval::Interval{<:Real}; log10_widening::Int
     ticks
 end
 
-wrap_math(str::AbstractString) = raw"$" * str * raw"$"
-
 """
 $(SIGNATURES)
 
@@ -137,7 +136,7 @@ end
 function format_ticks(significands, exponent, tick_format)
     (; max_exponent, min_exponent, thousands) = tick_format
     l = if min_exponent ≤ exponent ≤ max_exponent
-        map(s -> wrap_math(format_shifted(s, exponent)), significands)
+        map(s -> PGF.math(format_shifted(s, exponent)), significands)
     else
         if thousands
             Δ = closest_multiple(exponent, 3, true)[2]
@@ -147,7 +146,7 @@ function format_ticks(significands, exponent, tick_format)
             e = 0
         end
         tag = raw" \times 10^{" * string(Δ) * "}"
-        map(s -> wrap_math(format_shifted(s, e) * tag), significands)
+        map(s -> PGF.math(format_shifted(s, e) * tag), significands)
     end
 end
 
@@ -190,7 +189,7 @@ function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickForm
     else
         # note formatting here is really a heuristic, eg it cannot deal with Date, fix latex
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
-        [t => wrap_math(string(t))]
+        [t => PGF.math(string(t))]
     end
 end
 

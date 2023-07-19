@@ -75,7 +75,7 @@ Base.@kwdef struct Style
     "tick length"
     tick_length::PGF.LENGTH = 2.0mm
     "gap for labels"
-    label_gap::PGF.LENGTH = 3.0mm
+    label_gap::PGF.LENGTH = 1.5mm
 end
 
 Base.@kwdef struct Linear
@@ -106,12 +106,13 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
     !is_x && @argcheck orientation == :y "orientation has to be :x or :y"
     (; interval, ticks, style) = axis
     _point(x, y) = is_x ? PGF.Point(x, y) : PGF.Point(y, x)
-    (; line_gap, line_width, tick_length) = style
+    (; line_gap, line_width, tick_length, label_gap) = style
     a = is_x ? rectangle.left :  rectangle.bottom
     b = is_x ? rectangle.right : rectangle.top
     edge = is_x ? rectangle.top : rectangle.right
     y1 = edge - line_gap        # line, tick start
     y2 = y1 - tick_length       # tick end
+    y3 = y2 - label_gap         # labels start here
     PGF.setstrokecolor(io, PGF.BLACK)
     PGF.setlinewidth(io, line_width)
     PGF.pathmoveto(io, _point(a, y1))
@@ -122,6 +123,7 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
         PGF.pathmoveto(io, _point(x, y1))
         PGF.pathlineto(io, _point(x, y2))
         PGF.usepathqstroke(io)
+        PGF.text(io, _point(x, y3), label; top = is_x, right = !is_x)
     end
 end
 
