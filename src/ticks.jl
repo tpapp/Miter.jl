@@ -104,7 +104,7 @@ $(SIGNATURES)
 """
 function format_shifted(significand::Int, exponent::Int)
     io = IOBuffer()
-    print(io, significand)
+    print(io, abs(significand))
     if exponent > 0 && significand ≠ 0 # print trailing zeros
         for _ in 1:exponent
             print(io, '0')
@@ -123,6 +123,7 @@ function format_shifted(significand::Int, exponent::Int)
             pushfirst!(v, Z)
         end
     end
+    significand < 0 && pushfirst!(v, '-')
     String(v)
 end
 
