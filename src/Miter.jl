@@ -6,7 +6,7 @@ module Miter
 export Axis, Plot, Lines
 
 using Colors: @colorant_str, RGB # NOTE maybe no need for full Colors once done?
-using DocStringExtensions: SIGNATURES
+using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 using Unitful: @u_str
 
 include("compile.jl")

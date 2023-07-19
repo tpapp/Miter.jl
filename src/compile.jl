@@ -27,7 +27,10 @@ function pdf(f, output_path::AbstractString; tmp_dir = nothing)
     maybe_tmpdir(tmp_dir) do dir
         tex_file = joinpath(dir, out_basename .* ".tex")
         open(f, tex_file, "w")
-        run(`$(tectonic()) -X compile $(tex_file) -o $(out_dir)`)
+        redirect_stdio(; stdout = devnull, stderr = devnull)
+        if !success(`$(tectonic()) -X compile --outdir $(out_dir) $(tex_file)`)
+            error("Error running tectonic")
+        end
     end
     output_path
 end

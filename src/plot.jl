@@ -23,7 +23,7 @@ end
 
 Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, plot)
 
-function render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
+function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents) = plot
     (_, x_axis_rectangle, y_axis_rectangle,
      plot_rectangle) = PGF.split_matrix(rectangle, 20u"mm", 20u"mm")
@@ -32,11 +32,11 @@ function render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     @argcheck y_interval ≢ ∅ "empty y range"
     finalized_x_axis = Axis.finalize(x_axis, x_interval)
     finalized_y_axis = Axis.finalize(y_axis, y_interval)
-    fill_rectangle(io, x_axis_rectangle, colorant"blue")
-    fill_rectangle(io, y_axis_rectangle, colorant"red")
+    PGF.render(io, x_axis_rectangle, finalized_x_axis; orientation = :x)
+    PGF.render(io, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = Axis.DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
     for c in contents
-        render(io, drawing_area, c)
+        PGF.render(io, drawing_area, c)
     end
 end
 
@@ -49,7 +49,7 @@ function bounds_xy(lines::Lines)
     (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
 end
 
-function render(io::IO, drawing_area::DrawingArea, lines::Lines)
+function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
     peeled = Iterators.peel(lines.coordinates)
     peeled ≡ nothing && return
     c1, cR = peeled
@@ -61,7 +61,8 @@ function render(io::IO, drawing_area::DrawingArea, lines::Lines)
 end
 
 function print_tex(io::IO, plot::Plot; standalone::Bool = false)
-    standalone || PGF.preamble(io)
-    render(io, PGF.canvas(10u"cm", 8u"cm"), plot)
-    standalone || PGF.postamble(io)
+    canvas = PGF.canvas(10u"cm", 8u"cm")
+    PGF.preamble(io, canvas; standalone)
+    PGF.render(io, PGF.canvas(10u"cm", 8u"cm"), plot)
+    PGF.postamble(io; standalone)
 end
