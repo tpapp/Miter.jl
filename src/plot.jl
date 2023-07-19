@@ -8,25 +8,38 @@ using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
 import ..Axis: bounds_xy
 using ..Intervals
+using ..PGF
+using Unitful: mm
+
+Base.@kwdef struct PlotStyle
+    axis_left::PGF.LENGTH = 20mm
+    axis_bottom::PGF.LENGTH = 20mm
+    margin_right::PGF.LENGTH = 10mm
+    margin_top::PGF.LENGTH = 10mm
+end
+
 
 struct Plot
     contents
     x_axis
     y_axis
+    style
     @doc """
     $(SIGNATURES)
     """
-    function Plot(contents = []; x_axis = Linear(), y_axis = Linear())
-        new(contents, x_axis, y_axis)
+    function Plot(contents = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
+        new(contents, x_axis, y_axis, style)
     end
 end
 
 Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, plot)
 
 function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
-    (; x_axis, y_axis, contents) = plot
+    (; x_axis, y_axis, contents, style) = plot
+    (; axis_left, axis_bottom, margin_top, margin_right) = style
+    inner_rectangle = PGF.split_matrix(rectangle, -margin_right, -margin_top)[1] # remove margin
     (_, x_axis_rectangle, y_axis_rectangle,
-     plot_rectangle) = PGF.split_matrix(rectangle, 20u"mm", 20u"mm")
+     plot_rectangle) = PGF.split_matrix(inner_rectangle, axis_left, axis_bottom)
     x_interval, y_interval = Axis.bounds_xy(contents)
     @argcheck x_interval ≢ ∅ "empty x range"
     @argcheck y_interval ≢ ∅ "empty y range"
