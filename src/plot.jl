@@ -2,7 +2,7 @@
 #### plot
 ####
 
-export Plot, Lines
+export Plot, Lines, Scatter
 
 using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
@@ -52,6 +52,16 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     end
 end
 
+"""
+$(SIGNATURES)
+
+A helper function to define `bounds_xy` on an iterable of coordinate pairs.
+"""
+function coordinate_bounds(coordinates)
+    # FIXME is bounds used anywhere else? if not, remove
+    (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
+end
+
 struct Lines
     coordinates
     line_width::PGF.LENGTH
@@ -63,10 +73,7 @@ struct Lines
     end
 end
 
-function bounds_xy(lines::Lines)
-    (; coordinates) = lines
-    (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
-end
+bounds_xy(lines::Lines) = coordinate_bounds(lines.coordinates)
 
 function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color) = lines
@@ -80,6 +87,32 @@ function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
         PGF.pathlineto(io, coordinates_to_point(drawing_area, c))
     end
     PGF.usepathqstroke(io)
+end
+
+struct Scatter
+    coordinates
+    line_width::PGF.LENGTH
+    color
+    kind::Symbol
+    size::PGF.LENGTH
+    function Scatter(coordinates; line_width = 0.3mm, color = PGF.BLACK, kind = :+, size = 2mm)
+        line_width = PGF._length(line_width)
+        size = PGF._length(size)
+        @argcheck PGF.is_positive(line_width)
+        @argcheck PGF.is_positive(size)
+        new(coordinates, line_width, color, kind, size)
+    end
+end
+
+bounds_xy(scatter::Scatter) = coordinate_bounds(scatter.coordinates)
+
+function PGF.render(io::IO, drawing_area::DrawingArea, scatter::Scatter)
+    (; coordinates, line_width, color, kind, size) = scatter
+    PGF.setlinewidth(io, line_width)
+    PGF.setstrokecolor(io, color)
+    for c in coordinates
+        PGF.mark(io, Val(kind), coordinates_to_point(drawing_area, c), size)
+    end
 end
 
 function print_tex(io::IO, plot::Plot; standalone::Bool = false)

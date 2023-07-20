@@ -390,4 +390,36 @@ function segment(io::IO, a::Point, b::Point)
     usepathqstroke(io)
 end
 
+####
+#### marks
+####
+
+"""
+$(SIGNATURES)
+
+Draw a mark of type `K` at the given point, with the given `size` (roughly the diameter of a
+circle/square that contains the mark). Caller should set color, line width, etc.
+"""
+function mark(io::IO, ::Val{K}, at::Point, size::T) where {K,T}
+    if T ≡ LENGTH
+        error("Don't know how to draw a mark of type $K, define a method for `Miter.PGF.mark`.")
+    else
+        mark(io, Val(K), at, _length(size))
+    end
+end
+
+function mark(io::IO, ::Val{:+}, at::Point, size::LENGTH)
+    @argcheck is_positive(size)
+    (; x, y) = at
+    h = size / 2
+    segment(io, Point(x - h, y), Point(x + h, y))
+    segment(io, Point(x, y - h), Point(x, y + h))
+end
+
+function mark(io::IO, ::Val{:o}, at::Point, size::LENGTH)
+    @argcheck is_positive(size)
+    pathcircle(io, at(x - h, y), Point(x + h, y), size / 2)
+    pathqstroke(io)
+end
+
 end

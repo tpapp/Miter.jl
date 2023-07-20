@@ -99,7 +99,8 @@ end
          0.6000000000000001 => math("0.6"), 0.8 => math("0.8"), 1.0 => math("1.0")]
 end
 
-plot = Plot([Lines((x, abs2(x)) for x in -1:0.1:1)])
+plot = Plot([Lines((x, abs2(x)) for x in -1:0.1:1),
+             Scatter((x, (x + 1) / 2) for x in -1:0.1:1)])
 filename = tempname() * ".pdf"
 Miter.save(filename, plot)
 @test is_pdf(filename)

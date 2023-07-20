@@ -27,6 +27,8 @@ bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, it
 
 """
 $(SIGNATURES)
+
+Return two intervals for the axis bounds of the plot contents.
 """
 bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr)
 
