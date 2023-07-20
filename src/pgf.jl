@@ -43,6 +43,8 @@ The length type we use internally in this module. Not exposed outside this modul
 """
 const LENGTH = typeof(1.0u"mm")
 
+is_positive(x::LENGTH) = x > zero(x)
+
 """
 $(SIGNATURES)
 
@@ -168,6 +170,10 @@ end
 
 function pathlineto(io::IO, point::Point)
     _println(io, raw"\pgfpathlineto{", point, "}")
+end
+
+function pathcircle(io::IO, point::Point, radius::LENGTH)
+    _println(io, raw"\pgfpathcircle{", point, "}{", radius, "}")
 end
 
 # commands without arguments
@@ -368,5 +374,20 @@ Render `object` within `rectangle` by issuing the relevant drawing commands to `
 the `PGF` module.
 """
 function render end
+
+####
+#### utilities
+####
+
+"""
+$(SIGNATURES)
+
+Path and stroke a line segment between two points. Caller sets everything else before.
+"""
+function segment(io::IO, a::Point, b::Point)
+    pathmoveto(io, a)
+    pathlineto(io, b)
+    usepathqstroke(io)
+end
 
 end

@@ -115,14 +115,10 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
     y3 = y2 - label_gap         # labels start here
     PGF.setstrokecolor(io, PGF.BLACK)
     PGF.setlinewidth(io, line_width)
-    PGF.pathmoveto(io, _point(a, y1))
-    PGF.pathlineto(io, _point(b, y1))
-    PGF.usepathqstroke(io)
+    PGF.segment(io, _point(a, y1), _point(b, y1))
     for (pos, label) in ticks
         x = unit_to_canvas(a, b, coordinate_to_unit(axis, pos))
-        PGF.pathmoveto(io, _point(x, y1))
-        PGF.pathlineto(io, _point(x, y2))
-        PGF.usepathqstroke(io)
+        PGF.segment(io, _point(x, y1), _point(x, y2))
         PGF.text(io, _point(x, y3), label; top = is_x, right = !is_x)
     end
 end

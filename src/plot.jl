@@ -18,7 +18,6 @@ Base.@kwdef struct PlotStyle
     margin_top::PGF.LENGTH = 10mm
 end
 
-
 struct Plot
     contents
     x_axis
@@ -53,8 +52,15 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     end
 end
 
-struct Lines{T}
-    coordinates::T
+struct Lines
+    coordinates
+    line_width::PGF.LENGTH
+    color
+    function Lines(coordinates; line_width = 0.3mm, color = PGF.BLACK)
+        line_width = PGF._length(line_width)
+        @argcheck PGF.is_positive(line_width)
+        new(coordinates, line_width, color)
+    end
 end
 
 function bounds_xy(lines::Lines)
@@ -63,8 +69,11 @@ function bounds_xy(lines::Lines)
 end
 
 function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
-    peeled = Iterators.peel(lines.coordinates)
+    (; coordinates, line_width, color) = lines
+    peeled = Iterators.peel(coordinates)
     peeled ≡ nothing && return
+    PGF.setlinewidth(io, line_width)
+    PGF.setstrokecolor(io, color)
     c1, cR = peeled
     PGF.pathmoveto(io, coordinates_to_point(drawing_area, c1))
     for c in cR
