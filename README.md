@@ -21,7 +21,7 @@ A closely related package is [PGFPlotsX.jl](https://github.com/KristofferC/PGFPl
 | PGFPlotsX.jl                                     | Miter.jl                                                                                               |
 |--------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | uses `pgfplots`                                  | uses the basic layer primitives of `pgf`, doing calculations in Julia whenever possible, may be faster |
-| options and syntax can match `pgfplots` closely  | not related to `pgfplots` in any way, uses ony Julia syntax                                            |
+| options and syntax can match `pgfplots` closely  | not related to `pgfplots` in any way, uses only Julia syntax                                           |
 | needs a local LaTeX installation, `pdf2svg`, etc | uses binaries from jlls (*planned: optionally uses local installation*)                                |
 | strings passed through as is                     | special chars in strings (`#`, `$`, ...) escaped by default, use `math` or `latex`                     |
 

@@ -5,7 +5,7 @@ module Miter
 
 export Axis, Plot, Lines
 
-using Colors: @colorant_str, RGB # NOTE maybe no need for full Colors once done?
+using ColorTypes: RGB
 using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 using Unitful: @u_str
 
