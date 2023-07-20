@@ -117,7 +117,7 @@ function PGF.render(io::IO, drawing_area::DrawingArea, scatter::Scatter)
 end
 
 function print_tex(io::IO, plot::Plot; standalone::Bool = false)
-    canvas = PGF.canvas(10u"cm", 8u"cm")
+    canvas = PGF.canvas(100mm, 80mm)
     PGF.preamble(io, canvas; standalone)
     PGF.render(io, canvas, plot)
     PGF.postamble(io; standalone)

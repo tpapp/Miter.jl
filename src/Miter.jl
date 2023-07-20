@@ -7,7 +7,6 @@ export Axis, Plot, Lines
 
 using ColorTypes: RGB
 using DocStringExtensions: SIGNATURES, FUNCTIONNAME
-using Unitful: @u_str, mm
 
 include("compile.jl")
 include("pgf.jl")

@@ -19,7 +19,7 @@ using ArgCheck: @argcheck
 using ColorTypes: AbstractRGB, red, green, blue, RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using StaticArrays: SVector, push
-using Unitful: @u_str, ustrip, Length
+using Unitful: mm, ustrip, Length
 
 const BLACK = RGB(0.0, 0.0, 0.0)
 
@@ -41,7 +41,7 @@ _print(io::IO, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(io, x)
 """
 The length type we use internally in this module. Not exposed outside this module.
 """
-const LENGTH = typeof(1.0u"mm")
+const LENGTH = typeof(1.0mm)
 
 is_positive(x::LENGTH) = x > zero(x)
 
@@ -52,7 +52,7 @@ Convert to `LENGTH`, ensuring an inferrable type.
 """
 @inline _length(x) = LENGTH(x)::LENGTH
 
-_print(io::IO, x::LENGTH) = print(io, ustrip(u"mm", x) * (72 / 25.4), "bp")
+_print(io::IO, x::LENGTH) = print(io, ustrip(mm, x) * (72 / 25.4), "bp")
 
 ####
 #### colors
