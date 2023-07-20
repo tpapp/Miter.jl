@@ -1,6 +1,6 @@
 # see documentation at https://juliadocs.github.io/Documenter.jl/stable/
 
-using Documenter, Miter
+using Documenter, Miter, Colors
 
 makedocs(
     modules = [Miter],

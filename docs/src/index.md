@@ -9,6 +9,7 @@ All should be preceded by
 ```@example all
 using Miter, Colors
 ```
+to load the relevant packages.
 
 ## Gallery
 
