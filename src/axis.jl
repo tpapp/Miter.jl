@@ -16,6 +16,7 @@ using ArgCheck: @argcheck
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 import ..PGF
 using ..Intervals
+using ..Defaults: DEFAULTS
 using ..Ticks
 using Unitful: mm
 
@@ -71,13 +72,13 @@ end
 
 Base.@kwdef struct Style
     "line width"
-    line_width::PGF.LENGTH = 0.3mm
+    line_width::PGF.LENGTH = DEFAULTS.axis_style_line_width
     "gap between the plotting area and the axis line"
-    line_gap::PGF.LENGTH = 2.0mm
+    line_gap::PGF.LENGTH = DEFAULTS.axis_style_line_gap
     "tick length"
-    tick_length::PGF.LENGTH = 2.0mm
+    tick_length::PGF.LENGTH = DEFAULTS.axis_style_tick_length
     "gap for labels"
-    label_gap::PGF.LENGTH = 1.5mm
+    label_gap::PGF.LENGTH = DEFAULTS.axis_style_label_gap
 end
 
 Base.@kwdef struct Linear

@@ -14,6 +14,7 @@ export nontrivial_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using ..Intervals
+using ..Defaults: DEFAULTS
 using ..PGF
 
 """
@@ -128,10 +129,10 @@ function format_shifted(significand::Int, exponent::Int)
 end
 
 Base.@kwdef struct TickFormat
-    max_exponent::Int = 3
-    min_exponent::Int = -3
-    thousands::Bool = false
-    single_tick_sigdigits::Int = 3
+    max_exponent::Int = DEFAULTS.tick_format_max_exponent
+    min_exponent::Int = DEFAULTS.tick_format_min_exponent
+    thousands::Bool = DEFAULTS.tick_format_thousands
+    single_tick_sigdigits::Int = DEFAULTS.tick_format_single_tick_sigdigits
 end
 
 function format_ticks(significands, exponent, tick_format)
@@ -152,11 +153,11 @@ function format_ticks(significands, exponent, tick_format)
 end
 
 Base.@kwdef struct TickSelection
-    log10_widening::Int = 1
-    target_count::Int = 7
-    label_penalty::Float64 = 0.1
-    twos_penalty::Float64 = 0.0
-    fives_penalty::Float64 = 0.0
+    log10_widening::Int = DEFAULTS.tick_selection_log10_widening
+    target_count::Int = DEFAULTS.tick_selection_target_count
+    label_penalty::Float64 = DEFAULTS.tick_selection_label_penalty
+    twos_penalty::Float64 = DEFAULTS.tick_selection_twos_penalty
+    fives_penalty::Float64 = DEFAULTS.tick_selection_fives_penalty
 end
 
 function select_ticks(significand_exponent_formatted, tick_selection::TickSelection)

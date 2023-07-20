@@ -8,14 +8,15 @@ using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
 import ..Axis: bounds_xy
 using ..Intervals
+using ..Defaults: DEFAULTS
 using ..PGF
 using Unitful: mm
 
 Base.@kwdef struct PlotStyle
-    axis_left::PGF.LENGTH = 20mm
-    axis_bottom::PGF.LENGTH = 20mm
-    margin_right::PGF.LENGTH = 10mm
-    margin_top::PGF.LENGTH = 10mm
+    axis_left::PGF.LENGTH = DEFAULTS.plot_style_axis_left
+    axis_bottom::PGF.LENGTH = DEFAULTS.plot_style_axis_bottom
+    margin_right::PGF.LENGTH = DEFAULTS.plot_style_margin_right
+    margin_top::PGF.LENGTH = DEFAULTS.plot_style_margin_top
 end
 
 struct Plot
