@@ -1,3 +1,9 @@
+using ..PGF
+using ..Defaults: DEFAULTS
+using Unitful: mm
+
+export Canvas
+
 """
 $(SIGNATURES)
 
@@ -41,4 +47,26 @@ function save(filename::AbstractString, object)
     else
         error("don't know to handle extension $(ext)")
     end
+end
+
+struct Canvas
+    content::Any
+    width::PGF.LENGTH
+    height::PGF.LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    A wrapper for rendering `content` with the given `width` and `height`.
+    """
+    function Canvas(content; width = DEFAULTS.canvas_width, height = DEFAULTS.canvas_height)
+        new(content, width, height)
+    end
+end
+
+function print_tex(io::IO, canvas::Canvas; standalone::Bool = false)
+    (; content, width, height) = canvas
+    _canvas = PGF.canvas(width, height)
+    PGF.preamble(io, _canvas; standalone)
+    PGF.render(io, _canvas, content)
+    PGF.postamble(io; standalone)
 end

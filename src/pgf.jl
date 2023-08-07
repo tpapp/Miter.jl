@@ -18,8 +18,9 @@ module PGF
 using ArgCheck: @argcheck
 using ColorTypes: AbstractRGB, red, green, blue, RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
-using StaticArrays: SVector, push
-using Unitful: mm, ustrip, Length
+using StaticArrays: SVector, SMatrix
+using Printf: @printf
+using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
 const BLACK = RGB(0.0, 0.0, 0.0)
 
@@ -46,13 +47,18 @@ const LENGTH = typeof(1.0mm)
 is_positive(x::LENGTH) = x > zero(x)
 
 """
+All quantities we accept as lengths, for conversion with `_length`.
+"""
+const INPUT_LENGTH = Quantity{T,𝐋} where T
+
+"""
 $(SIGNATURES)
 
 Convert to `LENGTH`, ensuring an inferrable type.
 """
-@inline _length(x) = LENGTH(x)::LENGTH
+@inline _length(x::INPUT_LENGTH) = LENGTH(x)::LENGTH
 
-_print(io::IO, x::LENGTH) = print(io, ustrip(mm, x) * (72 / 25.4), "bp")
+_print(io::IO, x::LENGTH) = @printf(io, "%fbp", ustrip(mm, x) * (72 / 25.4))
 
 ####
 #### colors
@@ -297,36 +303,98 @@ end
 #### splitting
 ####
 
-function split_interval(min, max, interior::Union{NTuple,SVector})
-    x = push(SVector(map((i -> i > zero(LENGTH) ? min + i : max + i) ∘ _length, interior)),
-             _length(max))
-    intervals = map(axes(x, 1)) do i
-        z_prev = i == 1 ? min : x[i - 1]
-        z = x[i]
-        @argcheck z_prev ≤ z "Non-ascending coordinates."
-        (z_prev, z)
+struct Spacer
+    factor::Float64
+    @doc """
+    $(SIGNATURES)
+
+    Divide up remaining space proportionally.
+    """
+    function Spacer(x::Real = 1.0)
+        @argcheck x ≥ 0
+        new(Float64(x))
     end
-    SVector(intervals)
 end
 
-split_interval(min, max, interior::Length) = split_interval(min, max, SVector(interior))
+"""
+Spacer with a unit factor.
 
-function split_horizontally(rectangle::Rectangle, x_interior)
+Style note: use when this is the only kind of spacer, when other factors are present provide
+them explicitly.
+"""
+const SPACER = Spacer()
+
+struct Relative
+    factor::Float64
+    @doc """
+    $(SIGNATURES)
+
+    Relative widths, calculated proportionally to the containing interval length.
+    """
+    function Relative(x::Real)
+        @argcheck x ≥ 0
+        new(Float64(x))
+    end
+end
+
+function split_length(total::LENGTH, division::Tuple)
+    absolute_and_spacer = map(division) do x
+        if x isa INPUT_LENGTH
+            @argcheck x ≥ zero(LENGTH)
+            _length(x)
+        elseif x isa Relative
+            x.factor * total
+        elseif x isa Spacer
+            x
+        else
+            error("Invalid width specification $(x).")
+        end
+    end
+    absolute_sum = sum(x for x in absolute_and_spacer if x isa LENGTH)
+    @argcheck absolute_sum ≤ total
+    spacer_sum = sum(x.factor for x in absolute_and_spacer if x isa Spacer)
+    spacer_coefficient = (total - absolute_sum) / spacer_sum
+    map(absolute_and_spacer) do x
+        if x isa Spacer
+            x.factor * spacer_coefficient
+        else
+            x
+        end
+    end
+end
+
+function split_interval(min::LENGTH, max::LENGTH, division::NTuple{N,Any}) where N
+    cumulative_division = cumsum(split_length(max - min, division))
+    intervals = ntuple(N) do n
+        (min + (n == 1 ? zero(LENGTH) : cumulative_division[n - 1]), min + cumulative_division[n])
+    end
+    intervals
+end
+
+function split_horizontally(rectangle::Rectangle, x_divisions::NTuple{N,Any}) where N
     (; top, left, bottom, right) = rectangle
     map(((a, b),) -> Rectangle(; top, bottom, left = a, right = b),
-        split_interval(left, right, x_interior))
+        SVector{N}(split_interval(left, right, x_divisions)))
 end
 
-function split_vertically(rectangle::Rectangle, y_interior)
+function split_vertically(rectangle::Rectangle, y_divisions::NTuple{N,Any}) where N
     (; top, left, bottom, right) = rectangle
     map(((a, b),) -> Rectangle(; bottom = a, top = b, left, right),
-        split_interval(bottom, top, y_interior))
+        SVector{N}(split_interval(bottom, top, y_divisions)))
 end
 
-function split_matrix(rectangle::Rectangle, x_interior, y_interior)
-    mapreduce(r -> split_horizontally(r, x_interior), hcat,
-              split_vertically(rectangle, y_interior))
+function split_matrix(rectangle::Rectangle,
+                      x_divisions::NTuple{N,Any}, y_divisions::NTuple{M,Any}) where {N,M}
+    (; top, left, bottom, right) = rectangle
+    x_intervals = split_interval(left, right, x_divisions)
+    y_intervals = split_interval(bottom, top, y_divisions)
+    SMatrix{N,M}((Rectangle(; left, right, bottom, top)
+                  for (left, right) in x_intervals, (bottom, top) in y_intervals))
 end
+
+####
+#### pre- and postambles
+####
 
 """
 $(SIGNATURES)

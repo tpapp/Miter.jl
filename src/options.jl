@@ -14,6 +14,10 @@ Documentation for fields:
 
 """
 Base.@kwdef mutable struct Options
+    # canvas
+    canvas_width::LENGTH = 100mm
+    canvas_height::LENGTH = 80mm
+
     # tick format
     tick_format_max_exponent::Int = 3
     tick_format_min_exponent::Int = -3

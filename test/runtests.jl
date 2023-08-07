@@ -28,6 +28,21 @@ is_pdf(path) = open(io -> read(io, 4), path, "r") == b"%PDF"
 end
 
 ####
+#### pgf
+####
+
+###
+### splitting
+###
+
+using Miter.PGF: split_interval, Spacer, Relative, split_matrix
+
+@testset "split" begin
+    @test split_interval(0.0mm, 10.0mm, (Spacer(), 1mm, Relative(0.5), Spacer())) ==
+        ((0.0mm, 2.0mm), (2.0mm, 3.0mm), (3.0mm, 8.0mm), (8.0mm, 10.0mm))
+end
+
+####
 #### test internals
 ####
 
@@ -99,8 +114,8 @@ end
          0.6000000000000001 => math("0.6"), 0.8 => math("0.8"), 1.0 => math("1.0")]
 end
 
-plot = Plot([Lines((x, abs2(x)) for x in -1:0.1:1),
-             Scatter((x, (x + 1) / 2) for x in -1:0.1:1)])
+plot = Plot(Lines((x, abs2(x)) for x in -1:0.1:1),
+             Scatter((x, (x + 1) / 2) for x in -1:0.1:1))
 filename = tempname() * ".pdf"
 Miter.save(filename, plot)
 @test is_pdf(filename)
