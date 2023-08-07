@@ -27,10 +27,12 @@ struct Plot
     @doc """
     $(SIGNATURES)
     """
-    function Plot(contents = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
-        new(contents, x_axis, y_axis, style)
+    function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
+        new(Vector{Any}(contents), x_axis, y_axis, style)
     end
 end
+
+Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, plot)
 
