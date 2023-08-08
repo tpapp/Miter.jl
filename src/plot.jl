@@ -2,7 +2,7 @@
 #### plot
 ####
 
-export Plot, Lines, Scatter
+export Lines, Scatter, Plot, Tableau
 
 using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
@@ -123,4 +123,42 @@ end
 
 function print_tex(io::IO, plot::Plot; standalone::Bool = false)
     print_tex(io, Canvas(plot); standalone)
+end
+
+####
+#### Tableau
+####
+
+struct Tableau
+    contents::Matrix
+    horizontal_divisions
+    vertical_divisions
+    function Tableau(contents::AbstractMatrix;
+                     horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
+                     vertical_divisions = fill(PGF.SPACER, size(contents, 2)))
+        x_n, y_n = size(contents)
+        @argcheck length(horizontal_divisions) == x_n
+        @argcheck length(vertical_divisions) == y_n
+        new(Matrix(contents), horizontal_divisions, vertical_divisions)
+    end
+end
+
+Base.show(svg_io::IO, ::MIME"image/svg+xml", tableau::Tableau) = _show_as_svg(svg_io, tableau)
+
+Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, :, 1); kwargs...)
+
+function PGF.render(io::IO, rectangle::PGF.Rectangle, tableau::Tableau)
+    (; contents, horizontal_divisions, vertical_divisions) =  tableau
+    grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
+    for (subrectangle, subplot) in zip(grid, contents)
+        PGF.render(io, subrectangle, subplot)
+    end
+end
+
+function print_tex(io::IO, tableau::Tableau; standalone::Bool = false)
+    x_n, y_n = size(tableau.contents)
+    canvas = Canvas(tableau;
+                         width = x_n * DEFAULTS.canvas_width,
+                         height = y_n * DEFAULTS.canvas_height)
+    print_tex(io, canvas; standalone)
 end
