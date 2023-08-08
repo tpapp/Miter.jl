@@ -44,7 +44,9 @@ The length type we use internally in this module. Not exposed outside this modul
 """
 const LENGTH = typeof(1.0mm)
 
-is_positive(x::LENGTH) = x > zero(x)
+const LENGTH0 = zero(LENGTH)
+
+is_positive(x::LENGTH) = x > LENGTH0
 
 """
 All quantities we accept as lengths, for conversion with `_length`.
@@ -163,7 +165,7 @@ When only the width and the height are given, create a rectangle where bottom le
 origin.
 """
 function canvas(width, height)
-    Rectangle(; left = zero(LENGTH), right = width, bottom = zero(LENGTH), top = height)
+    Rectangle(; left = LENGTH0, right = width, bottom = LENGTH0, top = height)
 end
 
 ###
@@ -339,10 +341,10 @@ end
 
 function split_interval(a::LENGTH, b::LENGTH, divisions)
     total = b - a
-    @argcheck total ≥ zero(LENGTH)
+    @argcheck total ≥ LENGTH0
     function _resolve1(d)       # first pass: everything but Spacer
         if d isa INPUT_LENGTH
-            @argcheck d ≥ zero(LENGTH)
+            @argcheck d ≥ LENGTH0
             _length(d)
         elseif d isa Relative
             d.factor * total
@@ -350,10 +352,12 @@ function split_interval(a::LENGTH, b::LENGTH, divisions)
             error("Invalid division specification $(d).")
         end
     end
-    absolute_sum = sum(_resolve1(d) for d in divisions if !(d isa Spacer))
+    absolute_sum = sum(_resolve1(d) for d in divisions if !(d isa Spacer); init = LENGTH0)
     @argcheck absolute_sum ≤ total
-    spacer_sum = sum(d.factor for d in divisions if d isa Spacer)
-    spacer_coefficient = (total - absolute_sum) / spacer_sum
+    spacer_sum = sum(d.factor for d in divisions if d isa Spacer; init = 0.0)
+    remainder = total - absolute_sum
+    @argcheck spacer_sum > 0 || remainder ≈ 0
+    spacer_coefficient = remainder / spacer_sum
     function _resolve2(d)       # second pass
         if d isa INPUT_LENGTH
             _length(d)          # has been checked before
