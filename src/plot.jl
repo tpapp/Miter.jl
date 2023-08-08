@@ -39,12 +39,12 @@ Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, 
 function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
-    split = PGF.split_matrix(rectangle,
+    grid = PGF.split_matrix(rectangle,
                          (axis_left, PGF.SPACER , margin_right),
                          (axis_bottom, PGF.SPACER, margin_top))
-    plot_rectangle = split[2, 2]
-    x_axis_rectangle = split[2, 1]
-    y_axis_rectangle = split[1, 2]
+    plot_rectangle = grid[2, 2]
+    x_axis_rectangle = grid[2, 1]
+    y_axis_rectangle = grid[1, 2]
     x_interval, y_interval = Axis.bounds_xy(contents)
     @argcheck x_interval ≢ ∅ "empty x range"
     @argcheck y_interval ≢ ∅ "empty y range"

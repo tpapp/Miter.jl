@@ -337,59 +337,48 @@ struct Relative
     end
 end
 
-function split_length(total::LENGTH, division::Tuple)
-    absolute_and_spacer = map(division) do x
-        if x isa INPUT_LENGTH
-            @argcheck x ≥ zero(LENGTH)
-            _length(x)
-        elseif x isa Relative
-            x.factor * total
-        elseif x isa Spacer
-            x
+function split_interval(a::LENGTH, b::LENGTH, divisions)
+    total = b - a
+    @argcheck total ≥ zero(LENGTH)
+    function _resolve1(d)       # first pass: everything but Spacer
+        if d isa INPUT_LENGTH
+            @argcheck d ≥ zero(LENGTH)
+            _length(d)
+        elseif d isa Relative
+            d.factor * total
         else
-            error("Invalid width specification $(x).")
+            error("Invalid division specification $(d).")
         end
     end
-    absolute_sum = sum(x for x in absolute_and_spacer if x isa LENGTH)
+    absolute_sum = sum(_resolve1(d) for d in divisions if !(d isa Spacer))
     @argcheck absolute_sum ≤ total
-    spacer_sum = sum(x.factor for x in absolute_and_spacer if x isa Spacer)
+    spacer_sum = sum(d.factor for d in divisions if d isa Spacer)
     spacer_coefficient = (total - absolute_sum) / spacer_sum
-    map(absolute_and_spacer) do x
-        if x isa Spacer
-            x.factor * spacer_coefficient
+    function _resolve2(d)       # second pass
+        if d isa INPUT_LENGTH
+            _length(d)          # has been checked before
+        elseif d isa Relative
+            d.factor * total
         else
-            x
+            d.factor * spacer_coefficient
         end
     end
-end
-
-function split_interval(min::LENGTH, max::LENGTH, division::NTuple{N,Any}) where N
-    cumulative_division = cumsum(split_length(max - min, division))
-    intervals = ntuple(N) do n
-        (min + (n == 1 ? zero(LENGTH) : cumulative_division[n - 1]), min + cumulative_division[n])
-    end
-    intervals
-end
-
-function split_horizontally(rectangle::Rectangle, x_divisions::NTuple{N,Any}) where N
-    (; top, left, bottom, right) = rectangle
-    map(((a, b),) -> Rectangle(; top, bottom, left = a, right = b),
-        SVector{N}(split_interval(left, right, x_divisions)))
-end
-
-function split_vertically(rectangle::Rectangle, y_divisions::NTuple{N,Any}) where N
-    (; top, left, bottom, right) = rectangle
-    map(((a, b),) -> Rectangle(; bottom = a, top = b, left, right),
-        SVector{N}(split_interval(bottom, top, y_divisions)))
+    accumulate(((a, b), d) -> (b, b + _resolve2(d)), divisions; init = (a, a))
 end
 
 function split_matrix(rectangle::Rectangle,
-                      x_divisions::NTuple{N,Any}, y_divisions::NTuple{M,Any}) where {N,M}
+                      x_divisions::Union{NTuple{N,Any},AbstractVector},
+                      y_divisions::Union{NTuple{M,Any},AbstractVector}) where {N,M}
     (; top, left, bottom, right) = rectangle
     x_intervals = split_interval(left, right, x_divisions)
     y_intervals = split_interval(bottom, top, y_divisions)
-    SMatrix{N,M}((Rectangle(; left, right, bottom, top)
-                  for (left, right) in x_intervals, (bottom, top) in y_intervals))
+    if x_intervals isa Tuple && y_intervals isa Tuple
+        SMatrix{N,M}((Rectangle(; left, right, bottom, top)
+                      for (left, right) in x_intervals, (bottom, top) in y_intervals))
+    else
+        [Rectangle(; left, right, bottom, top)
+         for (left, right) in x_intervals, (bottom, top) in y_intervals]
+    end
 end
 
 ####
