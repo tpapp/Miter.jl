@@ -39,10 +39,10 @@ Base.@kwdef mutable struct Options
     axis_style_axis_label_gap::LENGTH = 2mm
 
     # plot style
-    plot_style_axis_left::LENGTH = 20mm
-    plot_style_axis_bottom::LENGTH = 20mm
-    plot_style_margin_right::LENGTH = 10mm
-    plot_style_margin_top::LENGTH = 10mm
+    plot_style_axis_left::LENGTH = 18mm
+    plot_style_axis_bottom::LENGTH = 10mm
+    plot_style_margin_right::LENGTH = 5mm
+    plot_style_margin_top::LENGTH = 5mm
 
 end
 
