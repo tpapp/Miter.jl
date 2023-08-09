@@ -26,5 +26,5 @@ Tableau([Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π))
               y_axis = Axis.Linear(; axis_label = "pdf of Normal distribution")),
          Plot(Lines([(x, exp(-abs(x)) / 2)
                      for x in range(-2, 2; length = 100)]);
-              y_axis = Axis.Linear(; axis_label = "pdf of Normal distribution"))])
+              y_axis = Axis.Linear(; axis_label = "pdf of Laplace distribution"))])
 ```
