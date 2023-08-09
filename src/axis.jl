@@ -98,9 +98,9 @@ Base.@kwdef struct FinalizedLinear{TT}
 end
 
 function finalize(axis::Linear, interval::Interval)
-    (; tick_selection, tick_format, style, label) = axis
+    (; tick_selection, tick_format, style, axis_label) = axis
     ticks = sensible_linear_ticks(interval, tick_format, tick_selection)
-    FinalizedLinear(; interval, ticks, style, label)
+    FinalizedLinear(; interval, ticks, style, axis_label)
 end
 
 function coordinate_to_unit(finalized_axis::FinalizedLinear, x::Real)
@@ -111,15 +111,15 @@ end
 function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; orientation)
     is_x = orientation == :x
     !is_x && @argcheck orientation == :y "orientation has to be :x or :y"
-    (; interval, ticks, style) = axis
+    (; interval, ticks, style, axis_label) = axis
     _point(x, y) = is_x ? PGF.Point(x, y) : PGF.Point(y, x)
-    (; line_gap, line_width, tick_length, label_gap) = style
+    (; line_gap, line_width, tick_length, tick_label_gap, axis_label_gap) = style
     a = is_x ? rectangle.left :  rectangle.bottom
     b = is_x ? rectangle.right : rectangle.top
-    edge = is_x ? rectangle.top : rectangle.right
-    y1 = edge - line_gap        # line, tick start
+    y_top_edge, y_bottom_edge = is_x ? (rectangle.top, rectangle.bottom) : (rectangle.right, rectangle.left)
+    y1 = y_top_edge - line_gap  # line, tick start
     y2 = y1 - tick_length       # tick end
-    y3 = y2 - label_gap         # labels start here
+    y3 = y2 - tick_label_gap    # tick labels start here
     PGF.setstrokecolor(io, PGF.BLACK)
     PGF.setlinewidth(io, line_width)
     PGF.segment(io, _point(a, y1), _point(b, y1))
@@ -128,6 +128,8 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
         PGF.segment(io, _point(x, y1), _point(x, y2))
         PGF.text(io, _point(x, y3), label; top = is_x, right = !is_x)
     end
+    PGF.text(io, _point((a + b) / 2, y_bottom_edge + axis_label_gap), axis_label;
+             bottom = is_x, left = !is_x, rotate = !is_x * 90)
 end
 
 end

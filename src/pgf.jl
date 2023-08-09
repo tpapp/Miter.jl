@@ -236,7 +236,7 @@ end
 
 # NOTE: we don't make this <: AbstracString, as it is only used as a wrapped, and only within
 # this package, as an input.
-struct LaTeX{T<:AbstractString}
+struct LaTeX{T<:AbstractString} <: AbstractString
     latex::T
     @doc """
     $(SIGNATURES)
@@ -280,7 +280,7 @@ end
 """
 $(SIGNATURES)
 
-Text output. Strings are escaped
+Text output.
 """
 function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
               left::Bool = false, right::Bool = false,
