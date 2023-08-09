@@ -295,7 +295,7 @@ function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
     top && _print(io, ",top")
     bottom && _print(io, ",bottom")
     base && _print(io, ",base")
-    iszero(rotate) && _print(io, ",rotate=", rotate)
+    iszero(rotate) || _print(io, ",rotate=", rotate)
     _print(io, "]{")
     _print_escaped(io, str)
     _println(io, "}")
