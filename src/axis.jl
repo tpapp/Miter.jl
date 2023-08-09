@@ -78,25 +78,29 @@ Base.@kwdef struct Style
     "tick length"
     tick_length::PGF.LENGTH = DEFAULTS.axis_style_tick_length
     "gap for labels"
-    label_gap::PGF.LENGTH = DEFAULTS.axis_style_label_gap
+    tick_label_gap::PGF.LENGTH = DEFAULTS.axis_style_tick_label_gap
+    "gap for axis labels"
+    axis_label_gap::PGF.LENGTH = DEFAULTS.axis_style_axis_label_gap
 end
 
 Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
+    axis_label::Abstractstring = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
     interval::Interval
     ticks::TT
     style::Style
+    axis_label::AbstractString
 end
 
 function finalize(axis::Linear, interval::Interval)
-    (; tick_selection, tick_format, style) = axis
+    (; tick_selection, tick_format, style, label) = axis
     ticks = sensible_linear_ticks(interval, tick_format, tick_selection)
-    FinalizedLinear(; interval, ticks, style)
+    FinalizedLinear(; interval, ticks, style, label)
 end
 
 function coordinate_to_unit(finalized_axis::FinalizedLinear, x::Real)

@@ -35,7 +35,8 @@ Base.@kwdef mutable struct Options
     axis_style_line_width::LENGTH = 0.3mm
     axis_style_line_gap::LENGTH = 2.0mm
     axis_style_tick_length::LENGTH = 2.0mm
-    axis_style_label_gap::LENGTH = 1.5mm
+    axis_style_tick_label_gap::LENGTH = 1.5mm
+    axis_style_axis_label_gap::LENGTH = 2mm
 
     # plot style
     plot_style_axis_left::LENGTH = 20mm
