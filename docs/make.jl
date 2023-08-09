@@ -8,7 +8,7 @@ makedocs(
                              assets = ["assets/custom.css"]),
     authors = "Tamás K. Papp",
     sitename = "Miter.jl",
-    pages = Any["index.md"]
+    pages = Any["index.md"],
     # strict = true,
     clean = true,
     # checkdocs = :exports,
