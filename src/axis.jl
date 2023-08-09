@@ -87,14 +87,14 @@ Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
-    axis_label::AbstractString = ""
+    axis_label::PGF.STRINGS = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
     interval::Interval
     ticks::TT
     style::Style
-    axis_label::AbstractString
+    axis_label::PGF.STRINGS = ""
 end
 
 function finalize(axis::Linear, interval::Interval)

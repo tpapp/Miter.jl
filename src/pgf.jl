@@ -236,7 +236,7 @@ end
 
 # NOTE: we don't make this <: AbstracString, as it is only used as a wrapped, and only within
 # this package, as an input.
-struct LaTeX{T<:AbstractString} <: AbstractString
+struct LaTeX{T<:AbstractString}
     latex::T
     @doc """
     $(SIGNATURES)
@@ -277,12 +277,15 @@ function _print_escaped(io::IO, str::AbstractString)
     end
 end
 
+"String types we can use with [`text`](@ref)."
+const STRINGS = Union{AbstractString,LaTeX}
+
 """
 $(SIGNATURES)
 
 Text output.
 """
-function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
+function text(io::IO, at::Point, str::STRINGS;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false, base::Bool = false,
               rotate = 0)

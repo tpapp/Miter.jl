@@ -63,37 +63,44 @@ function pdf(f, io::IO; tmp_dir = nothing)
     end
 end
 
+const TARGETS = Union{IO,AbstractString}
+
 """
 $(SIGNATURES)
 
-Call `f(io)` to write TeX code, compile, and send the SVG output to `io`.
+Run `pdftocairo`, compiling to `target`. `format` is `"svg`", etc.
 """
-function svg(f, io::IO; tmp_dir = nothing)
+function _run_pdftocairo(f, target::TARGETS, format; tmp_dir = nothing)
     maybe_tmpdir(tmp_dir) do dir
         pdf_path = joinpath(dir, DEFAULT_PDF)
         pdf(f, pdf_path; tmp_dir = dir)
-        run(pipeline(`$(pdftocairo()) -svg $(pdf_path) -`; stdout = io))
+        _singlefile = format ≠ "svg" ? "-singlefile" : ""
+        function _run(io)
+            if format == "svg"
+                run(pipeline(`$(pdftocairo()) -$(format) $(pdf_path) -`; stdout = io))
+            else
+                run(pipeline(`$(pdftocairo()) -$(format) $(pdf_path) -singlefile -`; stdout = io))
+            end
+        end
+        if target isa IO
+            _run(target)
+        else
+            open(_run, target, "w")
+        end
     end
 end
 
-function svg(f, output_path::AbstractString; tmp_dir = nothing)
-    open(io -> svg(f, io; tmp_dir), output_path, "w")
+"""
+$(SIGNATURES)
+
+Call `f(io)` to write TeX code, compile, and send/write the SVG output to `target`.
+"""
+function svg(f, target::TARGETS; tmp_dir = nothing)
+    _run_pdftocairo(f, target, "svg"; tmp_dir)
 end
 
-function png(f, io::IO; tmp_dir = nothing, scale_to_x = 500)
-    maybe_tmpdir(tmp_dir) do dir
-        pdf_path = joinpath(dir, DEFAULT_PDF)
-        pdf(f, pdf_path; tmp_dir = dir)
-        run(pipeline(`$(pdftocairo()) -png $(pdf_path) -singlefile -`; stdout = io))
-    end
-end
-
-function png(f, output_path::AbstractString; tmp_dir = nothing)
-    maybe_tmpdir(tmp_dir) do dir
-        pdf_path = joinpath(dir, DEFAULT_PDF)
-        pdf(f, pdf_path; tmp_dir = dir)
-        run(pipeline(`$(pdftocairo()) -png $(pdf_path) -singlefile $(output_path)`; stdout = io))
-    end
+function png(f, target::TARGETS; tmp_dir = nothing, scale_to_x = 500)
+    _run_pdftocairo(f, target, "png"; tmp_dir)
 end
 
 end

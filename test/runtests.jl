@@ -10,6 +10,8 @@ using ColorTypes
 ####
 
 is_pdf(path) = open(io -> read(io, 4), path, "r") == b"%PDF"
+is_svg(path) = open(io -> read(io, 5), path, "r") == b"<?xml"
+is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 
 ####
 #### compilation
@@ -120,9 +122,21 @@ end
 
     plot = Plot(L, S; x_axis = Axis.Linear(; axis_label = math"x"),
                 y_axis = Axis.Linear(; axis_label = math"y"))
-    filename = tempname() * ".pdf"
-    Miter.save(filename, plot)
-    @test is_pdf(filename)
+
+    let filename = tempname() * ".pdf"
+        Miter.save(filename, plot)
+        @test is_pdf(filename)
+    end
+
+    let filename = tempname() * ".png"
+        Miter.save(filename, plot)
+        @test is_png(filename)
+    end
+
+    let filename = tempname() * ".svg"
+        Miter.save(filename, plot)
+        @test is_svg(filename)
+    end
 
     tableau = Tableau([Plot(L), Plot(S)])
     filename = tempname() * ".pdf"
