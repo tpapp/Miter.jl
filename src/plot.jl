@@ -145,7 +145,7 @@ end
 
 Base.show(svg_io::IO, ::MIME"image/svg+xml", tableau::Tableau) = _show_as_svg(svg_io, tableau)
 
-Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, :, 1); kwargs...)
+Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
 
 function PGF.render(io::IO, rectangle::PGF.Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau

@@ -4,12 +4,13 @@ using Documenter, Miter, Colors
 
 makedocs(
     modules = [Miter],
-    format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
+    format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true",
+                             assets = ["assets/custom.css"]),
     authors = "Tamás K. Papp",
     sitename = "Miter.jl",
     pages = Any["index.md"]
     # strict = true,
-    # clean = true,
+    clean = true,
     # checkdocs = :exports,
 )
 

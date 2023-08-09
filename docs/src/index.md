@@ -17,3 +17,8 @@ to load the relevant packages.
 Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
       Scatter((x, (x + 1) / 2) for x in -1:0.1:1; color = colorant"darkgreen")])
 ```
+
+```@example all
+Tableau([Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π)) for x in range(-2, 2; length = 100)])),
+         Plot(Lines([(x, exp(-abs(x)) / 2) for x in range(-2, 2; length = 100)]))])
+```
