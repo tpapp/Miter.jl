@@ -87,7 +87,7 @@ Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
-    axis_label::Abstractstring = ""
+    axis_label::AbstractString = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
