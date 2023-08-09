@@ -129,7 +129,7 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
         PGF.text(io, _point(x, y3), label; top = is_x, right = !is_x)
     end
     PGF.text(io, _point((a + b) / 2, y_bottom_edge + axis_label_gap), axis_label;
-             bottom = is_x, left = !is_x, rotate = !is_x * 90)
+             bottom = true, rotate = !is_x * 90)
 end
 
 end
