@@ -74,13 +74,9 @@ function _run_pdftocairo(f, target::TARGETS, format; tmp_dir = nothing)
     maybe_tmpdir(tmp_dir) do dir
         pdf_path = joinpath(dir, DEFAULT_PDF)
         pdf(f, pdf_path; tmp_dir = dir)
-        _singlefile = format ≠ "svg" ? "-singlefile" : ""
         function _run(io)
-            if format == "svg"
-                run(pipeline(`$(pdftocairo()) -$(format) $(pdf_path) -`; stdout = io))
-            else
-                run(pipeline(`$(pdftocairo()) -$(format) $(pdf_path) -singlefile -`; stdout = io))
-            end
+            _extra = format == "svg" ? () : ("-singlefile", ) # pdftocairo quirk
+            run(pipeline(`$(pdftocairo()) -$(format) $(pdf_path) $(_extra...)  -`; stdout = io))
         end
         if target isa IO
             _run(target)

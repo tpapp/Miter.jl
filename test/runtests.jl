@@ -9,6 +9,10 @@ using ColorTypes
 #### test utilities
 ####
 
+###
+### rudimentary checks for output files
+###
+
 is_pdf(path) = open(io -> read(io, 4), path, "r") == b"%PDF"
 is_svg(path) = open(io -> read(io, 5), path, "r") == b"<?xml"
 is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
