@@ -277,12 +277,15 @@ function _print_escaped(io::IO, str::AbstractString)
     end
 end
 
+"String types we can use with [`text`](@ref)."
+const STRINGS = Union{AbstractString,LaTeX}
+
 """
 $(SIGNATURES)
 
-Text output. Strings are escaped
+Text output.
 """
-function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
+function text(io::IO, at::Point, str::STRINGS;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false, base::Bool = false,
               rotate = 0)
@@ -295,7 +298,7 @@ function text(io::IO, at::Point, str::Union{AbstractString,LaTeX};
     top && _print(io, ",top")
     bottom && _print(io, ",bottom")
     base && _print(io, ",base")
-    iszero(rotate) && _print(io, ",rotate=", rotate)
+    iszero(rotate) || _print(io, ",rotate=", rotate)
     _print(io, "]{")
     _print_escaped(io, str)
     _println(io, "}")

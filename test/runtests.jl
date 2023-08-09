@@ -9,7 +9,13 @@ using ColorTypes
 #### test utilities
 ####
 
+###
+### rudimentary checks for output files
+###
+
 is_pdf(path) = open(io -> read(io, 4), path, "r") == b"%PDF"
+is_svg(path) = open(io -> read(io, 5), path, "r") == b"<?xml"
+is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 
 ####
 #### compilation
@@ -118,10 +124,23 @@ end
     L = Lines((x, abs2(x)) for x in -1:0.1:1)
     S = Scatter((x, (x + 1) / 2) for x in -1:0.1:1)
 
-    plot = Plot(L, S)
-    filename = tempname() * ".pdf"
-    Miter.save(filename, plot)
-    @test is_pdf(filename)
+    plot = Plot(L, S; x_axis = Axis.Linear(; axis_label = math"x"),
+                y_axis = Axis.Linear(; axis_label = math"y"))
+
+    let filename = tempname() * ".pdf"
+        Miter.save(filename, plot)
+        @test is_pdf(filename)
+    end
+
+    let filename = tempname() * ".png"
+        Miter.save(filename, plot)
+        @test is_png(filename)
+    end
+
+    let filename = tempname() * ".svg"
+        Miter.save(filename, plot)
+        @test is_svg(filename)
+    end
 
     tableau = Tableau([Plot(L), Plot(S)])
     filename = tempname() * ".pdf"

@@ -32,16 +32,15 @@ Save `object` into `filename`.
 """
 function save(filename::AbstractString, object)
     ext = splitext(filename)[2]
+    _print_tex = Base.Fix2(print_tex, object)
     if ext == ".pdf"
-        Compile.pdf(filename) do io
-            print_tex(io, object)
-        end
+        Compile.pdf(_print_tex, filename)
     elseif ext == ".svg"
-        Compile.svg(filename) do io
-            print_tex(io, object)
-        end
+        Compile.svg(_print_tex, filename)
+    elseif ext == ".png"
+        Compile.png(_print_tex, filename)
     elseif ext == ".tex"
-        open(io -> print_tex(io, object), filename, "w")
+        open(_print_tex, filename, "w")
     elseif ext == ".tikz"
         open(io -> print_tex(io, object; standalone = true), filename, "w")
     else
