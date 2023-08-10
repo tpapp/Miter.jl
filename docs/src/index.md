@@ -21,10 +21,14 @@ Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
 ```
 
 ```@example all
-Tableau([Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π))
+Tableau(balanced_rectangle(
+        [Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π))
                      for x in range(-2, 2; length = 101)]);
-              y_axis = Axis.Linear(; axis_label = "pdf of Normal distribution")),
+              y_axis = Axis.Linear(; axis_label = "pdf of normal distribution")),
          Plot(Lines([(x, exp(-abs(x)) / 2)
                      for x in range(-2, 2; length = 101)]);
-              y_axis = Axis.Linear(; axis_label = "pdf of Laplace distribution"))])
+              y_axis = Axis.Linear(; axis_label = "pdf of Laplace distribution")),
+         Plot(Lines([(x, exp(-x))
+                     for x in range(0.1, 2; length = 50)]);
+              y_axis = Axis.Linear(; axis_label = "pdf of exponential distribution"))]))
 ```

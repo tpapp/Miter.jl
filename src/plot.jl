@@ -2,7 +2,7 @@
 #### plot
 ####
 
-export Lines, Scatter, Plot, Tableau
+export Lines, Scatter, Plot, Tableau, balanced_rectangle
 
 using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
@@ -161,4 +161,37 @@ function print_tex(io::IO, tableau::Tableau; standalone::Bool = false)
                          width = x_n * DEFAULTS.canvas_width,
                          height = y_n * DEFAULTS.canvas_height)
     print_tex(io, canvas; standalone)
+end
+
+"""
+$(SIGNATURES)
+
+Arrange elements of a vector in a `(w, h)` matrix, such that `width / height ≈ width_bias`.
+Extra elements are filled with `nothing`.
+
+When `columns_down = true` (default), columns will be reversed, corresponding to a top-down
+visual arrangement.
+
+When `row_major = false` (default), elements are arranged row-major. Note that in this
+package, the `x` coordinate is the first, so for left-right top-down arrangements you
+usually don't want this.
+
+The purpose of this function is to make balanced displays, eg in [`Tableau`](@ref).
+"""
+function balanced_rectangle(v::AbstractVector{T}; width_bias::Real = 1.0,
+                            columns_down::Bool = true, row_major::Bool = false) where T
+    @argcheck width_bias > 0
+    l = length(v)
+    w = round(Int, sqrt(l / width_bias))
+    h = cld(l, w)
+    if row_major
+        m_c = reshape(vcat(Vector{Union{T,Nothing}}(v), fill(nothing, h * w - l)), h, w)
+        m = collect(PermutedDimsArray(m_c, (2, 1)))
+    else
+        m = collect(reshape(vcat(Vector{Union{T,Nothing}}(v), fill(nothing, h * w - l)), w, h))
+    end
+    if columns_down
+        reverse!(m; dims = 2 - row_major)
+    end
+    m
 end

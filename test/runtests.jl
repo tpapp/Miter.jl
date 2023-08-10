@@ -147,3 +147,9 @@ end
     Miter.save(filename, tableau)
     @test is_pdf(filename)
 end
+
+###
+### plotting utilities
+###
+
+@test @inferred(balanced_rectangle(1:3)) == [3 nothing; 1 2]

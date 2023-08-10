@@ -436,8 +436,10 @@ $(FUNCTIONNAME)(io, rectangle, object; kwargs...)
 
 Render `object` within `rectangle` by issuing the relevant drawing commands to `io`, using
 the `PGF` module.
+
+Rendering `nothing` is a no-op.
 """
-function render end
+render(io::IO, rectangle::Rectangle, object::Nothing) = nothing
 
 ####
 #### utilities
