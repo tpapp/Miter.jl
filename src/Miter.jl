@@ -10,7 +10,6 @@ using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 
 include("compile.jl")
 include("pgf.jl")
-include("utilities.jl")
 include("intervals.jl")
 include("defaults.jl")
 include("ticks.jl")
