@@ -8,10 +8,13 @@ All should be preceded by
 
 ```@example all
 using Miter, Colors
+using Unitful: mm
 ```
 to load the relevant packages.
 
 ## Gallery
+
+### Simple plots
 
 ```@example all
 Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
@@ -19,6 +22,8 @@ Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
       x_axis = Axis.Linear(; axis_label = math"x"),
       y_axis = Axis.Linear(; axis_label = math"y"))
 ```
+
+### Tableaus
 
 ```@example all
 Tableau(balanced_rectangle(
@@ -31,4 +36,10 @@ Tableau(balanced_rectangle(
          Plot(Lines([(x, exp(-x))
                      for x in range(0.1, 2; length = 50)]);
               y_axis = Axis.Linear(; axis_label = "pdf of exponential distribution"))]))
+```
+
+### Visual debugging
+
+```@example all
+Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]), width = 100mm, height = 100mm)
 ```

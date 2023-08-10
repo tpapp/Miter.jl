@@ -5,7 +5,7 @@ module Miter
 
 export Axis, Plot, Lines, @math_str
 
-using ColorTypes: RGB
+using ColorTypes: RGB, RGB24
 using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 
 include("compile.jl")
@@ -16,6 +16,7 @@ include("ticks.jl")
 include("axis.jl")
 include("output.jl")
 include("plot.jl")
+include("utilities.jl")
 
 macro math_str(str)
     PGF.math(str)
