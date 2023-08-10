@@ -59,7 +59,7 @@ function dummy(label::AbstractString; color = reinterpret(RGB24, (hash(label) % 
 end
 
 function PGF.render(io::IO, rectangle::Miter.PGF.Rectangle, d::Dummy)
-    (; color, label) = d
+    (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle
     PGF.setfillcolor(io, color)
