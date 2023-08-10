@@ -34,7 +34,7 @@ end
 
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
-Base.show(svg_io::IO, ::MIME"image/svg+xml", plot::Plot) = _show_as_svg(svg_io, plot)
+@declare_showable Plot
 
 function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
@@ -143,7 +143,7 @@ struct Tableau
     end
 end
 
-Base.show(svg_io::IO, ::MIME"image/svg+xml", tableau::Tableau) = _show_as_svg(svg_io, tableau)
+@declare_showable Tableau
 
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
 

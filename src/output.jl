@@ -28,6 +28,15 @@ end
 """
 $(SIGNATURES)
 
+Define a graphical `Base.show` method for type `T`.
+"""
+macro declare_showable(T)
+    :(Base.show(io::IO, ::MIME"image/svg+xml", object::$T) = _show_as_svg(io, object))
+end
+
+"""
+$(SIGNATURES)
+
 Save `object` into `filename`.
 """
 function save(filename::AbstractString, object)
@@ -69,3 +78,5 @@ function print_tex(io::IO, canvas::Canvas; standalone::Bool = false)
     PGF.render(io, _canvas, content)
     PGF.postamble(io; standalone)
 end
+
+@declare_showable Canvas

@@ -152,4 +152,4 @@ end
 ### plotting utilities
 ###
 
-@test @inferred(balanced_rectangle(1:3)) == [3 nothing; 1 2]
+@test @inferred(balanced_rectangle(1:3)) == [3 1; nothing 2]
