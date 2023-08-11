@@ -94,7 +94,6 @@ function setlinewidth(io::IO, line_width)
     _print(io, raw"\pgfsetlinewidth{", LENGTH(line_width), "}")
 end
 
-
 ####
 #### points
 ####

@@ -23,6 +23,8 @@ end
 
 Interval(a, b) = Interval(promote(a, b)...)
 
+Interval(a) = Interval(a, a)
+
 "The empty set, use `∅` for a value."
 struct EmptySet end
 
@@ -47,7 +49,7 @@ end
 
 hull(::EmptySet, a::Interval) = a
 
-hull(a::Interval, ::EmptySet) = b
+hull(a::Interval, ::EmptySet) = a
 
 hull(::EmptySet, ::EmptySet) = ∅
 

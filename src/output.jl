@@ -1,5 +1,5 @@
 using ..PGF
-using ..Defaults: DEFAULTS
+using ..Styles: DEFAULTS
 using Unitful: mm
 
 export Canvas

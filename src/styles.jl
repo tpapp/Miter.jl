@@ -2,10 +2,13 @@
 ##### options and defaults
 #####
 
-module Defaults
+module Styles
 
-using ..PGF: LENGTH
+using ColorTypes: RGB
+using DocStringExtensions: SIGNATURES
 using Unitful: mm
+
+using ..PGF: LENGTH, PGF
 
 """
 
@@ -32,7 +35,7 @@ Base.@kwdef mutable struct Options
     tick_selection_fives_penalty::Float64 = 0.0
 
     # axis style
-    axis_style_line_width::LENGTH = 0.3mm
+    axis_style_line_width::LENGTH = 0.1mm
     axis_style_line_gap::LENGTH = 2.0mm
     axis_style_tick_length::LENGTH = 2.0mm
     axis_style_tick_label_gap::LENGTH = 1.5mm
@@ -44,6 +47,10 @@ Base.@kwdef mutable struct Options
     plot_style_margin_right::LENGTH = 5mm
     plot_style_margin_top::LENGTH = 5mm
 
+    # elements
+    line_width::LENGTH = 0.3mm
+    line_color::RGB = PGF.BLACK
+
 end
 
 """
@@ -53,5 +60,15 @@ The supported API is `getproperty` and `setproperty`, the fact that it is curren
 `struct` should not matter outside this package.
 """
 const DEFAULTS = Options()
+
+"""
+$(SIGNATURES)
+
+Helper function to set line style parameters (when `≢ nothing`).
+"""
+function set_line_style(io::IO; color = nothing, width = nothing)
+    color ≢ nothing && PGF.setstrokecolor(io, color)
+    width ≢ nothing && PGF.setlinewidth(io, width)
+end
 
 end

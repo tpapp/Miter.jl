@@ -14,7 +14,7 @@ export nontrivial_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using ..Intervals
-using ..Defaults: DEFAULTS
+using ..Styles: DEFAULTS
 using ..PGF
 
 """

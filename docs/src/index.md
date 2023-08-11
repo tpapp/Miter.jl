@@ -23,6 +23,14 @@ Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
       y_axis = Axis.Linear(; axis_label = math"y"))
 ```
 
+Horizontal lines and phantom objects (rendered, but ignored for boundary calculations).
+
+```@example all
+Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 100)),
+     Phantom(Hline(12.0)),      # does not show, it is outside the boundaries
+     Hline(0.0))
+```
+
 ### Tableaus
 
 ```@example all

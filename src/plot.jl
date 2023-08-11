@@ -2,13 +2,13 @@
 #### plot
 ####
 
-export Lines, Scatter, Plot, Tableau
+export Plot, Tableau, Phantom, Lines, Scatter, Hline
 
 using ArgCheck: @argcheck
-using ..Axis: Linear, DrawingArea, coordinates_to_point, bounds
+using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds
 import ..Axis: bounds_xy
 using ..Intervals
-using ..Defaults: DEFAULTS
+using ..Styles: DEFAULTS, set_line_style
 using ..PGF
 using Unitful: mm
 
@@ -58,6 +58,72 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     end
 end
 
+####
+#### Tableau
+####
+
+struct Tableau
+    contents::Matrix
+    horizontal_divisions
+    vertical_divisions
+    function Tableau(contents::AbstractMatrix;
+                     horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
+                     vertical_divisions = fill(PGF.SPACER, size(contents, 2)))
+        x_n, y_n = size(contents)
+        @argcheck length(horizontal_divisions) == x_n
+        @argcheck length(vertical_divisions) == y_n
+        new(Matrix(contents), horizontal_divisions, vertical_divisions)
+    end
+end
+
+@declare_showable Tableau
+
+Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
+
+function PGF.render(io::IO, rectangle::PGF.Rectangle, tableau::Tableau)
+    (; contents, horizontal_divisions, vertical_divisions) =  tableau
+    grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
+    for (subrectangle, subplot) in zip(grid, contents)
+        PGF.render(io, subrectangle, subplot)
+    end
+end
+
+function print_tex(io::IO, tableau::Tableau; standalone::Bool = false)
+    x_n, y_n = size(tableau.contents)
+    canvas = Canvas(tableau;
+                         width = x_n * DEFAULTS.canvas_width,
+                         height = y_n * DEFAULTS.canvas_height)
+    print_tex(io, canvas; standalone)
+end
+
+####
+#### plot elements
+####
+
+###
+### phantom
+###
+
+struct Phantom
+    object
+    @doc """
+    $(SIGNATURES)
+
+    Wrap the argument so that it is not included in boundary calculations.
+    """
+    Phantom(object) = new(object)
+end
+
+bounds_xy(::Phantom) = (∅, ∅)
+
+function PGF.render(io::IO, drawing_area::DrawingArea, phantom::Phantom)
+    PGF.render(io, drawing_area, phantom.object)
+end
+
+###
+### lines
+###
+
 """
 $(SIGNATURES)
 
@@ -72,7 +138,7 @@ struct Lines
     coordinates
     line_width::PGF.LENGTH
     color
-    function Lines(coordinates; line_width = 0.3mm, color = PGF.BLACK)
+    function Lines(coordinates; line_width = DEFAULTS.line_width, color = DEFAULTS.line_color)
         line_width = PGF._length(line_width)
         @argcheck PGF.is_positive(line_width)
         new(coordinates, line_width, color)
@@ -125,40 +191,31 @@ function print_tex(io::IO, plot::Plot; standalone::Bool = false)
     print_tex(io, Canvas(plot); standalone)
 end
 
-####
-#### Tableau
-####
 
-struct Tableau
-    contents::Matrix
-    horizontal_divisions
-    vertical_divisions
-    function Tableau(contents::AbstractMatrix;
-                     horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
-                     vertical_divisions = fill(PGF.SPACER, size(contents, 2)))
-        x_n, y_n = size(contents)
-        @argcheck length(horizontal_divisions) == x_n
-        @argcheck length(vertical_divisions) == y_n
-        new(Matrix(contents), horizontal_divisions, vertical_divisions)
+struct Hline
+    y::Real
+    color::RGB
+    width::PGF.LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    A horizontal line at `y` with the given parameters.
+    """
+    function Hline(y::Real; phantom::Bool = false, color = DEFAULTS.line_color,
+                   width = DEFAULTS.line_width)
+        @argcheck isfinite(y)
+        new(y, RGB(color), PGF._length(width))
     end
 end
 
-@declare_showable Tableau
+bounds_xy(hline::Hline) = (∅, Interval(hline.y))
 
-Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
-
-function PGF.render(io::IO, rectangle::PGF.Rectangle, tableau::Tableau)
-    (; contents, horizontal_divisions, vertical_divisions) =  tableau
-    grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
-    for (subrectangle, subplot) in zip(grid, contents)
-        PGF.render(io, subrectangle, subplot)
-    end
-end
-
-function print_tex(io::IO, tableau::Tableau; standalone::Bool = false)
-    x_n, y_n = size(tableau.contents)
-    canvas = Canvas(tableau;
-                         width = x_n * DEFAULTS.canvas_width,
-                         height = y_n * DEFAULTS.canvas_height)
-    print_tex(io, canvas; standalone)
+function PGF.render(io::IO, drawing_area::DrawingArea, hline::Hline)
+    (; y, color, width) = hline
+    (; left, right) = drawing_area.rectangle
+    y_c = y_coordinate_to_canvas(drawing_area, y)
+    set_line_style(io; color, width)
+    PGF.pathmoveto(io, PGF.Point(left, y_c))
+    PGF.pathlineto(io, PGF.Point(right, y_c))
+    PGF.usepathqstroke(io)
 end

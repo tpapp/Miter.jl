@@ -11,7 +11,7 @@ using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 include("compile.jl")
 include("pgf.jl")
 include("intervals.jl")
-include("defaults.jl")
+include("styles.jl")
 include("ticks.jl")
 include("axis.jl")
 include("output.jl")
