@@ -17,8 +17,8 @@ to load the relevant packages.
 ### Simple plots
 
 ```@example all
-Plot([Lines((x, abs2(x)) for x in -1:0.1:1; color = colorant"red"),
-      Scatter((x, (x + 1) / 2) for x in -1:0.1:1; color = colorant"darkgreen")];
+Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
+      Scatter((x, (x + 1) / 2) for x in -1:0.02:1; color = colorant"darkgreen")];
       x_axis = Axis.Linear(; axis_label = math"x"),
       y_axis = Axis.Linear(; axis_label = math"y"))
 ```
@@ -49,5 +49,6 @@ Tableau(balanced_rectangle(
 ### Visual debugging
 
 ```@example all
-Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]), width = 100mm, height = 100mm)
+Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]),
+       width = 100mm, height = 100mm)
 ```
