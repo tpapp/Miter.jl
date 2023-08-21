@@ -9,7 +9,7 @@ etc are considered exotic and avoided on purpose.
 """
 module Ticks
 
-export nontrivial_linear_ticks, TickSelection, TickFormat, sensible_linear_ticks
+export nontrivial_linear_tick_alternatives, TickSelection, TickFormat, sensible_linear_ticks
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -60,12 +60,108 @@ function compress_ticks(range::StepRange, k::Integer)
 end
 
 """
+A representation of ``s ⋅ 10^e``, where `s = significant * 10^inner_exponent` and `e` is the
+`outer_exponent`.
+"""
+struct ShiftedDecimal
+    significand::Int
+    inner_exponent::Int
+    outer_exponent::Int
+end
+
+"""
+$(SIGNATURES)
+
+Show the sign, digits, and decimal dot of the mantissa (ie everything without the outer
+exponent).
+"""
+function show_mantissa(io::IO, sd::ShiftedDecimal)
+    (; significand, inner_exponent) = sd
+    # sign
+    significand < 0 && print(io, '-')
+    # zeros and decimal dot before
+    Δ = 0                        # print a dot after this character
+    v = string(abs(significand)) # mantissa string representation
+    if inner_exponent < 0
+        Δ = inner_exponent + length(v) # decimal dot should follow this index
+        if Δ ≤ 0                 # insert a decimal dot after
+            print(io, "0.")
+            for _ in 1:(-Δ)
+                print(io, '0')
+            end
+        end
+    end
+    # mantissa
+    for (i, c) in enumerate(v)
+        print(io, c)
+        i == Δ && print(io, '.')
+    end
+    # trailing zeros
+    if inner_exponent > 0 && significand ≠ 0
+        for _ in 1:inner_exponent
+            print(io, '0')
+        end
+    end
+    nothing
+end
+
+"""
+$(SIGNATURES)
+
+Convert a representation to a coordinate. Does not need to be exact, `Float64` precision is
+sufficient.
+"""
+coordinate(sd::ShiftedDecimal) = sd.significand * exp10(sd.inner_exponent + sd.outer_exponent)
+
+function Base.show(io::IO, ::MIME"text/plain", sd::ShiftedDecimal)
+    (; significand, outer_exponent) = sd
+    show_mantissa(io, sd)
+    significand ≠ 0 && outer_exponent ≠ 0 && print(io, "e", outer_exponent)
+end
+
+function format_latex(sd::ShiftedDecimal)
+    (; significand, outer_exponent) = sd
+    io = IOBuffer()
+    print(io, '$')
+    show_mantissa(io, sd)
+    significand ≠ 0 && outer_exponent ≠ 0 && print(io, raw"\cdot 10^{", outer_exponent, "}")
+    print(io, '$')
+    PGF.LaTeX(String(take!(io)))
+end
+
+"""
+A vector of [`ShiftedDecimal`s](@ref).
+"""
+struct ShiftedDecimals <: AbstractVector{ShiftedDecimal}
+    significands::StepRange{Int,Int}
+    inner_exponent::Int
+    outer_exponent::Int
+end
+
+ShiftedDecimals(significand, inner_exponent) = ShiftedDecimals(significand, inner_exponent, 0)
+
+Base.size(sd::ShiftedDecimals) = (length(sd.significands), )
+
+function Base.getindex(sd::ShiftedDecimals, i::Int)
+    ShiftedDecimal(sd.significands[i], sd.inner_exponent, sd.outer_exponent)
+end
+
+"""
+$(SIGNATURES)
+
+Change the inner exponent by `-Δ` and the outer by `Δ`.
+"""
+function inner_to_outer(sd::ShiftedDecimals, Δ)
+    ShiftedDecimals(sd.significands, sd.inner_exponent - Δ, sd.outer_exponent + Δ)
+end
+
+"""
 $(SIGNATURES)
 
 A heuristic algorithm for choosing linear ticks inside `[a, b]`, with `a < b`.
 
-Return a vector of `(significands = c:k:d, exponent = e)`, where `e` is the exponent, and
-`significands` is a `StepRange{Int,Int}` to be adjusted by the exponent.
+Return a vector of [`ShiftedDecimals`](@ref), representing various options. Caller should
+select from these.
 
 `log10_widening` determines the division with the most ticks, which are then thinned step by
 step.
@@ -74,7 +170,7 @@ step.
     Any `a < b` is accepted, but the algorithm is not designed to give good results for `a ≈
     b`. You may want to use a different method for that.
 """
-function nontrivial_linear_ticks(interval::Interval{<:Real}; log10_widening::Int = 1)
+function nontrivial_linear_tick_alternatives(interval::Interval{<:Real}; log10_widening::Int = 1)
     is_nontrivial(x) = length(x) ≥ 2
     (; min, max) = interval
     Δ = max - min
@@ -82,50 +178,20 @@ function nontrivial_linear_ticks(interval::Interval{<:Real}; log10_widening::Int
     @argcheck log10_widening ≥ 1
     e1 = floor(Int, log10(Δ) - log10_widening)
     E1 = exp10(e1)
-    min1 = floor(Int, min / E1)
-    max1 = ceil(Int, max / E1)
+    min1 = ceil(Int, min / E1)
+    max1 = floor(Int, max / E1)
     ticks1 = min1:1:max1
-    ticks = [(significands = ticks1, exponent = e1)]
+    ticks = [ShiftedDecimals(ticks1, e1)]
     while is_nontrivial(ticks1)
         ticks2 = thin_ticks(ticks1, 2)
-        is_nontrivial(ticks2) && push!(ticks, (significands = ticks2, exponent = e1))
+        is_nontrivial(ticks2) && push!(ticks, ShiftedDecimals(ticks2, e1))
         ticks5 = thin_ticks(ticks1, 5)
-        is_nontrivial(ticks5) && push!(ticks, (significands = ticks5, exponent = e1))
+        is_nontrivial(ticks5) && push!(ticks, ShiftedDecimals(ticks5, e1))
         e1 += 1
         ticks1 = compress_ticks(ticks1, 10)
-        is_nontrivial(ticks1) && push!(ticks, (significands = ticks1, exponent = e1))
+        is_nontrivial(ticks1) && push!(ticks, ShiftedDecimals(ticks1, e1))
     end
     ticks
-end
-
-"""
-$(SIGNATURES)
-
-`significand * exp10(exponent)` as a string, using an exact representation.
-"""
-function format_shifted(significand::Int, exponent::Int)
-    io = IOBuffer()
-    print(io, abs(significand))
-    if exponent > 0 && significand ≠ 0 # print trailing zeros
-        for _ in 1:exponent
-            print(io, '0')
-        end
-    end
-    v = take!(io)
-    if exponent < 0
-        D = UInt8('.')
-        Z = UInt8('0')
-        Δ = exponent + length(v) # decimal dot should follow this index
-        if Δ > 0                 # insert a decimal dot after
-            insert!(v, Δ + 1, D)
-        else
-            prepend!(v, Z for _ in 1:(-Δ))
-            pushfirst!(v, D)
-            pushfirst!(v, Z)
-        end
-    end
-    significand < 0 && pushfirst!(v, '-')
-    String(v)
 end
 
 Base.@kwdef struct TickFormat
@@ -135,20 +201,24 @@ Base.@kwdef struct TickFormat
     single_tick_sigdigits::Int = DEFAULTS.tick_format_single_tick_sigdigits
 end
 
-function format_ticks(significands, exponent, tick_format)
+"""
+$(SIGNATURES)
+
+Bring the inner exponent into the range permitted by `tick_format`, making sure that the
+values are unchanged.
+"""
+function regularize_exponent(tick_format, sd::ShiftedDecimals)
     (; max_exponent, min_exponent, thousands) = tick_format
-    l = if min_exponent ≤ exponent ≤ max_exponent
-        map(s -> PGF.math(format_shifted(s, exponent)), significands)
+    (; inner_exponent) = sd
+    if (min_exponent ≤ inner_exponent ≤ max_exponent)
+        sd
     else
         if thousands
             Δ = closest_multiple(exponent, 3, true)[2]
-            e = exponent - Δ
         else
             Δ = exponent
-            e = 0
         end
-        tag = raw" \times 10^{" * string(Δ) * "}"
-        map(s -> PGF.math(format_shifted(s, e) * tag), significands)
+        inner_to_outer(sd, Δ)
     end
 end
 
@@ -158,23 +228,23 @@ Base.@kwdef struct TickSelection
     label_penalty::Float64 = DEFAULTS.tick_selection_label_penalty
     twos_penalty::Float64 = DEFAULTS.tick_selection_twos_penalty
     fives_penalty::Float64 = DEFAULTS.tick_selection_fives_penalty
+    exponent_penalty::Float64 = DEFAULTS.tick_selection_exponent_penalty
 end
 
-function select_ticks(significand_exponent_formatted, tick_selection::TickSelection)
-    (; target_count, label_penalty, twos_penalty, fives_penalty) = tick_selection
-    function _score((significand, exponent, formatted))
-        score = 1.0 * abs2(length(significand) - target_count) +
-            sum(length, formatted) * label_penalty
-        k = step(significand)
-        if k == 2
-            score += twos_penalty
-        elseif k == 5
-            score += fives_penalty
-        end
-        score
+function ticks_penalty(tick_selection::TickSelection, sd::ShiftedDecimals)
+    (; target_count, label_penalty, twos_penalty, fives_penalty, exponent_penalty) = tick_selection
+    (; significands, inner_exponent, outer_exponent) = sd
+    # NOTE taking length here is a shortcut as it is penalizes LaTeX commands like `\cdot`
+    n = length(significands)
+    score::Float64 = 1.0 * abs2(n - target_count)
+    score += (abs(inner_exponent) + (outer_exponent ≠ 0) * exponent_penalty) * n * label_penalty
+    k = step(significands)
+    if k == 2
+        score += twos_penalty
+    elseif k == 5
+        score += fives_penalty
     end
-    (_, index) = findmin(_score, significand_exponent_formatted)
-    significand_exponent_formatted[index]
+    score
 end
 
 """
@@ -183,13 +253,13 @@ $(SIGNATURES)
 function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickFormat,
                                tick_selection::TickSelection)
     if is_nonzero(interval)
-        ticks = nontrivial_linear_ticks(interval; tick_selection.log10_widening)
-        formatted_ticks = map(((s, e),) -> (s, e, format_ticks(s, e, tick_format)), ticks)
-        significand, exponent, formatted = select_ticks(formatted_ticks, tick_selection)
-        E = exp10(exponent)
-        map((s, f) -> s * E => f, significand, formatted)
+        ticks_alternatives = map(t -> regularize_exponent(tick_format, t),
+                                 nontrivial_linear_tick_alternatives(interval; tick_selection.log10_widening))
+        _, ix = findmin(ticks -> ticks_penalty(tick_selection, ticks), ticks_alternatives)
+        ticks = ticks_alternatives[ix]
+        map(s -> coordinate(s) => format_latex(s), ticks)
     else
-        # note formatting here is really a heuristic, eg it cannot deal with Date, fix latex
+        # note formatting here is really a heuristic, eg it cannot deal with Date, fix later
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
         [t => PGF.math(string(t))]
     end

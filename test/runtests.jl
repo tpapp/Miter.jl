@@ -1,5 +1,5 @@
 using Miter, Miter.Intervals, Miter.Ticks, Miter.PGF
-using Miter.Ticks: format_ticks
+using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.PGF: math
 using Test
 using Unitful.DefaultSymbols
@@ -32,6 +32,7 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
     @time Miter.Compile.pdf(io -> write(io, LATEX_MWE), pdf_path)
     @test is_pdf(pdf_path)
 end
+
 
 ####
 #### pgf
@@ -78,40 +79,49 @@ end
 ####
 
 @testset "nontrivial linear ticks" begin
-    @test @inferred nontrivial_linear_ticks(Interval(0, 10)) ==
-        [(significands = 0:1:10, exponent = 0),
-         (significands = 0:2:10, exponent = 0),
-         (significands = 0:5:10, exponent = 0),
-         (significands = 0:1:1, exponent = 1)]
+    @test @inferred nontrivial_linear_tick_alternatives(Interval(0, 10)) ==
+        [ShiftedDecimals(0:1:10, 0),
+         ShiftedDecimals(0:2:10, 0),
+         ShiftedDecimals(0:5:10, 0),
+         ShiftedDecimals(0:1:1, 1)]
 
-    @test @inferred nontrivial_linear_ticks(Interval(-2.1, 7.3)) ==
-        [(significands = -21:1:73, exponent = -1),
-         (significands = -20:2:72, exponent = -1),
-         (significands = -20:5:70, exponent = -1),
-         (significands = -2:1:6, exponent = 0),
-         (significands = -2:2:6, exponent = 0),
-         (significands = 0:5:5, exponent = 0)]
+    @test @inferred nontrivial_linear_tick_alternatives(Interval(-2.1, 7.3)) ==
+        [ShiftedDecimals(-21:1:73, -1),
+         ShiftedDecimals(-20:2:72, -1),
+         ShiftedDecimals(-20:5:70, -1),
+         ShiftedDecimals(-2:1:6, 0),
+         ShiftedDecimals(-2:2:6, 0),
+         ShiftedDecimals(0:5:5, 0)]
 
-    @test @inferred nontrivial_linear_ticks(Interval(-0.021, 0.073)) ==
-        map(((; significands, exponent),) -> (; significands, exponent = exponent -2),
-            nontrivial_linear_ticks(Interval(-2.1, 7.3)))
+    @test @inferred nontrivial_linear_tick_alternatives(Interval(-0.021, 0.073)) ==
+        map(t -> ShiftedDecimals(t.significands, t.inner_exponent - 2),
+            nontrivial_linear_tick_alternatives(Interval(-2.1, 7.3)))
 end
 
 @testset "format ticks" begin
-    @test format_ticks(-1:2, 0, TickFormat()) == math.(["-1", "0", "1", "2"])
-    @test format_ticks(-1:2, 3, TickFormat()) == math.(["-1000", "0", "1000", "2000"])
-    @test format_ticks(-1:2, 4, TickFormat()) == math.(["-1 \\times 10^{4}", "0 \\times 10^{4}", "1 \\times 10^{4}", "2 \\times 10^{4}"])
-    @test format_ticks(-1:2, 4, TickFormat(; thousands = true)) ==
-        math.(["-10 \\times 10^{3}", "0 \\times 10^{3}", "10 \\times 10^{3}",
-               "20 \\times 10^{3}"])
-    @test format_ticks(-1:2, -4, TickFormat()) ==
-        math.(["-1 \\times 10^{-4}", "0 \\times 10^{-4}", "1 \\times 10^{-4}",
-               "2 \\times 10^{-4}"])
-    @test format_ticks(-1:2, -4, TickFormat(; thousands = true)) ==
-        math.(["-100 \\times 10^{-6}", "0 \\times 10^{-6}", "100 \\times 10^{-6}",
-               "200 \\times 10^{-6}"])
-    @test format_ticks(0:2:10, -1, TickFormat()) == math.(["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"])
-    @test format_ticks(-10:5:10, -1, TickFormat()) == math.(["-1.0", "-0.5", "0.0", "0.5", "1.0"])
+    # no outer exponent
+    @test format_latex(ShiftedDecimal(5, 0, 0)) == math"5"
+    @test format_latex(ShiftedDecimal(-5, 0, 0)) == math"-5"
+    @test format_latex(ShiftedDecimal(5, 3, 0)) == math"5000"
+    @test format_latex(ShiftedDecimal(-5, 3, 0)) == math"-5000"
+    @test format_latex(ShiftedDecimal(5, -1, 0)) == math"0.5"
+    @test format_latex(ShiftedDecimal(-5, -1, 0)) == math"-0.5"
+    @test format_latex(ShiftedDecimal(5, -2, 0)) == math"0.05"
+    @test format_latex(ShiftedDecimal(-5, -2, 0)) == math"-0.05"
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == math"0.00"
+
+    # outer exponent
+    @test format_latex(ShiftedDecimal(5, 0, 2)) == math"5\cdot 10^{2}"
+    @test format_latex(ShiftedDecimal(-5, 0, -2)) == math"-5\cdot 10^{-2}"
+    @test format_latex(ShiftedDecimal(5, 3, 2)) == math"5000\cdot 10^{2}"
+    @test format_latex(ShiftedDecimal(-5, 3, -2)) == math"-5000\cdot 10^{-2}"
+
+    # zeros - outer exponent is always ignored
+    @test format_latex(ShiftedDecimal(0, 0, 0)) == math"0"
+    @test format_latex(ShiftedDecimal(0, -1, 0)) == math"0.0"
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == math"0.00"
+    @test format_latex(ShiftedDecimal(0, 2, 0)) == math"0"
+    @test format_latex(ShiftedDecimal(0, 0, -2)) == math"0"
 end
 
 @testset "sensible linear ticks" begin
