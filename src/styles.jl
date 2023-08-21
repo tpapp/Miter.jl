@@ -33,6 +33,7 @@ Base.@kwdef mutable struct Options
     tick_selection_label_penalty::Float64 = 0.1
     tick_selection_twos_penalty::Float64 = 0.0
     tick_selection_fives_penalty::Float64 = 0.0
+    tick_selection_exponent_penalty::Float64 = 3.0
 
     # axis style
     axis_style_line_width::LENGTH = 0.1mm
