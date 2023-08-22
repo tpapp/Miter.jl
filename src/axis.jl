@@ -17,7 +17,7 @@ using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 import ..PGF
 using ..Intervals
-using ..Styles: DEFAULTS, set_line_style
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
 using Unitful: mm
 
@@ -133,7 +133,7 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
     y1 = y_top_edge - line_gap  # line, tick start
     y2 = y1 - tick_length       # tick end
     y3 = y2 - tick_label_gap    # tick labels start here
-    set_line_style(io, width = line_width, color = line_color)
+    set_line_style(io, width = line_width, color = line_color, dash = LINE_SOLID)
     PGF.segment(io, _point(a, y1), _point(b, y1))
     for (pos, label) in ticks
         x = unit_to_canvas(a, b, coordinate_to_unit(axis, pos))

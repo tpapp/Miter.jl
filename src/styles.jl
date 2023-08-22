@@ -67,9 +67,14 @@ $(SIGNATURES)
 
 Helper function to set line style parameters (when `≢ nothing`).
 """
-function set_line_style(io::IO; color = nothing, width = nothing)
+function set_line_style(io::IO; color = nothing, width = nothing, dash = nothing)
     color ≢ nothing && PGF.setstrokecolor(io, color)
     width ≢ nothing && PGF.setlinewidth(io, width)
+    dash ≢ nothing && PGF.setdash(io, dash)
 end
+
+const LINE_SOLID = PGF.Dash()
+
+const LINE_DASHED = PGF.Dash(3mm, 3mm)
 
 end

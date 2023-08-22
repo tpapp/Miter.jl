@@ -8,7 +8,7 @@ using ArgCheck: @argcheck
 using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds
 import ..Axis: bounds_xy
 using ..Intervals
-using ..Styles: DEFAULTS, set_line_style
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
 using ..PGF
 using Unitful: mm
 
@@ -138,21 +138,25 @@ struct Lines
     coordinates
     line_width::PGF.LENGTH
     color
-    function Lines(coordinates; line_width = DEFAULTS.line_width, color = DEFAULTS.line_color)
+    dash::PGF.Dash
+    @doc """
+    $(SIGNATURES)
+    """
+    function Lines(coordinates; line_width = DEFAULTS.line_width,
+                   color = DEFAULTS.line_color, dash::PGF.Dash = LINE_SOLID)
         line_width = PGF._length(line_width)
         @argcheck PGF.is_positive(line_width)
-        new(coordinates, line_width, color)
+        new(coordinates, line_width, color, dash)
     end
 end
 
 bounds_xy(lines::Lines) = coordinate_bounds(lines.coordinates)
 
 function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
-    (; coordinates, line_width, color) = lines
+    (; coordinates, line_width, color, dash) = lines
     peeled = Iterators.peel(coordinates)
     peeled ≡ nothing && return
-    PGF.setlinewidth(io, line_width)
-    PGF.setstrokecolor(io, color)
+    set_line_style(io; color, width = line_width, dash)
     c1, cR = peeled
     PGF.pathmoveto(io, coordinates_to_point(drawing_area, c1))
     for c in cR
@@ -196,25 +200,26 @@ struct Hline
     y::Real
     color::RGB
     width::PGF.LENGTH
+    dash::PGF.Dash
     @doc """
     $(SIGNATURES)
 
     A horizontal line at `y` with the given parameters.
     """
     function Hline(y::Real; phantom::Bool = false, color = DEFAULTS.line_color,
-                   width = DEFAULTS.line_width)
+                   width = DEFAULTS.line_width, dash = LINE_DASHED)
         @argcheck isfinite(y)
-        new(y, RGB(color), PGF._length(width))
+        new(y, RGB(color), PGF._length(width), dash)
     end
 end
 
 bounds_xy(hline::Hline) = (∅, Interval(hline.y))
 
 function PGF.render(io::IO, drawing_area::DrawingArea, hline::Hline)
-    (; y, color, width) = hline
+    (; y, color, width, dash) = hline
     (; left, right) = drawing_area.rectangle
     y_c = y_coordinate_to_canvas(drawing_area, y)
-    set_line_style(io; color, width)
+    set_line_style(io; color, width, dash)
     PGF.pathmoveto(io, PGF.Point(left, y_c))
     PGF.pathlineto(io, PGF.Point(right, y_c))
     PGF.usepathqstroke(io)

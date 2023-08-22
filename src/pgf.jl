@@ -487,4 +487,33 @@ function mark(io::IO, ::Val{:o}, at::Point, size::LENGTH)
     pathqstroke(io)
 end
 
+####
+#### dash
+####
+
+struct Dash{N}
+    dimensions::NTuple{N,LENGTH}
+    offset::LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
+    """
+    function Dash(dimensions::Vararg{LENGTH,N}; offset::LENGTH = LENGTH0) where N
+        @argcheck iseven(N) "Dashes need an even number of dimensions."
+        new{N}(dimensions, offset)
+    end
+end
+
+Dash(dimensions...; offset = LENGTH0) = Dash(map(_length, dimensions)...; offset)
+
+function setdash(io::IO, dash::Dash)
+    (; dimensions, offset) = dash
+    _print(io, raw"\pgfsetdash{")
+    for d in dimensions
+        _print(io, '{', d, '}')
+    end
+    _print(io, "}{", offset, "}")
+end
+
 end
