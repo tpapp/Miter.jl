@@ -24,6 +24,8 @@ using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
 const BLACK = RGB(0.0, 0.0, 0.0)
 
+const GRAY = RGB(0.5, 0.5, 0.5)
+
 """
 $(SIGNATURES)
 

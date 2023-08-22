@@ -206,8 +206,8 @@ struct Hline
 
     A horizontal line at `y` with the given parameters.
     """
-    function Hline(y::Real; phantom::Bool = false, color = DEFAULTS.line_color,
-                   width = DEFAULTS.line_width, dash = LINE_DASHED)
+    function Hline(y::Real; phantom::Bool = false, color = PGF.GRAY,
+                   width = DEFAULTS.line_width / 2, dash = LINE_DASHED)
         @argcheck isfinite(y)
         new(y, RGB(color), PGF._length(width), dash)
     end

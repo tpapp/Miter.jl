@@ -18,7 +18,7 @@ to load the relevant packages.
 
 ```@example all
 Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
-      Scatter((x, (x + 1) / 2) for x in -1:0.02:1; color = colorant"darkgreen")];
+      Scatter((x, (x + 1) / 2) for x in -1:0.1:1; color = colorant"darkgreen")];
       x_axis = Axis.Linear(; axis_label = math"x"),
       y_axis = Axis.Linear(; axis_label = math"y"))
 ```

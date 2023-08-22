@@ -75,6 +75,6 @@ end
 
 const LINE_SOLID = PGF.Dash()
 
-const LINE_DASHED = PGF.Dash(3mm, 3mm)
+const LINE_DASHED = PGF.Dash(2mm, 2mm)
 
 end
