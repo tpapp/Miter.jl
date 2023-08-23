@@ -219,8 +219,8 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     (; y, color, width, dash) = hline
     (; left, right) = drawing_area.rectangle
     y_c = y_coordinate_to_canvas(drawing_area, y)
-    set_line_style(io; color, width, dash)
-    PGF.pathmoveto(io, PGF.Point(left, y_c))
-    PGF.pathlineto(io, PGF.Point(right, y_c))
-    PGF.usepathqstroke(io)
+    set_line_style(sink; color, width, dash)
+    PGF.pathmoveto(sink, PGF.Point(left, y_c))
+    PGF.pathlineto(sink, PGF.Point(right, y_c))
+    PGF.usepathqstroke(sink)
 end
