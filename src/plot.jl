@@ -117,7 +117,7 @@ end
 bounds_xy(::Phantom) = (∅, ∅)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
-    PGF.render(io, drawing_area, phantom.object)
+    PGF.render(sink, drawing_area, phantom.object)
 end
 
 ###
