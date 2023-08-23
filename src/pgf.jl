@@ -22,24 +22,13 @@ using StaticArrays: SVector, SMatrix
 using Printf: @printf
 using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
-const BLACK = RGB(0.0, 0.0, 0.0)
-
-const GRAY = RGB(0.5, 0.5, 0.5)
-
-"""
-$(SIGNATURES)
-
-Print the PGF/LaTeX representation to `io`. Not exposed outside this module.
-"""
-_print(io::IO, xs...) = foreach(x -> _print(io, x), xs)
-
-_println(io::IO, xs...) = (foreach(x -> _print(io, x), xs); print(io, '\n'))
-
-_print(io::IO, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(io, x)
-
 ####
-#### length
+#### types and constants
 ####
+
+###
+### length
+###
 
 """
 The length type we use internally in this module. Not exposed outside this module.
@@ -62,17 +51,90 @@ Convert to `LENGTH`, ensuring an inferrable type.
 """
 @inline _length(x::INPUT_LENGTH) = LENGTH(x)::LENGTH
 
-_print(io::IO, x::LENGTH) = @printf(io, "%fbp", ustrip(mm, x) * (72 / 25.4))
+###
+### colors
+###
+
+"""
+The color representation used by the PGF backend. All colors are converted to this before
+being used.
+"""
+const COLOR = RGB{Float64}
+
+const BLACK::COLOR = RGB(0.0, 0.0, 0.0)
+
+const GRAY::COLOR = RGB(0.5, 0.5, 0.5)
 
 ####
-#### colors
+#### dash
 ####
 
-function _print(io::IO, color::AbstractRGB)
-    _print(io, "rgb,1:red,", Float64(red(color)),
+struct Dash
+    dimensions::Vector{LENGTH}
+    offset::LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
+    """
+    function Dash(dimensions...; offset = LENGTH0)
+        @argcheck iseven(length(dimensions)) "Dashes need an even number of dimensions."
+        new([(l = _length(d); @argcheck is_positive(l); l) for d in dimensions], _length(offset))
+    end
+end
+
+####
+#### sink interface
+####
+
+Base.@kwdef mutable struct Sink{T}
+    io::T
+    "last line width set"
+    line_width::Union{Nothing,LENGTH} = nothing
+    "last stroke color set"
+    stroke_color::Union{Nothing,COLOR} = nothing
+    "last fill color set"
+    fill_color::Union{Nothing,COLOR} = nothing
+    "last dash set"
+    dash::Union{Nothing,Dash} = nothing
+end
+
+"""
+$(SIGNATURES)
+
+Wrap an `io` in a `Sink` for outputting PGF primitives.
+
+A `Sink` records various drawing properties, so it can omit superfluous set commands.
+"""
+sink(io::IO) = Sink(; io = io)
+
+"""
+$(SIGNATURES)
+
+Write the PGF/LaTeX representation to `sink`. Not exposed outside this module.
+
+Methods are encouraged to define `_print(sink::Sink, x::T)` for types `T` which can be
+directly printed for processing by LaTeX (eg numbers, lengths, colors, etc).
+
+Printing raw strings and objects to a `sink` should only be done by this method.
+"""
+_print(sink::Sink, xs...) = foreach(x -> _print(sink, x), xs)
+
+_println(sink::Sink, xs...) = (foreach(x -> _print(sink, x), xs); _print(sink, '\n'))
+
+_print(sink::Sink, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(sink.io, x)
+
+_print(sink::Sink, x::LENGTH) = @printf(sink.io, "%fbp", ustrip(mm, x) * (72 / 25.4))
+
+function _print(sink::Sink, color::COLOR)
+    _print(sink, "rgb,1:red,", Float64(red(color)),
            ";green,", Float64(green(color)),
            ";blue,", Float64(blue(color)))
 end
+
+####
+#### simple commands
+####
 
 """
 $(SIGNATURES)
@@ -81,20 +143,47 @@ Translate a symbol to a pgf command name string.
 """
 _pgfcommand(s::Symbol) = "\\pgf" * string(s)
 
-for command in (:setfillcolor, :setstrokecolor, :setcolor)
-    @eval function $command(io::IO, color)
-        _println(io, $(_pgfcommand(command)), '{', color, '}')
+function setfillcolor(sink::Sink, color::COLOR)
+    if sink.fill_color ≠ color
+        sink.fill_color = color
+        _println(sink, raw"\pgfsetfillcolor{", color, "}")
     end
 end
+
+setfillcolor(sink::Sink, color::AbstractRGB) = setfillcolor(sink, COLOR(color))
+
+function setstrokecolor(sink::Sink, color::COLOR)
+    if sink.stroke_color ≠ color
+        sink.stroke_color = color
+        _println(sink, raw"\pgfsetstrokecolor{", color, "}")
+    end
+end
+
+setstrokecolor(sink::Sink, color::AbstractRGB) = setstrokecolor(sink, COLOR(color))
+
+function setcolor(sink::Sink, color::COLOR)
+    if !(sink.stroke_color == color == sink.fill_color)
+        sink.fill_color = color
+        sink.stroke_color = color
+        _println(sink, raw"\pgfsetcolor{", color, "}")
+    end
+end
+
+setcolor(sink::Sink, color::AbstractRGB) = setcolor(sink, COLOR(color))
 
 """
 $(SIGNATURES)
 
 Set line width, converting to `mm` if necessary.
 """
-function setlinewidth(io::IO, line_width)
-    _print(io, raw"\pgfsetlinewidth{", LENGTH(line_width), "}")
+function setlinewidth(sink::Sink, line_width::LENGTH)
+    if sink.line_width ≠ line_width
+        sink.line_width = line_width
+        _print(sink, raw"\pgfsetlinewidth{", line_width, "}")
+    end
 end
+
+setlinewidth(sink::Sink, line_width) = setlinewidth(sink, _length(line_width))
 
 ####
 #### points
@@ -116,9 +205,9 @@ struct Point
     end
 end
 
-function _print(io::IO, point::Point)
+function _print(sink::Sink, point::Point)
     (; x, y) = point
-    _print(io, raw"\pgfqpoint{", x, "}{", y, "}")
+    _print(sink, raw"\pgfqpoint{", x, "}{", y, "}")
 end
 
 Base.:+(a::Point, b::Point) = Point(a.x + b.x, a.y + b.y)
@@ -133,7 +222,6 @@ $(SIGNATURES)
 Exchange coordinates of a point.
 """
 flip(a::Point) = Point(a.y, a.x)
-
 
 ####
 #### rectangles
@@ -173,55 +261,55 @@ end
 ### path manipulation
 ###
 
-function pathmoveto(io::IO, point::Point)
-    _println(io, raw"\pgfpathmoveto{", point, "}")
+function pathmoveto(sink::Sink, point::Point)
+    _println(sink, raw"\pgfpathmoveto{", point, "}")
 end
 
-function pathlineto(io::IO, point::Point)
-    _println(io, raw"\pgfpathlineto{", point, "}")
+function pathlineto(sink::Sink, point::Point)
+    _println(sink, raw"\pgfpathlineto{", point, "}")
 end
 
-function pathcircle(io::IO, point::Point, radius::LENGTH)
-    _println(io, raw"\pgfpathcircle{", point, "}{", radius, "}")
+function pathcircle(sink::Sink, point::Point, radius::LENGTH)
+    _println(sink, raw"\pgfpathcircle{", point, "}{", radius, "}")
 end
 
 # commands without arguments
 for command in (:pathclose, :usepathqfill, :usepathqstroke, :usepathqfillstroke,
                 :usepathqclip)
-    @eval function $command(io::IO)
-        _println(io, $(_pgfcommand(command)))
+    @eval function $command(sink::Sink)
+        _println(sink, $(_pgfcommand(command)))
     end
 end
 
-function path(io::IO, rectangle::Rectangle)
+function path(sink::Sink, rectangle::Rectangle)
     (; left, right, bottom, top) = rectangle
-    _println(io, raw"\pgfpathrectanglecorners{",
+    _println(sink, raw"\pgfpathrectanglecorners{",
                 Point(left, bottom), "}{", Point(right, top), "}")
 end
 
-function usepath(io::IO, actions...)
+function usepath(sink::Sink, actions...)
     had_fill = false
     had_stroke = false
     had_clip = false
     is_first = true
-    _print(io, raw"\pgfusepath{")
+    _print(sink, raw"\pgfusepath{")
     for action in actions
         if is_first
             is_first = false
         else
-            _print(io, ',')
+            _print(sink, ',')
         end
         if action ≡ :fill
             @argcheck !had_fill "Duplicate `:fill`."
-            _print(io, "fill")
+            _print(sink, "fill")
             had_fill = true
         elseif action ≡ :stroke
             @argcheck !had_stroke "Duplicate `:stroke`."
-            _print(io, "stroke")
+            _print(sink, "stroke")
             had_stroke = true
         elseif action ≡ :clip
             @argcheck !had_clip "Duplicate `:clip`."
-            _print(io, "clip")
+            _print(sink, "clip")
             had_clip = true
         elseif action ≡ :discard
             @argcheck(had_fill == had_stroke == had_clip == false,
@@ -232,7 +320,7 @@ function usepath(io::IO, actions...)
             throw(ArgumentError("Unknown action $(action)."))
         end
     end
-    _print(io, "}\n")
+    _print(sink, "}\n")
 end
 
 # NOTE: we don't make this <: AbstracString, as it is only used as a wrapped, and only within
@@ -259,15 +347,16 @@ Put \$'s around the string, and wrap in `LaTeX`, to pass directly.
 """
 math(str::AbstractString) = LaTeX("\$" * str * "\$")
 
-_print_escaped(io::IO, str::LaTeX) = print(io, str.latex)
+_print_escaped(sink::Sink, str::LaTeX) = print(sink.io, str.latex)
 
 """
 $(SIGNATURES)
 
-Outputs a version of `str` to `io` so that special characters (in LaTeX) are escaped to
+Outputs a version of `str` to `sink` so that special characters (in LaTeX) are escaped to
 produce the expected output.
 """
-function _print_escaped(io::IO, str::AbstractString)
+function _print_escaped(sink::Sink, str::AbstractString)
+    (; io) = sink
     for c in str
         if c == '\\'
             print(io, raw"\textbackslash")
@@ -286,23 +375,23 @@ $(SIGNATURES)
 
 Text output.
 """
-function text(io::IO, at::Point, str::STRINGS;
+function text(sink::Sink, at::Point, str::STRINGS;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false, base::Bool = false,
               rotate = 0)
     @argcheck top + bottom + base ≤ 1
     @argcheck left + right ≤ 1
     (; x, y) = at
-    _print(io, raw"\pgftext[x=", x, ",y=", y)
-    left && _print(io, ",left")
-    right && _print(io, ",right")
-    top && _print(io, ",top")
-    bottom && _print(io, ",bottom")
-    base && _print(io, ",base")
-    iszero(rotate) || _print(io, ",rotate=", rotate)
-    _print(io, "]{")
-    _print_escaped(io, str)
-    _println(io, "}")
+    _print(sink, raw"\pgftext[x=", x, ",y=", y)
+    left && _print(sink, ",left")
+    right && _print(sink, ",right")
+    top && _print(sink, ",top")
+    bottom && _print(sink, ",bottom")
+    base && _print(sink, ",base")
+    iszero(rotate) || _print(sink, ",rotate=", rotate)
+    _print(sink, "]{")
+    _print_escaped(sink, str)
+    _println(sink, "}")
 end
 
 ####
@@ -403,18 +492,18 @@ The preamble that should precede output generated by this module to compile in L
 
 After the preamble, bounding box calculations are suspended.
 """
-function preamble(io::IO, bounding_box::Rectangle;
+function preamble(sink::Sink, bounding_box::Rectangle;
                   standalone::Bool, baseline = LENGTH(0))
-    standalone || _print(io, raw"""
+    standalone || _print(sink, raw"""
 \documentclass{standalone}
 \usepackage{pgfcore}
 \begin{document}
 """)
-    _print(io, raw"""
+    _print(sink, raw"""
 \begin{pgfpicture}
 """)
-    PGF.path(io, bounding_box)
-    _println(io, raw"\pgfusepath{use as bounding box}",
+    PGF.path(sink, bounding_box)
+    _println(sink, raw"\pgfusepath{use as bounding box}",
            raw"\pgfsetbaseline{", LENGTH(baseline), "}\n",
            raw"\begin{pgfinterruptboundingbox}")
 end
@@ -422,25 +511,25 @@ end
 """
 $(SIGNATURES)
 """
-function postamble(io::IO; standalone::Bool)
-    _print(io, raw"""
+function postamble(sink::Sink; standalone::Bool)
+    _print(sink, raw"""
 \end{pgfinterruptboundingbox}
 \end{pgfpicture}
 """)
-    standalone || _print(io, raw"""
+    standalone || _print(sink, raw"""
 \end{document}
 """)
 end
 
 """
-$(FUNCTIONNAME)(io, rectangle, object; kwargs...)
+$(SIGNATURES)
 
 Render `object` within `rectangle` by issuing the relevant drawing commands to `io`, using
 the `PGF` module.
 
 Rendering `nothing` is a no-op.
 """
-render(io::IO, rectangle::Rectangle, object::Nothing) = nothing
+render(sink::Sink, rectangle::Rectangle, object::Nothing) = nothing
 
 ####
 #### utilities
@@ -451,10 +540,10 @@ $(SIGNATURES)
 
 Path and stroke a line segment between two points. Caller sets everything else before.
 """
-function segment(io::IO, a::Point, b::Point)
-    pathmoveto(io, a)
-    pathlineto(io, b)
-    usepathqstroke(io)
+function segment(sink::Sink, a::Point, b::Point)
+    pathmoveto(sink, a)
+    pathlineto(sink, b)
+    usepathqstroke(sink)
 end
 
 ####
@@ -467,55 +556,38 @@ $(SIGNATURES)
 Draw a mark of type `K` at the given point, with the given `size` (roughly the diameter of a
 circle/square that contains the mark). Caller should set color, line width, etc.
 """
-function mark(io::IO, ::Val{K}, at::Point, size::T) where {K,T}
+function mark(sink::Sink, ::Val{K}, at::Point, size::T) where {K,T}
     if T ≡ LENGTH
         error("Don't know how to draw a mark of type $K, define a method for `Miter.PGF.mark`.")
     else
-        mark(io, Val(K), at, _length(size))
+        mark(sink, Val(K), at, _length(size))
     end
 end
 
-function mark(io::IO, ::Val{:+}, at::Point, size::LENGTH)
+function mark(sink::Sink, ::Val{:+}, at::Point, size::LENGTH)
     @argcheck is_positive(size)
     (; x, y) = at
     h = size / 2
-    segment(io, Point(x - h, y), Point(x + h, y))
-    segment(io, Point(x, y - h), Point(x, y + h))
+    segment(sink, Point(x - h, y), Point(x + h, y))
+    segment(sink, Point(x, y - h), Point(x, y + h))
 end
 
-function mark(io::IO, ::Val{:o}, at::Point, size::LENGTH)
+function mark(sink::Sink, ::Val{:o}, at::Point, size::LENGTH)
     @argcheck is_positive(size)
-    pathcircle(io, at(x - h, y), Point(x + h, y), size / 2)
-    pathqstroke(io)
+    pathcircle(sink, at(x - h, y), Point(x + h, y), size / 2)
+    pathqstroke(sink)
 end
 
-####
-#### dash
-####
-
-struct Dash{N}
-    dimensions::NTuple{N,LENGTH}
-    offset::LENGTH
-    @doc """
-    $(SIGNATURES)
-
-    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
-    """
-    function Dash(dimensions::Vararg{LENGTH,N}; offset::LENGTH = LENGTH0) where N
-        @argcheck iseven(N) "Dashes need an even number of dimensions."
-        new{N}(dimensions, offset)
+function setdash(sink::Sink, dash::Dash)
+    if sink.dash ≠ dash
+        sink.dash = dash
+        (; dimensions, offset) = dash
+        _print(sink, raw"\pgfsetdash{")
+        for d in dimensions
+            _print(sink, '{', d, '}')
+        end
+        _print(sink, "}{", offset, "}")
     end
-end
-
-Dash(dimensions...; offset = LENGTH0) = Dash(map(_length, dimensions)...; offset)
-
-function setdash(io::IO, dash::Dash)
-    (; dimensions, offset) = dash
-    _print(io, raw"\pgfsetdash{")
-    for d in dimensions
-        _print(io, '{', d, '}')
-    end
-    _print(io, "}{", offset, "}")
 end
 
 end

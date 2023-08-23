@@ -10,11 +10,21 @@ $(SIGNATURES)
 Objects that can produce graphical output (eg a plot) should define
 
 ```julia
-print_tex(io::IO, object; standalone::Bool = false)
+print_tex(sink::PGF.Sink, object; standalone::Bool = false)
 ```
 
 where `standalone` determines whether the output should be a standalone document.
+
+!!! NOTE
+
+This function is meant for `objects` that map directly to graphical output (files), not plot
+elements.
+
+The `print_tex(sink::Sink, object; standalone)` method should be defined for objects,
+methods called with other argument types will call this one.
 """
+print_tex(io::IO, object; standalone = false) = print_tex(PGF.sink(io), object; standalone)
+
 function print_tex(filename::AbstractString, object; standalone::Bool = false)
     open(filename, "w") do io
         print_tex(io, object; standalone)
@@ -71,12 +81,12 @@ struct Canvas
     end
 end
 
-function print_tex(io::IO, canvas::Canvas; standalone::Bool = false)
+function print_tex(sink::PGF.Sink, canvas::Canvas; standalone::Bool = false)
     (; content, width, height) = canvas
     _canvas = PGF.canvas(width, height)
-    PGF.preamble(io, _canvas; standalone)
-    PGF.render(io, _canvas, content)
-    PGF.postamble(io; standalone)
+    PGF.preamble(sink, _canvas; standalone)
+    PGF.render(sink, _canvas, content)
+    PGF.postamble(sink; standalone)
 end
 
 @declare_showable Canvas

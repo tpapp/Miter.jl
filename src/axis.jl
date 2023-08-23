@@ -121,7 +121,7 @@ function coordinate_to_unit(finalized_axis::FinalizedLinear, x::Real)
     (x - min) / (max - min)
 end
 
-function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; orientation)
+function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, axis::FinalizedLinear; orientation)
     is_x = orientation == :x
     !is_x && @argcheck orientation == :y "orientation has to be :x or :y"
     (; interval, ticks, style, axis_label) = axis
@@ -133,14 +133,14 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, axis::FinalizedLinear; ori
     y1 = y_top_edge - line_gap  # line, tick start
     y2 = y1 - tick_length       # tick end
     y3 = y2 - tick_label_gap    # tick labels start here
-    set_line_style(io, width = line_width, color = line_color, dash = LINE_SOLID)
-    PGF.segment(io, _point(a, y1), _point(b, y1))
+    set_line_style(sink, width = line_width, color = line_color, dash = LINE_SOLID)
+    PGF.segment(sink, _point(a, y1), _point(b, y1))
     for (pos, label) in ticks
         x = unit_to_canvas(a, b, coordinate_to_unit(axis, pos))
-        PGF.segment(io, _point(x, y1), _point(x, y2))
-        PGF.text(io, _point(x, y3), label; top = is_x, right = !is_x)
+        PGF.segment(sink, _point(x, y1), _point(x, y2))
+        PGF.text(sink, _point(x, y3), label; top = is_x, right = !is_x)
     end
-    PGF.text(io, _point((a + b) / 2, y_bottom_edge + axis_label_gap), axis_label;
+    PGF.text(sink, _point((a + b) / 2, y_bottom_edge + axis_label_gap), axis_label;
              bottom = is_x, top = !is_x, rotate = !is_x * 90)
 end
 

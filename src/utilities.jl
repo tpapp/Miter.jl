@@ -58,20 +58,20 @@ function dummy(label::AbstractString; color = reinterpret(RGB24, (hash(label) % 
     Dummy(label, RGB24(color), margin)
 end
 
-function PGF.render(io::IO, rectangle::Miter.PGF.Rectangle, d::Dummy)
+function PGF.render(sink::PGF.Sink, rectangle::Miter.PGF.Rectangle, d::Dummy)
     (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle
-    PGF.setfillcolor(io, color)
-    PGF.path(io, rectangle)
-    PGF.usepathqfill(io)
+    PGF.setfillcolor(sink, color)
+    PGF.path(sink, rectangle)
+    PGF.usepathqfill(sink)
     # inner
-    PGF.setfillcolor(io, RGB(1, 1, 1))
-    PGF.path(io, PGF.Rectangle(; top = top - margin, bottom = bottom + margin,
+    PGF.setfillcolor(sink, RGB(1, 1, 1))
+    PGF.path(sink, PGF.Rectangle(; top = top - margin, bottom = bottom + margin,
                                left = left + margin, right = right - margin))
-    PGF.usepathqfill(io)
+    PGF.usepathqfill(sink)
     # text
-    PGF.text(io, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
+    PGF.text(sink, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
 end
 
 Canvas(Tableau([dummy("$(x), $(y)") for x in 1:3, y in 1:4]), width = 100mm, height = 100mm)
