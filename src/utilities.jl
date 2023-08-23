@@ -58,7 +58,7 @@ function dummy(label::AbstractString; color = reinterpret(RGB24, (hash(label) % 
     Dummy(label, RGB24(color), margin)
 end
 
-function PGF.render(io::IO, rectangle::Miter.PGF.Rectangle, d::Dummy)
+function PGF.render(sink::PGF.Sink, rectangle::Miter.PGF.Rectangle, d::Dummy)
     (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle

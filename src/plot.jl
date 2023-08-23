@@ -36,7 +36,7 @@ Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 @declare_showable Plot
 
-function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
+function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
     grid = PGF.split_matrix(rectangle,
@@ -50,11 +50,11 @@ function PGF.render(io::IO, rectangle::PGF.Rectangle, plot::Plot)
     @argcheck y_interval ≢ ∅ "empty y range"
     finalized_x_axis = Axis.finalize(x_axis, x_interval)
     finalized_y_axis = Axis.finalize(y_axis, y_interval)
-    PGF.render(io, x_axis_rectangle, finalized_x_axis; orientation = :x)
-    PGF.render(io, y_axis_rectangle, finalized_y_axis; orientation = :y)
+    PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
+    PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = Axis.DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
     for c in contents
-        PGF.render(io, drawing_area, c)
+        PGF.render(sink, drawing_area, c)
     end
 end
 
@@ -80,20 +80,20 @@ end
 
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
 
-function PGF.render(io::IO, rectangle::PGF.Rectangle, tableau::Tableau)
+function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau
     grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
     for (subrectangle, subplot) in zip(grid, contents)
-        PGF.render(io, subrectangle, subplot)
+        PGF.render(sink, subrectangle, subplot)
     end
 end
 
-function print_tex(io::IO, tableau::Tableau; standalone::Bool = false)
+function print_tex(sink::PGF.Sink, tableau::Tableau; standalone::Bool = false)
     x_n, y_n = size(tableau.contents)
     canvas = Canvas(tableau;
                          width = x_n * DEFAULTS.canvas_width,
                          height = y_n * DEFAULTS.canvas_height)
-    print_tex(io, canvas; standalone)
+    print_tex(sink, canvas; standalone)
 end
 
 ####
@@ -116,7 +116,7 @@ end
 
 bounds_xy(::Phantom) = (∅, ∅)
 
-function PGF.render(io::IO, drawing_area::DrawingArea, phantom::Phantom)
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
     PGF.render(io, drawing_area, phantom.object)
 end
 
@@ -152,17 +152,17 @@ end
 
 bounds_xy(lines::Lines) = coordinate_bounds(lines.coordinates)
 
-function PGF.render(io::IO, drawing_area::DrawingArea, lines::Lines)
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
     peeled = Iterators.peel(coordinates)
     peeled ≡ nothing && return
-    set_line_style(io; color, width = line_width, dash)
+    set_line_style(sink; color, width = line_width, dash)
     c1, cR = peeled
-    PGF.pathmoveto(io, coordinates_to_point(drawing_area, c1))
+    PGF.pathmoveto(sink, coordinates_to_point(drawing_area, c1))
     for c in cR
-        PGF.pathlineto(io, coordinates_to_point(drawing_area, c))
+        PGF.pathlineto(sink, coordinates_to_point(drawing_area, c))
     end
-    PGF.usepathqstroke(io)
+    PGF.usepathqstroke(sink)
 end
 
 struct Scatter
@@ -182,17 +182,17 @@ end
 
 bounds_xy(scatter::Scatter) = coordinate_bounds(scatter.coordinates)
 
-function PGF.render(io::IO, drawing_area::DrawingArea, scatter::Scatter)
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; coordinates, line_width, color, kind, size) = scatter
-    PGF.setlinewidth(io, line_width)
-    PGF.setstrokecolor(io, color)
+    PGF.setlinewidth(sink, line_width)
+    PGF.setstrokecolor(sink, color)
     for c in coordinates
-        PGF.mark(io, Val(kind), coordinates_to_point(drawing_area, c), size)
+        PGF.mark(sink, Val(kind), coordinates_to_point(drawing_area, c), size)
     end
 end
 
-function print_tex(io::IO, plot::Plot; standalone::Bool = false)
-    print_tex(io, Canvas(plot); standalone)
+function print_tex(sink::PGF.Sink, plot::Plot; standalone::Bool = false)
+    print_tex(sink, Canvas(plot); standalone)
 end
 
 
@@ -215,7 +215,7 @@ end
 
 bounds_xy(hline::Hline) = (∅, Interval(hline.y))
 
-function PGF.render(io::IO, drawing_area::DrawingArea, hline::Hline)
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     (; y, color, width, dash) = hline
     (; left, right) = drawing_area.rectangle
     y_c = y_coordinate_to_canvas(drawing_area, y)
