@@ -55,9 +55,33 @@ Convert to `LENGTH`, ensuring an inferrable type.
 ### colors
 ###
 
-const BLACK = RGB(0.0, 0.0, 0.0)
+"""
+The color representation used by the PGF backend. All colors are converted to this before
+being used.
+"""
+const COLOR = RGB{Float64}
 
-const GRAY = RGB(0.5, 0.5, 0.5)
+const BLACK::COLOR = RGB(0.0, 0.0, 0.0)
+
+const GRAY::COLOR = RGB(0.5, 0.5, 0.5)
+
+####
+#### dash
+####
+
+struct Dash
+    dimensions::Vector{LENGTH}
+    offset::LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
+    """
+    function Dash(dimensions...; offset = LENGTH0)
+        @argcheck iseven(length(dimensions)) "Dashes need an even number of dimensions."
+        new([(l = _length(d); @argcheck is_positive(l); l) for d in dimensions], _length(offset))
+    end
+end
 
 ####
 #### sink interface
@@ -65,12 +89,22 @@ const GRAY = RGB(0.5, 0.5, 0.5)
 
 Base.@kwdef mutable struct Sink{T}
     io::T
+    "last line width set"
+    line_width::Union{Nothing,LENGTH} = nothing
+    "last stroke color set"
+    stroke_color::Union{Nothing,COLOR} = nothing
+    "last fill color set"
+    fill_color::Union{Nothing,COLOR} = nothing
+    "last dash set"
+    dash::Union{Nothing,Dash} = nothing
 end
 
 """
 $(SIGNATURES)
 
 Wrap an `io` in a `Sink` for outputting PGF primitives.
+
+A `Sink` records various drawing properties, so it can omit superfluous set commands.
 """
 sink(io::IO) = Sink(; io = io)
 
@@ -92,7 +126,7 @@ _print(sink::Sink, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(si
 
 _print(sink::Sink, x::LENGTH) = @printf(sink.io, "%fbp", ustrip(mm, x) * (72 / 25.4))
 
-function _print(sink::Sink, color::AbstractRGB)
+function _print(sink::Sink, color::COLOR)
     _print(sink, "rgb,1:red,", Float64(red(color)),
            ";green,", Float64(green(color)),
            ";blue,", Float64(blue(color)))
@@ -109,20 +143,47 @@ Translate a symbol to a pgf command name string.
 """
 _pgfcommand(s::Symbol) = "\\pgf" * string(s)
 
-for command in (:setfillcolor, :setstrokecolor, :setcolor)
-    @eval function $command(sink::Sink, color)
-        _println(sink, $(_pgfcommand(command)), '{', color, '}')
+function setfillcolor(sink::Sink, color::COLOR)
+    if sink.fill_color ≠ color
+        sink.fill_color = color
+        _println(sink, raw"\pgfsetfillcolor{", color, "}")
     end
 end
+
+setfillcolor(sink::Sink, color::AbstractRGB) = setfillcolor(sink, COLOR(color))
+
+function setstrokecolor(sink::Sink, color::COLOR)
+    if sink.stroke_color ≠ color
+        sink.stroke_color = color
+        _println(sink, raw"\pgfsetstrokecolor{", color, "}")
+    end
+end
+
+setstrokecolor(sink::Sink, color::AbstractRGB) = setstrokecolor(sink, COLOR(color))
+
+function setcolor(sink::Sink, color::COLOR)
+    if !(sink.stroke_color == color == sink.fill_color)
+        sink.fill_color = color
+        sink.stroke_color = color
+        _println(sink, raw"\pgfsetcolor{", color, "}")
+    end
+end
+
+setcolor(sink::Sink, color::AbstractRGB) = setcolor(sink, COLOR(color))
 
 """
 $(SIGNATURES)
 
 Set line width, converting to `mm` if necessary.
 """
-function setlinewidth(sink::Sink, line_width)
-    _print(sink, raw"\pgfsetlinewidth{", LENGTH(line_width), "}")
+function setlinewidth(sink::Sink, line_width::LENGTH)
+    if sink.line_width ≠ line_width
+        sink.line_width = line_width
+        _print(sink, raw"\pgfsetlinewidth{", line_width, "}")
+    end
 end
+
+setlinewidth(sink::Sink, line_width) = setlinewidth(sink, _length(line_width))
 
 ####
 #### points
@@ -517,33 +578,16 @@ function mark(sink::Sink, ::Val{:o}, at::Point, size::LENGTH)
     pathqstroke(sink)
 end
 
-####
-#### dash
-####
-
-struct Dash{N}
-    dimensions::NTuple{N,LENGTH}
-    offset::LENGTH
-    @doc """
-    $(SIGNATURES)
-
-    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
-    """
-    function Dash(dimensions::Vararg{LENGTH,N}; offset::LENGTH = LENGTH0) where N
-        @argcheck iseven(N) "Dashes need an even number of dimensions."
-        new{N}(dimensions, offset)
-    end
-end
-
-Dash(dimensions...; offset = LENGTH0) = Dash(map(_length, dimensions)...; offset)
-
 function setdash(sink::Sink, dash::Dash)
-    (; dimensions, offset) = dash
-    _print(sink, raw"\pgfsetdash{")
-    for d in dimensions
-        _print(sink, '{', d, '}')
+    if sink.dash ≠ dash
+        sink.dash = dash
+        (; dimensions, offset) = dash
+        _print(sink, raw"\pgfsetdash{")
+        for d in dimensions
+            _print(sink, '{', d, '}')
+        end
+        _print(sink, "}{", offset, "}")
     end
-    _print(sink, "}{", offset, "}")
 end
 
 end
