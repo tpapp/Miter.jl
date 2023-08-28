@@ -347,16 +347,34 @@ Put \$'s around the string, and wrap in `LaTeX`, to pass directly.
 """
 math(str::AbstractString) = LaTeX("\$" * str * "\$")
 
-_print_escaped(sink::Sink, str::LaTeX) = print(sink.io, str.latex)
+"""
+$(SIGNATURES)
+
+Enclose `str` in `\$`s and indicate that it is to be treated as (valid, self-contained) LaTeX
+code.
+"""
+macro math_str(str)
+    PGF.math(str)
+end
 
 """
 $(SIGNATURES)
 
-Outputs a version of `str` to `sink` so that special characters (in LaTeX) are escaped to
+Indicate the argument is to be treated as (valid, self-contained) LaTeX code.
+"""
+macro latex_str(str)
+    PGF.LaTeX(str)
+end
+
+_print_escaped(io::IO, str::LaTeX) = print(io, str.latex)
+
+"""
+$(SIGNATURES)
+
+Outputs a version of `str` to `io` so that special characters (in LaTeX) are escaped to
 produce the expected output.
 """
-function _print_escaped(sink::Sink, str::AbstractString)
-    (; io) = sink
+function _print_escaped(io::IO, str::AbstractString)
     for c in str
         if c == '\\'
             print(io, raw"\textbackslash")
@@ -373,14 +391,23 @@ const STRINGS = Union{AbstractString,LaTeX}
 """
 $(SIGNATURES)
 
+Check alignment args of `PGF.text`, provide a sensible error message.
+"""
+function _check_text_alignment(; top, bottom, base, left, right)
+    @argcheck top + bottom + base ≤ 1
+    @argcheck left + right ≤ 1
+end
+
+"""
+$(SIGNATURES)
+
 Text output.
 """
 function text(sink::Sink, at::Point, str::STRINGS;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false, base::Bool = false,
               rotate = 0)
-    @argcheck top + bottom + base ≤ 1
-    @argcheck left + right ≤ 1
+    _check_text_alignment(; top, bottom, base, left, right)
     (; x, y) = at
     _print(sink, raw"\pgftext[x=", x, ",y=", y)
     left && _print(sink, ",left")
@@ -390,9 +417,25 @@ function text(sink::Sink, at::Point, str::STRINGS;
     base && _print(sink, ",base")
     iszero(rotate) || _print(sink, ",rotate=", rotate)
     _print(sink, "]{")
-    _print_escaped(sink, str)
+    _print_escaped(sink.io, str)
     _println(sink, "}")
 end
+
+"""
+$(SIGNATURES)
+
+Wrap text (`LaTeX`, or plain text) in the LaTeX command that makes it have the given `color`.
+"""
+function textcolor(color::COLOR, text)
+    io = IOBuffer()
+    print(io, raw"\textcolor[rgb]{", Float64(red(color)), ",", Float64(green(color)), ",",
+          Float64(blue(color)), "}{")
+    _print_escaped(io, text)
+    print(io, "}")
+    LaTeX(String(take!(io)))
+end
+
+textcolor(color::AbstractRGB, text) = textcolor(COLOR(color), text)
 
 ####
 #### splitting

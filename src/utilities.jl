@@ -1,5 +1,10 @@
 export balanced_rectangle
 
+####
+#### arrangement
+####
+
+
 """
 $(SIGNATURES)
 
@@ -73,5 +78,3 @@ function PGF.render(sink::PGF.Sink, rectangle::Miter.PGF.Rectangle, d::Dummy)
     # text
     PGF.text(sink, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
 end
-
-Canvas(Tableau([dummy("$(x), $(y)") for x in 1:3, y in 1:4]), width = 100mm, height = 100mm)
