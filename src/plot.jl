@@ -206,6 +206,13 @@ struct Scatter
     color
     kind::Symbol
     size::PGF.LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    # Mark kinds
+
+    $(PGF.MARK_KINDS)
+    """
     function Scatter(coordinates; line_width = 0.3mm, color = PGF.BLACK, kind = :+, size = 2mm)
         line_width = PGF._length(line_width)
         size = PGF._length(size)
@@ -220,7 +227,7 @@ bounds_xy(scatter::Scatter) = coordinate_bounds(scatter.coordinates)
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; coordinates, line_width, color, kind, size) = scatter
     PGF.setlinewidth(sink, line_width)
-    PGF.setstrokecolor(sink, color)
+    PGF.setcolor(sink, color)
     for c in coordinates
         PGF.mark(sink, Val(kind), coordinates_to_point(drawing_area, c), size)
     end

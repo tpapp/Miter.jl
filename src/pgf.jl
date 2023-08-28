@@ -617,9 +617,22 @@ end
 
 function mark(sink::Sink, ::Val{:o}, at::Point, size::LENGTH)
     @argcheck is_positive(size)
-    pathcircle(sink, at(x - h, y), Point(x + h, y), size / 2)
-    pathqstroke(sink)
+    pathcircle(sink, at, size / 2)
+    usepathqstroke(sink)
 end
+
+function mark(sink::Sink, ::Val{:*}, at::Point, size::LENGTH)
+    @argcheck is_positive(size)
+    pathcircle(sink, at, size / 2)
+    usepathqfill(sink)
+end
+
+"A table of built-in marks."
+const MARK_KINDS = """
+- `:+` a horizontal and a vertical line crossing
+- `:o` a hollow circle
+- `:*` a filled circle
+"""
 
 function setdash(sink::Sink, dash::Dash)
     if sink.dash ≠ dash

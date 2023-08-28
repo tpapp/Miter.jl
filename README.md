@@ -18,10 +18,12 @@ It can currently output plots as `pdf`, `svg`, `tex` (standalone file) and `tikz
 
 A closely related package is [PGFPlotsX.jl](https://github.com/KristofferC/PGFPlotsX.jl). The table below compares them, planned features are in *italics*.
 
-| PGFPlotsX.jl                                     | Miter.jl                                                                                               |
-|--------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| uses `pgfplots`                                  | uses the basic layer primitives of `pgf`, doing calculations in Julia whenever possible, may be faster |
-| options and syntax can match `pgfplots` closely  | not related to `pgfplots` in any way, uses only Julia syntax                                           |
-| needs a local LaTeX installation, `pdf2svg`, etc | uses binaries from jlls (*planned: optionally uses local installation*)                                |
-| strings passed through as is                     | special chars in strings (`#`, `$`, ...) escaped by default, use `math` or `latex`                     |
+| PGFPlotsX.jl                                             | Miter.jl                                                                                               |
+|----------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| uses `pgfplots`                                          | uses the basic layer primitives of `pgf`, doing calculations in Julia whenever possible, may be faster |
+| options and syntax can match `pgfplots` closely          | not related to `pgfplots` in any way, uses only Julia syntax                                           |
+| units passed as text strings                             | uses [Unitful.jl](https://painterqubits.github.io/Unitful.jl/stable/) for units                        |
+| colors need to be expanded to text strings in some cases | uses [ColorTypes.jl](https://github.com/JuliaGraphics/ColorTypes.jl) for colors                        |
+| needs a local LaTeX installation, `pdf2svg`, etc         | uses binaries from jlls (*planned: optionally uses local installation*)                                |
+| strings passed through as is                             | special chars in strings (`#`, `$`, ...) escaped by default, use `math` or `latex`                     |
 

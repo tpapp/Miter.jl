@@ -42,6 +42,17 @@ let c = colorant"teal",
 end
 ```
 
+Various kinds of marks.
+
+```@example all
+using Miter, Colors
+let x = range(0, 1; length = 21)
+    Plot(Scatter((x, 0.2 * x) for x in x; color = colorant"firebrick", kind = :+),
+         Scatter((x, 0.1 + abs2(x)) for x in x; color = colorant"olive", kind = :*),
+         Scatter((x, -x + abs2(x) - 0.1) for x in x; color = colorant"teal", kind = :o))
+end
+```
+
 ### Tableaus
 
 ```@example all
