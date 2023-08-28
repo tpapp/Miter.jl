@@ -2,15 +2,22 @@
 #### plot
 ####
 
+module Plots
+
 export Plot, Tableau, Phantom, Lines, Scatter, Hline, Annotation
 
 using ArgCheck: @argcheck
-using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds
+using DocStringExtensions: SIGNATURES
+using Unitful: mm
+
+using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds,
+    finalize
 import ..Axis: bounds_xy
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..Output: @declare_showable
+import ..Output: print_tex, Canvas
 using ..PGF
-using Unitful: mm
 
 ####
 #### input conversions
@@ -65,14 +72,14 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
-    x_interval, y_interval = Axis.bounds_xy(contents)
+    x_interval, y_interval = bounds_xy(contents)
     @argcheck x_interval ≢ ∅ "empty x range"
     @argcheck y_interval ≢ ∅ "empty y range"
-    finalized_x_axis = Axis.finalize(x_axis, x_interval)
-    finalized_y_axis = Axis.finalize(y_axis, y_interval)
+    finalized_x_axis = finalize(x_axis, x_interval)
+    finalized_y_axis = finalize(y_axis, y_interval)
     PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
     PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
-    drawing_area = Axis.DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
+    drawing_area = DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
     for c in contents
         PGF.render(sink, drawing_area, c)
     end
@@ -229,7 +236,7 @@ end
 
 struct Hline
     y::Real
-    color::RGB
+    color::PGF.COLOR
     width::PGF.LENGTH
     dash::PGF.Dash
     @doc """
@@ -290,4 +297,6 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, text::Annotation)
     (; x, y, text, top, bottom, base, left, right, rotate) = text
     PGF.text(sink, coordinates_to_point(drawing_area, (x, y)), text; top, bottom, base,
              left, right, rotate)
+end
+
 end

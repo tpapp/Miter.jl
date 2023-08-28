@@ -13,6 +13,7 @@ export nontrivial_linear_tick_alternatives, TickSelection, TickFormat, sensible_
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
+
 using ..Intervals
 using ..Styles: DEFAULTS
 using ..PGF

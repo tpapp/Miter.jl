@@ -1,4 +1,12 @@
+module Utilities
+
 export balanced_rectangle
+
+using ArgCheck: @argcheck
+using ColorTypes: RGB24
+using DocStringExtensions: SIGNATURES
+
+using ..PGF
 
 ####
 #### arrangement
@@ -47,7 +55,7 @@ Visual debugging, use [`dummy`](@ref) to create.
 """
 struct Dummy
     label::AbstractString
-    color::RGB24
+    color::PGF.COLOR
     margin::PGF.LENGTH
 end
 
@@ -60,10 +68,10 @@ label and the given color (derived from the hash by default, deterministic to th
 """
 function dummy(label::AbstractString; color = reinterpret(RGB24, (hash(label) % UInt32)),
                margin = 5mm)
-    Dummy(label, RGB24(color), margin)
+    Dummy(label, PGF.COLOR(color), margin)
 end
 
-function PGF.render(sink::PGF.Sink, rectangle::Miter.PGF.Rectangle, d::Dummy)
+function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, d::Dummy)
     (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle
@@ -77,4 +85,6 @@ function PGF.render(sink::PGF.Sink, rectangle::Miter.PGF.Rectangle, d::Dummy)
     PGF.usepathqfill(sink)
     # text
     PGF.text(sink, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
+end
+
 end
