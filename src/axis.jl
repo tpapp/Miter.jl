@@ -1,30 +1,28 @@
 """
 FIXME document
 
-# The user interface
-
-[`bounds`](@ref), [`Linear`](@ref)
-
-# Within-package API
-
-FIXME document
-
 """
 module Axis
 
 using ArgCheck: @argcheck
 using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
+using Unitful: mm
+
 import ..PGF
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
-using Unitful: mm
 
 ####
 #### Axis
 ####
 
+"""
+$(SIGNATURES)
+
+Helper function for univariate bounds, handling the empty case.
+"""
 bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, itr)...)
 
 """

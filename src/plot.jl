@@ -2,15 +2,42 @@
 #### plot
 ####
 
-export Plot, Tableau, Phantom, Lines, Scatter, Hline
+module Plots
+
+export Plot, Tableau, Phantom, Lines, Scatter, Hline, Annotation
 
 using ArgCheck: @argcheck
-using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds
+using DocStringExtensions: SIGNATURES
+using Unitful: mm
+
+using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds,
+    finalize
 import ..Axis: bounds_xy
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..Output: @declare_showable
+import ..Output: print_tex, Canvas
 using ..PGF
-using Unitful: mm
+
+####
+#### input conversions
+####
+
+ensure_vector(v::AbstractVector) = v
+
+ensure_vector(v) = collect(v)::AbstractVector
+
+function float64_xy(xy)
+    @argcheck length(xy) == 2
+    x, y = Float64.(xy)
+    @argcheck isfinite(x)
+    @argcheck isfinite(y)
+    x, y
+end
+
+####
+#### plot styles
+####
 
 Base.@kwdef struct PlotStyle
     axis_left::PGF.LENGTH = DEFAULTS.plot_style_axis_left
@@ -45,14 +72,14 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
-    x_interval, y_interval = Axis.bounds_xy(contents)
+    x_interval, y_interval = bounds_xy(contents)
     @argcheck x_interval ≢ ∅ "empty x range"
     @argcheck y_interval ≢ ∅ "empty y range"
-    finalized_x_axis = Axis.finalize(x_axis, x_interval)
-    finalized_y_axis = Axis.finalize(y_axis, y_interval)
+    finalized_x_axis = finalize(x_axis, x_interval)
+    finalized_y_axis = finalize(y_axis, y_interval)
     PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
     PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
-    drawing_area = Axis.DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
+    drawing_area = DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
     for c in contents
         PGF.render(sink, drawing_area, c)
     end
@@ -134,6 +161,10 @@ function coordinate_bounds(coordinates)
     (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
 end
 
+###
+### Lines
+###
+
 struct Lines
     coordinates
     line_width::PGF.LENGTH
@@ -146,7 +177,7 @@ struct Lines
                    color = DEFAULTS.line_color, dash::PGF.Dash = LINE_SOLID)
         line_width = PGF._length(line_width)
         @argcheck PGF.is_positive(line_width)
-        new(coordinates, line_width, color, dash)
+        new(ensure_vector(coordinates), line_width, color, dash)
     end
 end
 
@@ -165,6 +196,10 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
     PGF.usepathqstroke(sink)
 end
 
+###
+### Scatter
+###
+
 struct Scatter
     coordinates
     line_width::PGF.LENGTH
@@ -176,7 +211,7 @@ struct Scatter
         size = PGF._length(size)
         @argcheck PGF.is_positive(line_width)
         @argcheck PGF.is_positive(size)
-        new(coordinates, line_width, color, kind, size)
+        new(ensure_vector(coordinates), line_width, color, kind, size)
     end
 end
 
@@ -195,10 +230,13 @@ function print_tex(sink::PGF.Sink, plot::Plot; standalone::Bool = false)
     print_tex(sink, Canvas(plot); standalone)
 end
 
+###
+### Hline
+###
 
 struct Hline
     y::Real
-    color::RGB
+    color::PGF.COLOR
     width::PGF.LENGTH
     dash::PGF.Dash
     @doc """
@@ -223,4 +261,42 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     PGF.pathmoveto(sink, PGF.Point(left, y_c))
     PGF.pathlineto(sink, PGF.Point(right, y_c))
     PGF.usepathqstroke(sink)
+end
+
+###
+### Annotation
+###
+
+struct Annotation
+    x::Float64
+    y::Float64
+    text::Union{AbstractString,PGF.LaTeX}
+    top::Bool
+    bottom::Bool
+    base::Bool
+    left::Bool
+    right::Bool
+    rotate::Float64
+    @doc """
+    $(SIGNATURES)
+
+    Place `text` (a `LaTeX` or `AbstractString`) at the given coordinates, using the
+    specified alignment and rotation. See also [`PGF.textcolor`](@ref).
+    """
+    function Annotation(at, text; left::Bool = false, right::Bool = false, top::Bool = false,
+                        bottom::Bool = false, base::Bool = false, rotate::Real = 0)
+        PGF._check_text_alignment(; left, right, top, bottom, base)
+        x, y = float64_xy(at)
+        new(x, y, text, top, bottom, base, left, right, Float64(rotate))
+    end
+end
+
+bounds_xy(text::Annotation) = (Interval(text.x), Interval(text.y))
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, text::Annotation)
+    (; x, y, text, top, bottom, base, left, right, rotate) = text
+    PGF.text(sink, coordinates_to_point(drawing_area, (x, y)), text; top, bottom, base,
+             left, right, rotate)
+end
+
 end

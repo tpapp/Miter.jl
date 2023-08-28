@@ -31,6 +31,17 @@ Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 
      Hline(0.0))
 ```
 
+Annotations.
+
+```@example all
+let c = colorant"teal",
+    xy = collect((x,  0.5 * x + 0.1 * randn()) for x in range(-1, 1; length = 30))
+    Plot(Scatter(xy; color = c),
+         Annotation((0, 0.3), textcolor(c, latex"random dots $y = 0.5\cdot x + N(0, 0.1)$");
+                    rotate = 30))
+end
+```
+
 ### Tableaus
 
 ```@example all

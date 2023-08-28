@@ -1,8 +1,13 @@
-using ..PGF
-using ..Styles: DEFAULTS
-using Unitful: mm
+module Output
 
 export Canvas
+
+using DocStringExtensions: SIGNATURES
+using Unitful: mm
+
+using ..Compile
+using ..PGF
+using ..Styles: DEFAULTS
 
 """
 $(SIGNATURES)
@@ -41,7 +46,7 @@ $(SIGNATURES)
 Define a graphical `Base.show` method for type `T`.
 """
 macro declare_showable(T)
-    :(Base.show(io::IO, ::MIME"image/svg+xml", object::$T) = _show_as_svg(io, object))
+    :(Base.show(io::IO, ::MIME"image/svg+xml", object::$(esc(T))) = _show_as_svg(io, object))
 end
 
 """
@@ -90,3 +95,5 @@ function print_tex(sink::PGF.Sink, canvas::Canvas; standalone::Bool = false)
 end
 
 @declare_showable Canvas
+
+end
