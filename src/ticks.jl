@@ -29,7 +29,7 @@ function closest_multiple(n::Integer, k::Integer, down::Bool)
     if r == 0
         m, n
     elseif down
-        m - 1, n - r
+        m, n - r
     else
         m + 1, n - r + k
     end
