@@ -89,7 +89,7 @@ end
         [ShiftedDecimals(-21:1:73, -1),
          ShiftedDecimals(-20:2:72, -1),
          ShiftedDecimals(-20:5:70, -1),
-         ShiftedDecimals(-2:1:6, 0),
+         ShiftedDecimals(-2:1:7, 0),
          ShiftedDecimals(-2:2:6, 0),
          ShiftedDecimals(0:5:5, 0)]
 
