@@ -15,6 +15,8 @@ FIXME document it
 """
 module PGF
 
+export textcolor, @math_str, @latex_str, LaTeX
+
 using ArgCheck: @argcheck
 using ColorTypes: AbstractRGB, red, green, blue, RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES

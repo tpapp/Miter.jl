@@ -19,7 +19,7 @@ include("utilities.jl")
 
 using Reexport: @reexport
 
-@reexport using .PGF: textcolor, @math_str, @latex_str
+@reexport using .PGF
 @reexport using .Plots
 @reexport using .Output
 @reexport using .Utilities
