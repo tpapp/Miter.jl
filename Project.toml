@@ -1,7 +1,7 @@
 name = "Miter"
 uuid = "e2c39885-2134-4813-a274-cbd32ca8996e"
 authors = ["Tamás K. Papp <tkpapp@gmail.com>"]
-version = "0.4.0"
+version = "0.5.0"
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
