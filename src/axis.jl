@@ -98,20 +98,20 @@ Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
-    axis_label::PGF.STRINGS = ""
+    label::PGF.STRINGS = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
     interval::Interval
     ticks::TT
     style::Style
-    axis_label::PGF.STRINGS = ""
+    label::PGF.STRINGS = ""
 end
 
 function finalize(axis::Linear, interval::Interval)
-    (; tick_selection, tick_format, style, axis_label) = axis
+    (; tick_selection, tick_format, style, label) = axis
     ticks = sensible_linear_ticks(interval, tick_format, tick_selection)
-    FinalizedLinear(; interval, ticks, style, axis_label)
+    FinalizedLinear(; interval, ticks, style, label)
 end
 
 function coordinate_to_unit(finalized_axis::FinalizedLinear, x::Real)
@@ -122,7 +122,7 @@ end
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, axis::FinalizedLinear; orientation)
     is_x = orientation == :x
     !is_x && @argcheck orientation == :y "orientation has to be :x or :y"
-    (; interval, ticks, style, axis_label) = axis
+    (; interval, ticks, style, label) = axis
     _point(x, y) = is_x ? PGF.Point(x, y) : PGF.Point(y, x)
     (; line_gap, line_width, line_color, tick_length, tick_label_gap, axis_label_gap) = style
     a = is_x ? rectangle.left :  rectangle.bottom
@@ -138,7 +138,7 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, axis::FinalizedLin
         PGF.segment(sink, _point(x, y1), _point(x, y2))
         PGF.text(sink, _point(x, y3), label; top = is_x, right = !is_x)
     end
-    PGF.text(sink, _point((a + b) / 2, y_bottom_edge + axis_label_gap), axis_label;
+    PGF.text(sink, _point((a + b) / 2, y_bottom_edge + axis_label_gap), label;
              bottom = is_x, top = !is_x, rotate = !is_x * 90)
 end
 

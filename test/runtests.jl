@@ -134,8 +134,8 @@ end
     L = Lines((x, abs2(x)) for x in -1:0.1:1)
     S = Scatter((x, (x + 1) / 2) for x in -1:0.1:1)
 
-    plot = Plot(L, S; x_axis = Axis.Linear(; axis_label = math"x"),
-                y_axis = Axis.Linear(; axis_label = math"y"))
+    plot = Plot(L, S; x_axis = Axis.Linear(; label = math"x"),
+                y_axis = Axis.Linear(; label = math"y"))
 
     let filename = tempname() * ".pdf"
         Miter.save(filename, plot)
