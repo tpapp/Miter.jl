@@ -3,8 +3,9 @@ module Utilities
 export balanced_rectangle
 
 using ArgCheck: @argcheck
-using ColorTypes: RGB24
+using ColorTypes: RGB24, Gray
 using DocStringExtensions: SIGNATURES
+using Unitful: mm
 
 using ..PGF
 
@@ -79,7 +80,7 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, d::Dummy)
     PGF.path(sink, rectangle)
     PGF.usepathqfill(sink)
     # inner
-    PGF.setfillcolor(sink, RGB(1, 1, 1))
+    PGF.setfillcolor(sink, Gray(1))
     PGF.path(sink, PGF.Rectangle(; top = top - margin, bottom = bottom + margin,
                                left = left + margin, right = right - margin))
     PGF.usepathqfill(sink)

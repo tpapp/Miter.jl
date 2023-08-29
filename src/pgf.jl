@@ -18,7 +18,7 @@ module PGF
 export textcolor, @math_str, @latex_str, LaTeX
 
 using ArgCheck: @argcheck
-using ColorTypes: AbstractRGB, red, green, blue, RGB
+using ColorTypes: Colorant, red, green, blue, RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using StaticArrays: SVector, SMatrix
 using Printf: @printf
@@ -152,7 +152,7 @@ function setfillcolor(sink::Sink, color::COLOR)
     end
 end
 
-setfillcolor(sink::Sink, color::AbstractRGB) = setfillcolor(sink, COLOR(color))
+setfillcolor(sink::Sink, color::Colorant) = setfillcolor(sink, COLOR(color))
 
 function setstrokecolor(sink::Sink, color::COLOR)
     if sink.stroke_color ≠ color
@@ -161,7 +161,7 @@ function setstrokecolor(sink::Sink, color::COLOR)
     end
 end
 
-setstrokecolor(sink::Sink, color::AbstractRGB) = setstrokecolor(sink, COLOR(color))
+setstrokecolor(sink::Sink, color::Colorant) = setstrokecolor(sink, COLOR(color))
 
 function setcolor(sink::Sink, color::COLOR)
     if !(sink.stroke_color == color == sink.fill_color)
@@ -171,7 +171,7 @@ function setcolor(sink::Sink, color::COLOR)
     end
 end
 
-setcolor(sink::Sink, color::AbstractRGB) = setcolor(sink, COLOR(color))
+setcolor(sink::Sink, color::Colorant) = setcolor(sink, COLOR(color))
 
 """
 $(SIGNATURES)
@@ -437,7 +437,7 @@ function textcolor(color::COLOR, text)
     LaTeX(String(take!(io)))
 end
 
-textcolor(color::AbstractRGB, text) = textcolor(COLOR(color), text)
+textcolor(color::Colorant, text) = textcolor(COLOR(color), text)
 
 ####
 #### splitting
