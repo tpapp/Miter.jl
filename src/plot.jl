@@ -4,14 +4,14 @@
 
 module Plots
 
-export Plot, Tableau, Phantom, Lines, Scatter, Hline, Annotation
+export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
 using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds,
-    finalize
+    finalize, FinalizedLinear
 import ..Axis: bounds_xy
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
@@ -53,6 +53,11 @@ struct Plot
     style
     @doc """
     $(SIGNATURES)
+
+    Create a plot with the given `contents` (a vector, but a convenience form that accepts
+    multiple arguments is available).
+
+    Once created, `push!`, `pushfirst!`, and `append!` can be used to add elements.
     """
     function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
         new(Vector{Any}(contents), x_axis, y_axis, style)
@@ -62,6 +67,11 @@ end
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 @declare_showable Plot
+
+# NOTE when other similar structures are introduced we should make an abstract type
+Base.push!(plot::Plot, object) = push!(plot.contents, object)
+Base.pushfirst!(plot::Plot, object) = pushfirst!(plot.contents, object)
+Base.append!(plot::Plot, objects) = append!(plot.contents, objects)
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
@@ -228,6 +238,7 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; coordinates, line_width, color, kind, size) = scatter
     PGF.setlinewidth(sink, line_width)
     PGF.setcolor(sink, color)
+    PGF.setdash(sink, LINE_SOLID)
     for c in coordinates
         PGF.mark(sink, Val(kind), coordinates_to_point(drawing_area, c), size)
     end
@@ -251,8 +262,8 @@ struct Hline
 
     A horizontal line at `y` with the given parameters.
     """
-    function Hline(y::Real; phantom::Bool = false, color = PGF.GRAY,
-                   width = DEFAULTS.line_width / 2, dash = LINE_DASHED)
+    function Hline(y::Real; color = DEFAULTS.guide_color, width = DEFAULTS.guide_width,
+                   dash = DEFAULTS.guide_dash)
         @argcheck isfinite(y)
         new(y, PGF.COLOR(color), PGF._length(width), dash)
     end
@@ -267,6 +278,100 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     set_line_style(sink; color, width, dash)
     PGF.pathmoveto(sink, PGF.Point(left, y_c))
     PGF.pathlineto(sink, PGF.Point(right, y_c))
+    PGF.usepathqstroke(sink)
+end
+
+###
+### LineThrough
+###
+
+struct LineThrough
+    x::Float64
+    y::Float64
+    slope::Float64
+    color::PGF.COLOR
+    width::PGF.LENGTH
+    dash::PGF.Dash
+    @doc """
+    $(SIGNATURES)
+
+    A line through the given coordinates. Slope can be finite or ±Inf. Does not extend bounds.
+    """
+    function LineThrough(xy, slope::Real; color = DEFAULTS.guide_color,
+                         width = DEFAULTS.guide_width, dash = DEFAULTS.guide_dash)
+        x, y = float64_xy(xy)
+        slope = Float64(slope)
+        @argcheck isfinite(slope) || isinf(slope)
+        new(x, y, slope, color, width, dash)
+    end
+end
+
+bounds_xy(::LineThrough) = (∅, ∅)
+
+"""
+$(SIGNATURES)
+
+Return two points where `line_through` crosses the rectangle defined by intervals.
+"""
+function line_through_endpoints(line_through::LineThrough, x_interval::Interval,
+                                y_interval::Interval)
+    (; x, y, slope) = line_through
+    if slope == 0               # horizontal line
+        (x_interval.min, y), (x_interval.max, y)
+    elseif abs(slope) == Inf    # vertical line
+        (x, y_interval.min), (x, y_interval.max)
+    else
+        x1 = y1 = x2 = y2 = 0.0 # saved valid crossings
+        is_first = true
+        function _save(x, y)
+            # save coordinates, return `true` when two have been collected
+            if is_first
+                x1, y1 = x, y
+                is_first = false
+                false
+            else
+                x2, y2 = x, y
+                true
+            end
+        end
+        function _is_in(z, a)
+            # test if z ∈ a, but allow for numerical error
+            (; min, max) = a
+            tol = √eps(z) * (max - min)
+            min - tol ≤ z ≤ max + tol
+        end
+        function _find_x_crossing(ŷ)
+            # find the crossing of a horizontal line at `ŷ`, save when it is in bounds,
+            # return true when `_save` does
+            x̂ = (ŷ - y) / slope + x
+            _is_in(x̂, x_interval) && _save(x̂, ŷ)
+        end
+        function _find_y_crossing(x̂)
+            # same as _find_x_crossing, mutatis mutandis
+            ŷ = (x̂ - x) * slope + y
+            _is_in(ŷ, y_interval) && _save(x̂, ŷ)
+        end
+        if _find_x_crossing(y_interval.min) ||
+            _find_x_crossing(y_interval.max) ||
+            _find_y_crossing(x_interval.min) ||
+            _find_y_crossing(x_interval.max)
+            return (x1, y1), (x2, y2)
+        else
+            error("internal error: no valid crossing found, investigate numerical error")
+        end
+    end
+end
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, line_through::LineThrough)
+    (; finalized_x_axis, finalized_y_axis) = drawing_area
+    (; color, width, dash) = line_through
+    @argcheck(finalized_x_axis isa FinalizedLinear && finalized_y_axis isa FinalizedLinear,
+              "LineThrough only supported for linear axes.")
+    z1, z2 = line_through_endpoints(line_through, finalized_x_axis.interval,
+                                    finalized_y_axis.interval)
+    set_line_style(sink; color, width, dash)
+    PGF.pathmoveto(sink, coordinates_to_point(drawing_area, z1))
+    PGF.pathlineto(sink, coordinates_to_point(drawing_area, z2))
     PGF.usepathqstroke(sink)
 end
 

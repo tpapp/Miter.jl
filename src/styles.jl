@@ -8,7 +8,11 @@ using ColorTypes: RGB
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
-using ..PGF: LENGTH, PGF
+using ..PGF: LENGTH, COLOR, Dash, PGF
+
+const LINE_SOLID = Dash()
+
+const LINE_DASHED = Dash(2mm, 2mm)
 
 """
 
@@ -50,7 +54,13 @@ Base.@kwdef mutable struct Options
 
     # elements
     line_width::LENGTH = 0.3mm
-    line_color::RGB = PGF.BLACK
+    line_color::COLOR = PGF.BLACK
+    "width for guidelines"
+    guide_width::LENGTH = 0.15mm
+    "color for guidelines"
+    guide_color::COLOR = PGF.GRAY
+    "dash for guidelines"
+    guide_dash::Dash = LINE_DASHED
 
 end
 
@@ -72,9 +82,5 @@ function set_line_style(sink::PGF.Sink; color = nothing, width = nothing, dash =
     width ≢ nothing && PGF.setlinewidth(sink, width)
     dash ≢ nothing && PGF.setdash(sink, dash)
 end
-
-const LINE_SOLID = PGF.Dash()
-
-const LINE_DASHED = PGF.Dash(2mm, 2mm)
 
 end

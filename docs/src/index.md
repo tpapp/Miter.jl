@@ -53,6 +53,18 @@ let x = range(0, 1; length = 21)
 end
 ```
 
+Guidelines, adding plot elements with `push!`.
+
+```@example all
+let plot = Plot(Scatter((sin(α), cos(α)) for α in range(-π, π, length = 61); kind = :o,
+                            color = colorant"chocolate4"))
+    for θ in 0:30:150
+        pushfirst!(plot, LineThrough((0, 0), tand(θ)))
+    end
+plot
+end
+```
+
 ### Tableaus
 
 ```@example all
