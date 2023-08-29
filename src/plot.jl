@@ -323,6 +323,7 @@ function line_through_endpoints(line_through::LineThrough, x_interval::Interval,
     else
         x1 = y1 = x2 = y2 = 0.0 # saved valid crossings
         is_first = true
+        tol = max(x_interval.max - x_interval.min, y_interval.max - y_interval.min, 1.0) * √eps()
         function _save(x, y)
             # save coordinates, return `true` when two have been collected
             if is_first
@@ -330,14 +331,18 @@ function line_through_endpoints(line_through::LineThrough, x_interval::Interval,
                 is_first = false
                 false
             else
-                x2, y2 = x, y
-                true
+                if isapprox(x, x1; atol = tol) && isapprox(y, y1; atol = tol)
+                    # same as previous, don't save
+                    false
+                else
+                    x2, y2 = x, y
+                    true
+                end
             end
         end
         function _is_in(z, a)
             # test if z ∈ a, but allow for numerical error
             (; min, max) = a
-            tol = √eps(z) * (max - min)
             min - tol ≤ z ≤ max + tol
         end
         function _find_x_crossing(ŷ)
