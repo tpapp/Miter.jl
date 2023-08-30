@@ -59,7 +59,7 @@ Guidelines, adding plot elements with `push!`.
 let plot = Plot(Scatter((sin(α), cos(α)) for α in range(-π, π, length = 61); kind = :o,
                             color = colorant"chocolate4"))
     for θ in 0:30:150
-        pushfirst!(plot, LineThrough((0, 0), tand(θ)))
+        pushfirst!(plot.contents, LineThrough((0, 0), tand(θ)))
     end
 plot
 end

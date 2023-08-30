@@ -47,7 +47,7 @@ Base.@kwdef struct PlotStyle
 end
 
 struct Plot
-    contents
+    contents::Vector{Any}
     x_axis
     y_axis
     style
@@ -57,7 +57,10 @@ struct Plot
     Create a plot with the given `contents` (a vector, but a convenience form that accepts
     multiple arguments is available).
 
-    Once created, `push!`, `pushfirst!`, and `append!` can be used to add elements.
+    The following properties (fields) are accessible as part of the API:
+
+    - `contents`: the contents of a plot, a `Vector{Any}`. Elements can be inserted,
+      appended, pushed, etc.
     """
     function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
         new(Vector{Any}(contents), x_axis, y_axis, style)
@@ -67,11 +70,6 @@ end
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 @declare_showable Plot
-
-# NOTE when other similar structures are introduced we should make an abstract type
-Base.push!(plot::Plot, object) = push!(plot.contents, object)
-Base.pushfirst!(plot::Plot, object) = pushfirst!(plot.contents, object)
-Base.append!(plot::Plot, objects) = append!(plot.contents, objects)
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
@@ -100,9 +98,19 @@ end
 ####
 
 struct Tableau
-    contents::Matrix
+    contents::Matrix{Any}
     horizontal_divisions
     vertical_divisions
+    @doc """
+    $(SIGNATURES)
+
+    Make a *tableau*, an arrangement of plots on a matrix-like grid. Axes are not aligned.
+    See [`balanced_rectangle`](@ref) for arranging a vector.
+
+    The following properties (fields) are accessible as part of the API:
+
+    - `contents`: the contents of a tableau, a `Matrix{Any}`.
+    """
     function Tableau(contents::AbstractMatrix;
                      horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
                      vertical_divisions = fill(PGF.SPACER, size(contents, 2)))
