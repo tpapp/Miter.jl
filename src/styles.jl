@@ -26,8 +26,8 @@ Base.@kwdef mutable struct Options
     canvas_height::LENGTH = 80mm
 
     # tick format
-    tick_format_max_exponent::Int = 3
-    tick_format_min_exponent::Int = -3
+    tick_format_max_exponent::Int = 5
+    tick_format_min_exponent::Int = -5
     tick_format_thousands::Bool = false
     tick_format_single_tick_sigdigits::Int = 3
 

@@ -215,9 +215,9 @@ function regularize_exponent(tick_format, sd::ShiftedDecimals)
         sd
     else
         if thousands
-            Δ = closest_multiple(exponent, 3, true)[2]
+            Δ = closest_multiple(inner_exponent, 3, true)[2]
         else
-            Δ = exponent
+            Δ = inner_exponent
         end
         inner_to_outer(sd, Δ)
     end
