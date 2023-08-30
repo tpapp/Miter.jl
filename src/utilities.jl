@@ -13,7 +13,6 @@ using ..PGF
 #### arrangement
 ####
 
-
 """
 $(SIGNATURES)
 
@@ -28,12 +27,21 @@ package, the `x` coordinate is the first, so for left-right top-down arrangement
 usually don't want this.
 
 The purpose of this function is to make balanced displays, eg in [`Tableau`](@ref).
+
+`w` can also be specified explicitly, in which case `width_bias` is not used.
 """
 function balanced_rectangle(v::AbstractVector{T}; width_bias::Real = 1.0,
-                            columns_down::Bool = true, row_major::Bool = false) where T
-    @argcheck width_bias > 0
+                            columns_down::Bool = true, row_major::Bool = false,
+                            w::Union{Nothing,Integer} = nothing) where T
+    @argcheck !isempty(v)
     l = length(v)
-    w = round(Int, sqrt(l / width_bias))
+    if w ≡ nothing
+        @argcheck width_bias > 0
+        w = round(Int, sqrt(l / width_bias))
+    else
+        @argcheck w > 0
+        w = Int(w)
+    end
     h = cld(l, w)
     if row_major
         m_c = reshape(vcat(Vector{Union{T,Nothing}}(v), fill(nothing, h * w - l)), h, w)
