@@ -10,7 +10,7 @@ include("styles.jl")
 include("ticks.jl")
 include("axis.jl")
 include("output.jl")
-include("plot.jl")
+include("plots.jl")
 include("utilities.jl")
 
 ####
