@@ -65,6 +65,22 @@ plot
 end
 ```
 
+Combine ranges with `Invisible`.
+
+```@example all
+using Miter
+make_plot = function(x, y)
+    Plot(Scatter((r = rand() / 5 + 0.8; (x + r * cos(ϕ), y + r * sin(ϕ)))
+                 for ϕ in range(0, 2*π; length = 100)))
+end
+plot1 = make_plot(0, 0)
+plot2 = make_plot(1, 1)
+i = Invisible(Axis.bounds_xy([plot1.contents, plot2.contents]))
+push!(plot1.contents, i)
+push!(plot2.contents, i)
+Tableau(balanced_rectangle([plot1, plot2]; w = 2))
+```
+
 ### Tableaus
 
 ```@example all

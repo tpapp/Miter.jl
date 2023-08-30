@@ -1,11 +1,13 @@
 module Intervals
 
-export Interval, ∅, is_nonzero, hull, hull_xy
+export Interval, ∅, is_nonzero, hull, hull_xy, CoordinateBounds
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 
-struct Interval{T}
+abstract type CoordinateBounds end
+
+struct Interval{T} <: CoordinateBounds
     min::T
     max::T
     @doc """
@@ -26,7 +28,7 @@ Interval(a, b) = Interval(promote(a, b)...)
 Interval(a) = Interval(a, a)
 
 "The empty set, use `∅` for a value."
-struct EmptySet end
+struct EmptySet <: CoordinateBounds end
 
 "Singleton for the empty set."
 const ∅ = EmptySet()

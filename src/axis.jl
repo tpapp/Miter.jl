@@ -4,6 +4,8 @@ FIXME document
 """
 module Axis
 
+export bounds_xy
+
 using ArgCheck: @argcheck
 using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES

@@ -20,8 +20,9 @@ include("utilities.jl")
 using Reexport: @reexport
 
 @reexport using .PGF
-@reexport using .Plots
 @reexport using .Output
+@reexport using .Axis
+@reexport using .Plots
 @reexport using .Utilities
 
 # modules that prefix symbols

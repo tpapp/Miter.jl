@@ -4,7 +4,7 @@
 
 module Plots
 
-export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation
+export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation, Invisible
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -423,5 +423,28 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, text::Annotation)
     PGF.text(sink, coordinates_to_point(drawing_area, (x, y)), text; top, bottom, base,
              left, right, rotate)
 end
+
+###
+### Invisible
+###
+
+struct Invisible
+    xy::Tuple{CoordinateBounds,CoordinateBounds}
+    @doc """
+    $(SIGNATURES)
+
+    Create an invisible object with the sole function of extending coordinate bounds to (x,
+    y), which should be `Interval`s or `∅`.
+
+    You can also use `Invisible(bounds_xy(object))` to extend bounds to those in `object`.
+    """
+    function Invisible(xy::Tuple{CoordinateBounds,CoordinateBounds})
+        new(xy)
+    end
+end
+
+bounds_xy(invisible::Invisible) = invisible.xy
+
+PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
 
 end
