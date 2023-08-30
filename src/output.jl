@@ -53,10 +53,22 @@ end
 $(SIGNATURES)
 
 Save `object` into `filename`.
+
+File type is determined by its extension, which can be overidden by `ext` (a string, case
+does not matter as it is normalized). Valid options are:
+
+- `pdf`: Portable Document Format (PDF)
+- `svg`: Scalable Vector Graphics (SVG)
+- `png`: Portable Network Graphics (PNG)
+- `tex`: standalone LaTeX code that can be compiled *as is*
+- `tikz`: LaTeX code that can be included in a document
+
+For tex/tikz, the LaTeX package `pgf` needs to be available/included in the document.
 """
-function save(filename::AbstractString, object)
+function save(filename::AbstractString, object; ext = lstrip(splitext(filename)[2], '.'))
     ext = splitext(filename)[2]
     _print_tex = Base.Fix2(print_tex, object)
+    ext = lowercase(ext)
     if ext == ".pdf"
         Compile.pdf(_print_tex, filename)
     elseif ext == ".svg"
@@ -67,6 +79,8 @@ function save(filename::AbstractString, object)
         open(_print_tex, filename, "w")
     elseif ext == ".tikz"
         open(io -> print_tex(io, object; standalone = true), filename, "w")
+    elseif ext == ""
+        error("could not determine file type without extension, specify it explicitly")
     else
         error("don't know to handle extension $(ext)")
     end
