@@ -28,6 +28,7 @@ using Reexport: @reexport
 # modules that prefix symbols
 
 export Axis
+export Intervals
 
 # symbols meant to be used with a Miter. prefix
 

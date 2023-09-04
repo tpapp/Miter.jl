@@ -93,6 +93,8 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     end
 end
 
+bounds_xy(plot::Plot) = bounds_xy(plot.contents)
+
 ####
 #### Tableau
 ####
