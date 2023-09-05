@@ -23,16 +23,11 @@ using ..Ticks
 """
 $(SIGNATURES)
 
-Helper function for univariate bounds, handling the empty case.
-"""
-bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, itr)...)
-
-"""
-$(SIGNATURES)
-
 Return two intervals for the axis bounds of the plot contents.
 """
-bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr)
+bounds_xy(itr) = isempty(itr) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, itr)
+
+bounds_xy(xy::Tuple{<:Real,<:Real}) = (Interval(xy[1]), Interval(xy[2]))
 
 function finalize end
 

@@ -10,8 +10,8 @@ using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
-using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds,
-    finalize, FinalizedLinear
+using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, finalize,
+    FinalizedLinear
 import ..Axis: bounds_xy
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
@@ -168,20 +168,6 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
 end
 
 ###
-### lines
-###
-
-"""
-$(SIGNATURES)
-
-A helper function to define `bounds_xy` on an iterable of coordinate pairs.
-"""
-function coordinate_bounds(coordinates)
-    # FIXME is bounds used anywhere else? if not, remove
-    (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
-end
-
-###
 ### Lines
 ###
 
@@ -201,7 +187,7 @@ struct Lines
     end
 end
 
-bounds_xy(lines::Lines) = coordinate_bounds(lines.coordinates)
+bounds_xy(lines::Lines) = bounds_xy(lines.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
@@ -242,7 +228,7 @@ struct Scatter
     end
 end
 
-bounds_xy(scatter::Scatter) = coordinate_bounds(scatter.coordinates)
+bounds_xy(scatter::Scatter) = bounds_xy(scatter.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; coordinates, line_width, color, kind, size) = scatter
