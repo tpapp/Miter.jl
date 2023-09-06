@@ -14,10 +14,11 @@ using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point,
     FinalizedLinear
 import ..Axis: bounds_xy
 using ..Intervals
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..PGF
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
 
 ####
 #### input conversions
@@ -206,37 +207,27 @@ end
 ### Scatter
 ###
 
-struct Scatter
-    coordinates
-    line_width::PGF.LENGTH
-    color
-    kind::Symbol
-    size::PGF.LENGTH
+struct Scatter{M}
+    coordinates::AbstractVector
+    mark::M
     @doc """
     $(SIGNATURES)
 
-    # Mark kinds
-
-    $(PGF.MARK_KINDS)
+    A scatterplot.
     """
-    function Scatter(coordinates; line_width = 0.3mm, color = PGF.BLACK, kind = :+, size = 2mm)
-        line_width = PGF._length(line_width)
-        size = PGF._length(size)
-        @argcheck PGF.is_positive(line_width)
-        @argcheck PGF.is_positive(size)
-        new(ensure_vector(coordinates), line_width, color, kind, size)
+    function Scatter(mark::M, coordinates) where {M}
+        new{M}(ensure_vector(coordinates), mark)
     end
 end
+
+Scatter(coordinates) = Scatter(MarkSymbol(), coordinates)
 
 bounds_xy(scatter::Scatter) = bounds_xy(scatter.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
-    (; coordinates, line_width, color, kind, size) = scatter
-    PGF.setlinewidth(sink, line_width)
-    PGF.setcolor(sink, color)
-    PGF.setdash(sink, LINE_SOLID)
-    for c in coordinates
-        PGF.mark(sink, Val(kind), coordinates_to_point(drawing_area, c), size)
+    (; mark, coordinates) = scatter
+    for xy in coordinates
+        PGF.render(sink, drawing_area, mark, xy)
     end
 end
 
