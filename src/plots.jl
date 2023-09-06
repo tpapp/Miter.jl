@@ -4,20 +4,22 @@
 
 module Plots
 
+# reexported as API
 export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation, Invisible
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
-using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, bounds,
-    finalize, FinalizedLinear
+using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, finalize,
+    FinalizedLinear
 import ..Axis: bounds_xy
 using ..Intervals
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..PGF
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
 
 ####
 #### input conversions
@@ -168,20 +170,6 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
 end
 
 ###
-### lines
-###
-
-"""
-$(SIGNATURES)
-
-A helper function to define `bounds_xy` on an iterable of coordinate pairs.
-"""
-function coordinate_bounds(coordinates)
-    # FIXME is bounds used anywhere else? if not, remove
-    (bounds(x -> x[1], coordinates), bounds(x -> x[2], coordinates))
-end
-
-###
 ### Lines
 ###
 
@@ -201,7 +189,7 @@ struct Lines
     end
 end
 
-bounds_xy(lines::Lines) = coordinate_bounds(lines.coordinates)
+bounds_xy(lines::Lines) = bounds_xy(lines.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
@@ -220,37 +208,27 @@ end
 ### Scatter
 ###
 
-struct Scatter
-    coordinates
-    line_width::PGF.LENGTH
-    color
-    kind::Symbol
-    size::PGF.LENGTH
+struct Scatter{M}
+    coordinates::AbstractVector
+    mark::M
     @doc """
     $(SIGNATURES)
 
-    # Mark kinds
-
-    $(PGF.MARK_KINDS)
+    A scatterplot.
     """
-    function Scatter(coordinates; line_width = 0.3mm, color = PGF.BLACK, kind = :+, size = 2mm)
-        line_width = PGF._length(line_width)
-        size = PGF._length(size)
-        @argcheck PGF.is_positive(line_width)
-        @argcheck PGF.is_positive(size)
-        new(ensure_vector(coordinates), line_width, color, kind, size)
+    function Scatter(mark::M, coordinates) where {M}
+        new{M}(ensure_vector(coordinates), mark)
     end
 end
 
-bounds_xy(scatter::Scatter) = coordinate_bounds(scatter.coordinates)
+Scatter(coordinates) = Scatter(MarkSymbol(), coordinates)
+
+bounds_xy(scatter::Scatter) = bounds_xy(scatter.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
-    (; coordinates, line_width, color, kind, size) = scatter
-    PGF.setlinewidth(sink, line_width)
-    PGF.setcolor(sink, color)
-    PGF.setdash(sink, LINE_SOLID)
-    for c in coordinates
-        PGF.mark(sink, Val(kind), coordinates_to_point(drawing_area, c), size)
+    (; mark, coordinates) = scatter
+    for xy in coordinates
+        PGF.render(sink, drawing_area, mark, xy)
     end
 end
 

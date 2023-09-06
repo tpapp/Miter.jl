@@ -15,6 +15,7 @@ FIXME document it
 """
 module PGF
 
+# reexported as API
 export textcolor, @math_str, @latex_str, LaTeX
 
 using ArgCheck: @argcheck
@@ -595,46 +596,6 @@ end
 #### marks
 ####
 
-"""
-$(SIGNATURES)
-
-Draw a mark of type `K` at the given point, with the given `size` (roughly the diameter of a
-circle/square that contains the mark). Caller should set color, line width, etc.
-"""
-function mark(sink::Sink, ::Val{K}, at::Point, size::T) where {K,T}
-    if T ≡ LENGTH
-        error("Don't know how to draw a mark of type $K, define a method for `Miter.PGF.mark`.")
-    else
-        mark(sink, Val(K), at, _length(size))
-    end
-end
-
-function mark(sink::Sink, ::Val{:+}, at::Point, size::LENGTH)
-    @argcheck is_positive(size)
-    (; x, y) = at
-    h = size / 2
-    segment(sink, Point(x - h, y), Point(x + h, y))
-    segment(sink, Point(x, y - h), Point(x, y + h))
-end
-
-function mark(sink::Sink, ::Val{:o}, at::Point, size::LENGTH)
-    @argcheck is_positive(size)
-    pathcircle(sink, at, size / 2)
-    usepathqstroke(sink)
-end
-
-function mark(sink::Sink, ::Val{:*}, at::Point, size::LENGTH)
-    @argcheck is_positive(size)
-    pathcircle(sink, at, size / 2)
-    usepathqfill(sink)
-end
-
-"A table of built-in marks."
-const MARK_KINDS = """
-- `:+` a horizontal and a vertical line crossing
-- `:o` a hollow circle
-- `:*` a filled circle
-"""
 
 function setdash(sink::Sink, dash::Dash)
     if sink.dash ≠ dash

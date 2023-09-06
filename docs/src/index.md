@@ -18,7 +18,7 @@ to load the relevant packages.
 
 ```@example all
 Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
-      Scatter((x, (x + 1) / 2) for x in -1:0.1:1; color = colorant"darkgreen")];
+      Scatter(MarkSymbol(; color = colorant"darkgreen"), (x, (x + 1) / 2) for x in -1:0.1:1)];
       x_axis = Axis.Linear(; label = math"x"),
       y_axis = Axis.Linear(; label = math"y"))
 ```
@@ -36,7 +36,7 @@ Annotations.
 ```@example all
 let c = colorant"teal",
     xy = collect((x,  0.5 * x + 0.1 * randn()) for x in range(-1, 1; length = 30))
-    Plot(Scatter(xy; color = c),
+    Plot(Scatter(MarkSymbol(; color = c), xy),
          Annotation((0, 0.3), textcolor(c, latex"random dots $y = 0.5\cdot x + N(0, 0.1)$");
                     rotate = 30))
 end
@@ -45,23 +45,22 @@ end
 Various kinds of marks.
 
 ```@example all
-using Miter, Colors
 let x = range(0, 1; length = 21)
-    Plot(Scatter((x, 0.2 * x) for x in x; color = colorant"firebrick", kind = :+),
-         Scatter((x, 0.1 + abs2(x)) for x in x; color = colorant"olive", kind = :*),
-         Scatter((x, -x + abs2(x) - 0.1) for x in x; color = colorant"teal", kind = :o))
+    Plot(Scatter(MarkSymbol(:+; color = colorant"firebrick"), (x, 0.2 * x) for x in x),
+         Scatter(MarkSymbol(:*, color = colorant"olive"), (x, 0.1 + abs2(x)) for x in x),
+         Scatter(MarkSymbol(:o; color = colorant"teal"), (x, -x + abs2(x) - 0.1) for x in x))
 end
 ```
 
 Guidelines, adding plot elements with `push!`.
 
 ```@example all
-let plot = Plot(Scatter((sin(α), cos(α)) for α in range(-π, π, length = 61); kind = :o,
-                            color = colorant"chocolate4"))
+let plot = Plot(Scatter(MarkSymbol(:o; color = colorant"chocolate4"),
+                        (sin(α), cos(α)) for α in range(-π, π, length = 61)))
     for θ in 0:30:150
         pushfirst!(plot.contents, LineThrough((0, 0), tand(θ)))
     end
-plot
+    plot
 end
 ```
 
@@ -79,6 +78,17 @@ i = Invisible(Axis.bounds_xy([plot1.contents, plot2.contents]))
 push!(plot1.contents, i)
 push!(plot2.contents, i)
 Tableau(balanced_rectangle([plot1, plot2]; w = 2))
+```
+
+Q5 (five quantiles) plots.
+
+```@example all
+Plot(Scatter(MarkQ5(),
+             (x, Q5(randn(10) ./ 4 .+ (x / 3)))
+             for x in range(0, 5; length = 8)),
+     Scatter(MarkQ5(; color = colorant"deepskyblue1"),
+             (Q5(randn(10) ./ 4 .+ (abs2(y) / 5)), y)
+             for y in range(0, 5; length = 8)))
 ```
 
 ### Tableaus

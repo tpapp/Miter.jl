@@ -56,12 +56,15 @@ Base.@kwdef mutable struct Options
     line_width::LENGTH = 0.3mm
     line_color::COLOR = PGF.BLACK
     "width for guidelines"
+
     guide_width::LENGTH = 0.15mm
     "color for guidelines"
     guide_color::COLOR = PGF.GRAY
     "dash for guidelines"
     guide_dash::Dash = LINE_DASHED
 
+    mark_size::LENGTH = 2mm
+    mark_symbol::Symbol = :+
 end
 
 """

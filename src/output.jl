@@ -1,5 +1,6 @@
 module Output
 
+# reexported as API
 export Canvas
 
 using DocStringExtensions: SIGNATURES

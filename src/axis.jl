@@ -4,6 +4,7 @@ FIXME document
 """
 module Axis
 
+# reexported as API
 export bounds_xy
 
 using ArgCheck: @argcheck
@@ -23,16 +24,16 @@ using ..Ticks
 """
 $(SIGNATURES)
 
-Helper function for univariate bounds, handling the empty case.
-"""
-bounds(f, itr) = isempty(itr) ? Interval{eltype(itr)}() : Interval(extrema(f, itr)...)
-
-"""
-$(SIGNATURES)
-
 Return two intervals for the axis bounds of the plot contents.
+
+# Extending
+
+User defined types `T` can either define a `bounds_xy(::Tuple{T,T})` method (or other
+applicable combinations), or a method for `extrema(::T)`.
 """
-bounds_xy(itr) = mapreduce(bounds_xy, hull_xy, itr)
+bounds_xy(a::AbstractArray) = isempty(a) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, vec(a))
+
+bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
 
 function finalize end
 
