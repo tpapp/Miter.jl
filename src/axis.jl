@@ -24,10 +24,15 @@ using ..Ticks
 $(SIGNATURES)
 
 Return two intervals for the axis bounds of the plot contents.
-"""
-bounds_xy(itr) = isempty(itr) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, itr)
 
-bounds_xy(xy::Tuple{<:Real,<:Real}) = (Interval(xy[1]), Interval(xy[2]))
+# Extending
+
+User defined types `T` can either define a `bounds_xy(::Tuple{T,T})` method (or other
+applicable combinations), or a method for `extrema(::T)`.
+"""
+bounds_xy(a::AbstractArray) = isempty(a) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, vec(a))
+
+bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
 
 function finalize end
 

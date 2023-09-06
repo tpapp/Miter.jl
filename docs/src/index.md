@@ -80,6 +80,17 @@ push!(plot2.contents, i)
 Tableau(balanced_rectangle([plot1, plot2]; w = 2))
 ```
 
+Q5 (five quantiles) plots.
+
+```@example all
+Plot(Scatter(MarkQ5(),
+             (x, Q5(randn(10) ./ 4 .+ (x / 3)))
+             for x in range(0, 5; length = 8)),
+     Scatter(MarkQ5(; color = colorant"deepskyblue1"),
+             (Q5(randn(10) ./ 4 .+ (abs2(y) / 5)), y)
+             for y in range(0, 5; length = 8)))
+```
+
 ### Tableaus
 
 ```@example all
