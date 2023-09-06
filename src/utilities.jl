@@ -1,5 +1,6 @@
 module Utilities
 
+# reexported as API
 export balanced_rectangle
 
 using ArgCheck: @argcheck

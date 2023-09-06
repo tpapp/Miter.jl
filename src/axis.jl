@@ -4,6 +4,7 @@ FIXME document
 """
 module Axis
 
+# reexported as API
 export bounds_xy
 
 using ArgCheck: @argcheck

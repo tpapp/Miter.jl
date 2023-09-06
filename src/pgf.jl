@@ -15,6 +15,7 @@ FIXME document it
 """
 module PGF
 
+# reexported as API
 export textcolor, @math_str, @latex_str, LaTeX
 
 using ArgCheck: @argcheck

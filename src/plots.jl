@@ -4,6 +4,7 @@
 
 module Plots
 
+# reexported as API
 export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation, Invisible
 
 using ArgCheck: @argcheck

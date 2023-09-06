@@ -1,7 +1,7 @@
 "Marks for scatterplots."
 module Marks
 
-export MarkSymbol
+# reexported as API
 export MarkSymbol, Q5, MarkQ5
 
 using ArgCheck: @argcheck
