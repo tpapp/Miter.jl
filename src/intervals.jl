@@ -27,6 +27,10 @@ Interval(a, b) = Interval(promote(a, b)...)
 
 Interval(a) = Interval(a, a)
 
+Base.minimum(a::Interval) = a.min
+Base.maximum(a::Interval) = a.max
+Base.extrema(a::Interval) = (a.min, a.max)
+
 "The empty set, use `∅` for a value."
 struct EmptySet <: CoordinateBounds end
 
