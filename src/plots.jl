@@ -5,7 +5,8 @@
 module Plots
 
 # reexported as API
-export Plot, Tableau, Phantom, Lines, Scatter, Hline, LineThrough, Annotation, Invisible
+export Plot, Tableau, Phantom, Lines, Scatter, Hline, Hgrid, LineThrough, Annotation,
+    Invisible
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -259,14 +260,23 @@ end
 
 bounds_xy(hline::Hline) = (∅, Interval(hline.y))
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
-    (; y, color, width, dash) = hline
+"""
+$(SIGNATURES)
+
+Internal utility function to draw a horizontal line at `y`. Caller should set the line style.
+"""
+function _hline(sink::PGF.Sink, drawing_area::DrawingArea, y::Real)
     (; left, right) = drawing_area.rectangle
     y_c = y_coordinate_to_canvas(drawing_area, y)
-    set_line_style(sink; color, width, dash)
     PGF.pathmoveto(sink, PGF.Point(left, y_c))
     PGF.pathlineto(sink, PGF.Point(right, y_c))
     PGF.usepathqstroke(sink)
+end
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
+    (; y, color, width, dash) = hline
+    set_line_style(sink; color, width, dash)
+    _hline(sink, drawing_area, y)
 end
 
 ###
@@ -367,6 +377,39 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, line_through::Lin
     PGF.pathlineto(sink, coordinates_to_point(drawing_area, z2))
     PGF.usepathqstroke(sink)
 end
+
+###
+### Hgrid
+###
+
+struct Hgrid
+    color::PGF.COLOR
+    width::PGF.LENGTH
+    dash::PGF.Dash
+    @doc """
+    $(SIGNATURES)
+
+    A horizontal grid at the ticks of the ``y`` axis.
+    """
+    function Hgrid(; color = DEFAULTS.grid_color,
+                   width = DEFAULTS.grid_width,
+                   dash = DEFAULTS.grid_dash)
+        new(PGF.COLOR(color), PGF._length(width), dash)
+    end
+end
+
+bounds_xy(hgrid::Hgrid) = (∅, ∅)
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hgrid::Hgrid)
+    (; color, width, dash) = hgrid
+    set_line_style(sink; color, width, dash)
+    # FIXME code below relies on nested properties of types, define an API
+    for (pos, _) in drawing_area.finalized_y_axis.ticks
+        _hline(sink, drawing_area, pos)
+    end
+end
+
+
 
 ###
 ### Annotation

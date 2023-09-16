@@ -4,7 +4,7 @@
 
 module Styles
 
-using ColorTypes: RGB
+using ColorTypes: RGB, Gray
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
@@ -41,6 +41,7 @@ Base.@kwdef mutable struct Options
 
     # axis style
     axis_style_line_width::LENGTH = 0.1mm
+    axis_style_line_color::COLOR = Gray(0.0)
     axis_style_line_gap::LENGTH = 2.0mm
     axis_style_tick_length::LENGTH = 2.0mm
     axis_style_tick_label_gap::LENGTH = 1.5mm
@@ -54,14 +55,22 @@ Base.@kwdef mutable struct Options
 
     # elements
     line_width::LENGTH = 0.3mm
-    line_color::COLOR = PGF.BLACK
+    line_color::COLOR = Gray(0.0)
     "width for guidelines"
 
+    "width for guidelines"
     guide_width::LENGTH = 0.15mm
     "color for guidelines"
-    guide_color::COLOR = PGF.GRAY
+    guide_color::COLOR = Gray(0.5)
     "dash for guidelines"
     guide_dash::Dash = LINE_DASHED
+
+    "width for gridlines"
+    grid_width::LENGTH = 0.1mm
+    "color for gridlines"
+    grid_color::COLOR = Gray(0.75)
+    "dash for gridlines"
+    grid_dash::Dash = LINE_SOLID
 
     mark_size::LENGTH = 2mm
     mark_symbol::Symbol = :+
