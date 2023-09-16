@@ -86,7 +86,7 @@ Base.@kwdef struct Style
     "line width"
     line_width::PGF.LENGTH = DEFAULTS.axis_style_line_width
     "line color"
-    line_color::RGB = PGF.BLACK
+    line_color::RGB = DEFAULTS.axis_style_line_color
     "gap between the plotting area and the axis line"
     line_gap::PGF.LENGTH = DEFAULTS.axis_style_line_gap
     "tick length"

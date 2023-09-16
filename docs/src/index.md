@@ -64,6 +64,14 @@ let plot = Plot(Scatter(MarkSymbol(:o; color = colorant"chocolate4"),
 end
 ```
 
+Grids.
+
+```@example all
+Plot(Hgrid(), # specified first; renders first
+     Scatter((x, expm1(x) + randn() / 10)
+             for x in range(0, 1; length = 100)))
+```
+
 Combine ranges with `Invisible`.
 
 ```@example all

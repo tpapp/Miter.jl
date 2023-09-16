@@ -64,10 +64,6 @@ being used.
 """
 const COLOR = RGB{Float64}
 
-const BLACK::COLOR = RGB(0.0, 0.0, 0.0)
-
-const GRAY::COLOR = RGB(0.5, 0.5, 0.5)
-
 ####
 #### dash
 ####
