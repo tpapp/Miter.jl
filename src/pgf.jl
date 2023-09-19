@@ -384,6 +384,15 @@ function _print_escaped(io::IO, str::AbstractString)
     end
 end
 
+function Base.:(*)(str1::LaTeX, str_rest...)
+    io = IOBuffer()
+    _print_escaped(io, str1)
+    for str in str_rest
+        _print_escaped(io, str)
+    end
+    LaTeX(String(take!(io)))
+end
+
 "String types we can use with [`text`](@ref)."
 const STRINGS = Union{AbstractString,LaTeX}
 
