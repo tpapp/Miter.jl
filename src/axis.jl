@@ -35,6 +35,8 @@ bounds_xy(a::AbstractArray) = isempty(a) ? (∅, ∅) : mapreduce(bounds_xy, hul
 
 bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
 
+bounds_xy(items...) = isempty(items) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, items)
+
 function finalize end
 
 """

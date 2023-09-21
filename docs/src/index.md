@@ -58,7 +58,7 @@ Guidelines, adding plot elements with `push!`.
 let plot = Plot(Scatter(MarkSymbol(:o; color = colorant"chocolate4"),
                         (sin(α), cos(α)) for α in range(-π, π, length = 61)))
     for θ in 0:30:150
-        pushfirst!(plot.contents, LineThrough((0, 0), tand(θ)))
+        pushfirst!(plot, LineThrough((0, 0), tand(θ)))
     end
     plot
 end
@@ -82,9 +82,9 @@ make_plot = function(x, y)
 end
 plot1 = make_plot(0, 0)
 plot2 = make_plot(1, 1)
-i = Invisible(Axis.bounds_xy([plot1.contents, plot2.contents]))
-push!(plot1.contents, i)
-push!(plot2.contents, i)
+i = Invisible(Axis.bounds_xy(plot1, plot2))
+push!(plot1, i)
+push!(plot2, i)
 Tableau(balanced_rectangle([plot1, plot2]; w = 2))
 ```
 
