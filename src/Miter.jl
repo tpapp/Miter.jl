@@ -25,6 +25,7 @@ using Reexport: @reexport
 @reexport using .Axis
 @reexport using .Marks
 @reexport using .Plots
+@reexport using .Styles
 @reexport using .Utilities
 
 # modules that prefix symbols

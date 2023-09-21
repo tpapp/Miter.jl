@@ -4,6 +4,9 @@
 
 module Styles
 
+# reexported as API
+export DEFAULTS, LINE_SOLID, LINE_DASHED
+
 using ColorTypes: RGB, Gray
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
