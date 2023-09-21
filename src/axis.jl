@@ -33,8 +33,10 @@ applicable combinations), or a method for `extrema(::T)`.
 """
 bounds_xy(a::AbstractArray) = isempty(a) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, vec(a))
 
+# bounds for a coordinate pair
 bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
 
+# convenience function to combine bounds
 bounds_xy(items...) = isempty(items) ? (∅, ∅) : mapreduce(bounds_xy, hull_xy, items)
 
 function finalize end
