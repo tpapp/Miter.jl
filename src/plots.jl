@@ -6,7 +6,7 @@ module Plots
 
 # reexported as API
 export Plot, Tableau, Phantom, Lines, Scatter, Hline, Hgrid, LineThrough, Annotation,
-    Invisible
+    Invisible, sync_bounds!
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -493,5 +493,67 @@ end
 bounds_xy(invisible::Invisible) = invisible.xy
 
 PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
+
+"""
+$(SIGNATURES)
+
+Add an `Invisible(xy)` to each plot in `itr`.
+"""
+function _add_invisible!(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
+    invisible = Invisible(xy)
+    for i in itr
+        push!(i, invisible)
+    end
+    itr
+end
+
+"""
+$(SIGNATURES)
+
+Make sure that axis bounds are the same for axes `:x`, `:y`, or both (`:xy`), as determined
+by `tag`. Tag can be given in the form of `Val(tag)` too, this is a convenience wrapper.
+
+Matrices (like [`Tableau`](@ref) are synced by column- and row, according to the `tag`.
+
+Vectors are just synced as specified.
+
+All methods return the (modified) second argument.
+"""
+@inline function sync_bounds!(tag::Symbol, collection)
+    @argcheck tag ∈ (:x, :y, :xy)
+    sync_bounds!(Val(tag), collection)
+end
+
+function sync_bounds!(::Val{:x}, v::AbstractVector)
+    xb, _ = bounds_xy(v)
+    _add_invisible!((xb, ∅), v)
+end
+
+function sync_bounds!(::Val{:y}, v::AbstractVector)
+    _, yb = bounds_xy(v)
+    _add_invisible!((∅, yb), v)
+end
+
+sync_bounds!(::Val{:xy}, v::AbstractVector) = _add_invisible!(bounds_xy(v), v)
+
+function sync_bounds!(::Val{:x}, m::AbstractMatrix)
+    for row in eachrow(m)
+        sync_bounds!(Val(:x), row)
+    end
+    m
+end
+
+function sync_bounds!(::Val{:y}, m::AbstractMatrix)
+    for col in eachcol(m)
+        sync_bounds!(Val(:y), col)
+    end
+    m
+end
+
+function sync_bounds!(::Val{:xy}, m::AbstractMatrix)
+    sync_bounds!(Val(:x), m)
+    sync_bounds!(Val(:y), m)
+    m
+end
 
 end
