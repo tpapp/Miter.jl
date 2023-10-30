@@ -6,7 +6,7 @@ module Plots
 
 # reexported as API
 export Plot, Tableau, Phantom, Lines, Scatter, Hline, Hgrid, LineThrough, Annotation,
-    Invisible
+    Invisible, sync_bounds!
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -49,7 +49,7 @@ Base.@kwdef struct PlotStyle
     margin_top::PGF.LENGTH = DEFAULTS.plot_style_margin_top
 end
 
-struct Plot
+struct Plot <: AbstractVector{Any}
     contents::Vector{Any}
     x_axis
     y_axis
@@ -60,10 +60,8 @@ struct Plot
     Create a plot with the given `contents` (a vector, but a convenience form that accepts
     multiple arguments is available).
 
-    The following properties (fields) are accessible as part of the API:
-
-    - `contents`: the contents of a plot, a `Vector{Any}`. Elements can be inserted,
-      appended, pushed, etc.
+    A plot behaves like a `Vector{Any}` and its contents be indexed as such. It also
+    supports `push!`, `pushfirst!`, `append!`, `pop!`, `insert!`.
     """
     function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
         new(Vector{Any}(contents), x_axis, y_axis, style)
@@ -73,6 +71,30 @@ end
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 @declare_showable Plot
+
+###
+### vector and dequeue API
+###
+
+Base.size(plot::Plot) = size(plot.contents)
+
+Base.getindex(plot::Plot, i::Integer) = Base.getindex(plot.contents, i)
+
+Base.setindex!(plot::Plot, value, i::Integer) = Base.setindex(plot.contents, value, i)
+
+Base.push!(plot::Plot, items...) = push!(plot.contents, items...)
+
+Base.pushfirst!(plot::Plot, items...) = pushfirst!(plot.contents, items...)
+
+Base.append!(plot::Plot, collections...) = pushfirst!(plot.contents, collections...)
+
+Base.pop!(plot::Plot) = pop!(plot.contents)
+
+Base.insert!(plot::Plot, i::Integer, item) = insert!(plot.contents, i, item)
+
+###
+### rendering and bounds
+###
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style) = plot
@@ -96,13 +118,11 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     end
 end
 
-bounds_xy(plot::Plot) = bounds_xy(plot.contents)
-
 ####
 #### Tableau
 ####
 
-struct Tableau
+struct Tableau <: AbstractMatrix{Any}
     contents::Matrix{Any}
     horizontal_divisions
     vertical_divisions
@@ -112,9 +132,7 @@ struct Tableau
     Make a *tableau*, an arrangement of plots on a matrix-like grid. Axes are not aligned.
     See [`balanced_rectangle`](@ref) for arranging a vector.
 
-    The following properties (fields) are accessible as part of the API:
-
-    - `contents`: the contents of a tableau, a `Matrix{Any}`.
+    Contents are exposed via the array interface as a matrix.
     """
     function Tableau(contents::AbstractMatrix;
                      horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
@@ -129,6 +147,12 @@ end
 @declare_showable Tableau
 
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
+
+Base.size(tableau::Tableau) = size(tableau.contents)
+
+Base.getindex(tableau::Tableau, i::Vararg{Int}) = getindex(tableau.contents, i...)
+
+Base.setindex!(tableau::Tableau, item, i::Vararg{Int}) = setindex(tableau.contents, item, i...)
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau
@@ -469,5 +493,67 @@ end
 bounds_xy(invisible::Invisible) = invisible.xy
 
 PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
+
+"""
+$(SIGNATURES)
+
+Add an `Invisible(xy)` to each plot in `itr`.
+"""
+function _add_invisible!(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
+    invisible = Invisible(xy)
+    for i in itr
+        push!(i, invisible)
+    end
+    itr
+end
+
+"""
+$(SIGNATURES)
+
+Make sure that axis bounds are the same for axes `:x`, `:y`, or both (`:xy`), as determined
+by `tag`. Tag can be given in the form of `Val(tag)` too, this is a convenience wrapper.
+
+Matrices (like [`Tableau`](@ref) are synced by column- and row, according to the `tag`.
+
+Vectors are just synced as specified.
+
+All methods return the (modified) second argument.
+"""
+@inline function sync_bounds!(tag::Symbol, collection)
+    @argcheck tag ∈ (:x, :y, :xy)
+    sync_bounds!(Val(tag), collection)
+end
+
+function sync_bounds!(::Val{:x}, v::AbstractVector)
+    xb, _ = bounds_xy(v)
+    _add_invisible!((xb, ∅), v)
+end
+
+function sync_bounds!(::Val{:y}, v::AbstractVector)
+    _, yb = bounds_xy(v)
+    _add_invisible!((∅, yb), v)
+end
+
+sync_bounds!(::Val{:xy}, v::AbstractVector) = _add_invisible!(bounds_xy(v), v)
+
+function sync_bounds!(::Val{:x}, m::AbstractMatrix)
+    for row in eachrow(m)
+        sync_bounds!(Val(:x), row)
+    end
+    m
+end
+
+function sync_bounds!(::Val{:y}, m::AbstractMatrix)
+    for col in eachcol(m)
+        sync_bounds!(Val(:y), col)
+    end
+    m
+end
+
+function sync_bounds!(::Val{:xy}, m::AbstractMatrix)
+    sync_bounds!(Val(:x), m)
+    sync_bounds!(Val(:y), m)
+    m
+end
 
 end

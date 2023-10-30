@@ -58,7 +58,7 @@ Guidelines, adding plot elements with `push!`.
 let plot = Plot(Scatter(MarkSymbol(:o; color = colorant"chocolate4"),
                         (sin(α), cos(α)) for α in range(-π, π, length = 61)))
     for θ in 0:30:150
-        pushfirst!(plot.contents, LineThrough((0, 0), tand(θ)))
+        pushfirst!(plot, LineThrough((0, 0), tand(θ)))
     end
     plot
 end
@@ -72,20 +72,19 @@ Plot(Hgrid(), # specified first; renders first
              for x in range(0, 1; length = 100)))
 ```
 
-Combine ranges with `Invisible`.
+Sync x and y bounds in a tableau.
 
-```@example all
-using Miter
-make_plot = function(x, y)
-    Plot(Scatter((r = rand() / 5 + 0.8; (x + r * cos(ϕ), y + r * sin(ϕ)))
-                 for ϕ in range(0, 2*π; length = 100)))
+```julia
+function wobbler(x, y, r, rotate)
+    Plot(Lines([sincos(θ) .* (r * (sin(θ  * 3 + rotate)/4 + 1))
+                for θ in range(0, 2*π; length = 200)]))
 end
-plot1 = make_plot(0, 0)
-plot2 = make_plot(1, 1)
-i = Invisible(Axis.bounds_xy([plot1.contents, plot2.contents]))
-push!(plot1.contents, i)
-push!(plot2.contents, i)
-Tableau(balanced_rectangle([plot1, plot2]; w = 2))
+
+m = Tableau(balanced_rectangle([wobbler(0, 0, 2, 0),
+                                wobbler(1, 0, 1, π/2),
+                                wobbler(-1, 0, 3, -π/2),
+                                wobbler(1, 3, 1, π)]));
+sync_bounds!(:xy, m)
 ```
 
 Q5 (five quantiles) plots.
