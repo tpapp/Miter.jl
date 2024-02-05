@@ -240,6 +240,8 @@ struct Scatter{M}
     $(SIGNATURES)
 
     A scatterplot.
+
+    See [`MarkSymbol`](@ref) and [`MarkQ5`](@ref).
     """
     function Scatter(mark::M, coordinates) where {M}
         new{M}(ensure_vector(coordinates), mark)
