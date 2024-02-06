@@ -9,7 +9,7 @@ using DocStringExtensions: SIGNATURES
 using Statistics: quantile
 
 using ..Axis: DrawingArea, coordinates_to_point
-using ..PGF: COLOR, LENGTH, Point, Sink, is_positive, _length, PGF
+using ..PGF: COLOR, LENGTH, Point, Sink, _length_positive, PGF
 import ..PGF: render
 using ..Styles: set_line_style, LINE_SOLID, DEFAULTS
 
@@ -30,8 +30,7 @@ struct MarkSymbol{S}
                         line_width = DEFAULTS.line_width,
                         color = DEFAULTS.line_color,
                         size = DEFAULTS.mark_size)
-        @argcheck is_positive(size) && is_positive(line_width)
-        new{S}(_length(line_width), COLOR(color), _length(size))
+        new{S}(_length_positive(line_width), COLOR(color), _length_positive(size))
     end
 end
 
@@ -48,7 +47,7 @@ function draw_mark_symbol(sink::Sink, ::Val{K}, xy::Point, size::T) where {K,T}
     if T ≡ LENGTH
         error("Don't know how to draw a mark of type $K, define a method for this function.")
     else
-        mark(sink, Val(K), xy, _length(size))
+        mark(sink, Val(K), xy, _length_positive(size))
     end
 end
 
@@ -116,10 +115,10 @@ struct MarkQ5
     """
     function MarkQ5(; color = DEFAULTS.line_color, width05 = DEFAULTS.line_width * 0.5,
                     width25 = DEFAULTS.line_width * 1.5, size50 = DEFAULTS.line_width * 4.0)
-        _width05 = _length(width05)
-        _width25 = _length(width25)
-        _size50 = _length(size50)
-        @argcheck _size50 / 2 ≥ _width25 ≥ _width05 > PGF.LENGTH0
+        _width05 = _length_positive(width05)
+        _width25 = _length_positive(width25)
+        _size50 = _length_positive(size50)
+        @argcheck _size50 / 2 ≥ _width25 ≥ _width05
         new(COLOR(color), _width05, _width25, _size50)
     end
 end

@@ -20,6 +20,7 @@ using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..PGF
+using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
 
 ####
@@ -43,10 +44,10 @@ end
 ####
 
 Base.@kwdef struct PlotStyle
-    axis_left::PGF.LENGTH = DEFAULTS.plot_style_axis_left
-    axis_bottom::PGF.LENGTH = DEFAULTS.plot_style_axis_bottom
-    margin_right::PGF.LENGTH = DEFAULTS.plot_style_margin_right
-    margin_top::PGF.LENGTH = DEFAULTS.plot_style_margin_top
+    axis_left::LENGTH = DEFAULTS.plot_style_axis_left
+    axis_bottom::LENGTH = DEFAULTS.plot_style_axis_bottom
+    margin_right::LENGTH = DEFAULTS.plot_style_margin_right
+    margin_top::LENGTH = DEFAULTS.plot_style_margin_top
 end
 
 struct Plot <: AbstractVector{Any}
@@ -200,7 +201,7 @@ end
 
 struct Lines
     coordinates
-    line_width::PGF.LENGTH
+    line_width::LENGTH
     color
     dash::PGF.Dash
     @doc """
@@ -208,9 +209,7 @@ struct Lines
     """
     function Lines(coordinates; line_width = DEFAULTS.line_width,
                    color = DEFAULTS.line_color, dash::PGF.Dash = LINE_SOLID)
-        line_width = PGF._length(line_width)
-        @argcheck PGF.is_positive(line_width)
-        new(ensure_vector(coordinates), line_width, color, dash)
+        new(ensure_vector(coordinates), _length_positive(line_width), color, dash)
     end
 end
 
@@ -269,10 +268,10 @@ end
 
 struct Circles
     x_y_w::AbstractVector
-    scale::PGF.LENGTH
-    fill_color::Union{PGF.COLOR}
-    stroke_color::Union{Nothing,PGF.COLOR}
-    stroke_width::PGF.LENGTH
+    scale::LENGTH
+    fill_color::Union{Nothing,COLOR}
+    stroke_color::Union{Nothing,COLOR}
+    stroke_width::LENGTH
     @doc """
     $(SIGNATURES)
 
@@ -287,12 +286,15 @@ struct Circles
 
     `fill_color` determines the fill color of circles.
     """
-    function Circles(x_y_w, scale::PGF.LENGTH;
-                     stroke_color::Union{Nothing,PGF.COLOR} = nothing,
+    function Circles(x_y_w, scale;
+                     stroke_color = nothing,
                      stroke_width = DEFAULTS.line_width,
-                     fill_color::Union{Nothing,PGF.COLOR} = DEFAULTS.fill_color)
-        @argcheck PGF.is_positive(scale)
-        new(collect(x_y_w), scale, fill_color, stroke_color, stroke_width)
+                     fill_color = DEFAULTS.fill_color)
+        new(collect(x_y_w),
+            _length_positive(scale),
+            convert_maybe(COLOR, fill_color),
+            convert_maybe(COLOR, stroke_color),
+            _length_positive(stroke_width))
     end
 end
 
@@ -326,8 +328,8 @@ end
 
 struct Hline
     y::Real
-    color::PGF.COLOR
-    width::PGF.LENGTH
+    color::COLOR
+    width::LENGTH
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -337,7 +339,7 @@ struct Hline
     function Hline(y::Real; color = DEFAULTS.guide_color, width = DEFAULTS.guide_width,
                    dash = DEFAULTS.guide_dash)
         @argcheck isfinite(y)
-        new(y, PGF.COLOR(color), PGF._length(width), dash)
+        new(y, COLOR(color), _length_positive(width), dash)
     end
 end
 
@@ -370,8 +372,8 @@ struct LineThrough
     x::Float64
     y::Float64
     slope::Float64
-    color::PGF.COLOR
-    width::PGF.LENGTH
+    color::COLOR
+    width::LENGTH
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -466,8 +468,8 @@ end
 ###
 
 struct Hgrid
-    color::PGF.COLOR
-    width::PGF.LENGTH
+    color::COLOR
+    width::LENGTH
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -477,7 +479,7 @@ struct Hgrid
     function Hgrid(; color = DEFAULTS.grid_color,
                    width = DEFAULTS.grid_width,
                    dash = DEFAULTS.grid_dash)
-        new(PGF.COLOR(color), PGF._length(width), dash)
+        new(COLOR(color), _length_positive(width), dash)
     end
 end
 
