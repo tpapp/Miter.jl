@@ -5,8 +5,8 @@
 module Plots
 
 # reexported as API
-export Plot, Tableau, Phantom, Lines, Scatter, Hline, Hgrid, LineThrough, Annotation,
-    Invisible, sync_bounds!
+export Plot, Tableau, Phantom, Lines, Scatter, Circles, Hline, Hgrid, LineThrough,
+    Annotation, Invisible, sync_bounds!
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
@@ -264,6 +264,63 @@ function print_tex(sink::PGF.Sink, plot::Plot; standalone::Bool = false)
 end
 
 ###
+### Circles
+###
+
+struct Circles
+    x_y_w::AbstractVector
+    scale::PGF.LENGTH
+    fill_color::Union{PGF.COLOR}
+    stroke_color::Union{Nothing,PGF.COLOR}
+    stroke_width::PGF.LENGTH
+    @doc """
+    $(SIGNATURES)
+
+    Taking an iterator or vector aof `(x, y, w)` triplets (eg `NTuple{3}`, but anything
+    iterable with 3 elements will do), draw circles centered on `(x, y)` coordinates
+    with radius `scale * √w`.
+
+    # Keyword arguments
+
+    `stroke_color` determines the stroke color, using `nothing` if circles should not be
+    stroked. `stroke_width` determines the stroke with if applicable.
+
+    `fill_color` determines the fill color of circles.
+    """
+    function Circles(x_y_w, scale::PGF.LENGTH;
+                     stroke_color::Union{Nothing,PGF.COLOR} = nothing,
+                     stroke_width = DEFAULTS.line_width,
+                     fill_color::Union{Nothing,PGF.COLOR} = DEFAULTS.fill_color)
+        @argcheck PGF.is_positive(scale)
+        new(collect(x_y_w), scale, fill_color, stroke_color, stroke_width)
+    end
+end
+
+bounds_xy(circles::Circles) = bounds_xy(circles.x_y_w)
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, circles::Circles)
+    (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
+    if stroke_color ≢ nothing
+        set_line_style(sink; color = stroke_color, width = stroke_width)
+        do_stroke = true
+    else
+        do_stroke = false
+    end
+    do_fill = fill_color ≢ nothing
+    do_fill && PGF.setfillcolor(sink, fill_color)
+    for (x, y, w) in x_y_w
+        PGF.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
+        if do_fill && do_stroke
+            PGF.usepathqfillstroke(sink)
+        elseif do_fill
+            PGF.usepathqfill(sink)
+        elseif do_stroke
+            PGF.usepathqstroke(sink)
+        end
+    end
+end
+
+###
 ### Hline
 ###
 
@@ -434,8 +491,6 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hgrid::Hgrid)
         _hline(sink, drawing_area, pos)
     end
 end
-
-
 
 ###
 ### Annotation

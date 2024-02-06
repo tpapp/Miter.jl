@@ -98,6 +98,14 @@ Plot(Scatter(MarkQ5(),
              for y in range(0, 5; length = 8)))
 ```
 
+Circles.
+
+```@example all
+x_y_w = [(x, y, 6 - hypot(x, y)) for x in -5:5 for y in -5:5 if hypot(x, y) ≤ 5]
+# make the largest point have 3mm radius
+Plot(Circles(x_y_w, 3mm / √maximum(last, x_y_w)))
+```
+
 ### Tableaus
 
 ```@example all
