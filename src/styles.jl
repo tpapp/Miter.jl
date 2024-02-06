@@ -59,8 +59,9 @@ Base.@kwdef mutable struct Options
     # elements
     line_width::LENGTH = 0.3mm
     line_color::COLOR = Gray(0.0)
-    "width for guidelines"
+    fill_color::COLOR = Gray(0.5)
 
+    # guidelines
     "width for guidelines"
     guide_width::LENGTH = 0.15mm
     "color for guidelines"
@@ -68,6 +69,7 @@ Base.@kwdef mutable struct Options
     "dash for guidelines"
     guide_dash::Dash = LINE_DASHED
 
+    # grid lines
     "width for gridlines"
     grid_width::LENGTH = 0.1mm
     "color for gridlines"
@@ -75,6 +77,7 @@ Base.@kwdef mutable struct Options
     "dash for gridlines"
     grid_dash::Dash = LINE_SOLID
 
+    # mark options
     mark_size::LENGTH = 2mm
     mark_symbol::Symbol = :+
 end
