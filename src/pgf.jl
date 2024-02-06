@@ -29,6 +29,13 @@ using Unitful: mm, ustrip, Length, Quantity, 𝐋
 #### types and constants
 ####
 
+"""
+$(SIGNATURES)
+
+Convert user-specified arguments to types we use internally, passing through `nothing`.
+"""
+convert_maybe(::Type{T}, value) where T = value ≡ nothing ? value : convert(T, value)
+
 ###
 ### length
 ###
@@ -54,13 +61,25 @@ Convert to `LENGTH`, ensuring an inferrable type.
 """
 @inline _length(x::INPUT_LENGTH) = LENGTH(x)::LENGTH
 
+"""
+$(SIGNATURES)
+
+Convert to `LENGTH`, checking that the result is (strictly) positive.
+"""
+function _length_positive(x)
+    y = _length(x)
+    @argcheck is_positive(y)
+    y
+end
+
+
 ###
 ### colors
 ###
 
 """
 The color representation used by the PGF backend. All colors are converted to this before
-being used.
+being used, use this type for conversion.
 """
 const COLOR = RGB{Float64}
 
@@ -78,7 +97,7 @@ struct Dash
     """
     function Dash(dimensions...; offset = LENGTH0)
         @argcheck iseven(length(dimensions)) "Dashes need an even number of dimensions."
-        new([(l = _length(d); @argcheck is_positive(l); l) for d in dimensions], _length(offset))
+        new([_length_positive(d) for d in dimensions], _length(offset))
     end
 end
 
