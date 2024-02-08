@@ -74,7 +74,9 @@ Plot(Hgrid(), # specified first; renders first
 
 Sync x and y bounds in a tableau.
 
-```julia
+```@example all
+using Accessors # for @modify
+
 function wobbler(x, y, r, rotate)
     Plot(Lines([sincos(θ) .* (r * (sin(θ  * 3 + rotate)/4 + 1))
                 for θ in range(0, 2*π; length = 200)]))
@@ -84,7 +86,7 @@ m = Tableau(balanced_rectangle([wobbler(0, 0, 2, 0),
                                 wobbler(1, 0, 1, π/2),
                                 wobbler(-1, 0, 3, -π/2),
                                 wobbler(1, 3, 1, π)]));
-sync_bounds!(:xy, m)
+@modify(sync_bounds(:xy), m.contents) # sync columns and rows
 ```
 
 Q5 (five quantiles) plots.

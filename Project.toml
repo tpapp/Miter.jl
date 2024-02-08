@@ -4,8 +4,10 @@ authors = ["Tamás K. Papp <tkpapp@gmail.com>"]
 version = "0.6.2"
 
 [deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
+ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Poppler_jll = "9c32591e-4766-534b-9725-b71a8799265b"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
