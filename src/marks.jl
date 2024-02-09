@@ -71,7 +71,7 @@ end
 function render(sink::Sink, drawing_area::DrawingArea, mark::MarkSymbol{S}, xy) where S
     (; line_width, size, color) = mark
     set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
-    setfillcolor(sink, color)   # NOTE currently same fill and stroke color
+    PGF.setfillcolor(sink, color)   # NOTE currently same fill and stroke color
     draw_mark_symbol(sink, Val(S), coordinates_to_point(drawing_area, xy), size)
 end
 
