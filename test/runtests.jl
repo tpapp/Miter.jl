@@ -158,8 +158,40 @@ end
     @test is_pdf(filename)
 end
 
-###
-### plotting utilities
-###
+@testset "balanced rectangle" begin
+    @test @inferred(balanced_rectangle(1:3)) == [3 1; nothing 2]
+end
 
-@test @inferred(balanced_rectangle(1:3)) == [3 1; nothing 2]
+@testset "sync bounds" begin
+    v = [Plot(Scatter(zip(randn(10), randn(10)))) for i in 1:4]
+    @test allequal([first(bounds_xy(p)) for p in sync_bounds(:X, v)])
+    @test allequal([last(bounds_xy(p)) for p in sync_bounds(:Y, v)])
+    @test allequal([bounds_xy(p) for p in sync_bounds(:XY, v)])
+    @test_throws ArgumentError sync_bounds(:x, v)
+
+    m = [Plot(Scatter(zip(randn(10), randn(10)))) for _ in 1:2, _ in 1:3]
+
+    m_x = sync_bounds(:x, m)
+    @test size(m_x) == size(m)
+    for i in axes(m, 1)
+        @test allequal(first.(bounds_xy.(m_x[i, :])))
+    end
+
+    m_y = sync_bounds(:y, m)
+    @test size(m_y) == size(m)
+    for j in axes(m, 2)
+        @test allequal(last.(bounds_xy.(m_y[:, j])))
+    end
+
+    m_xy = sync_bounds(:xy, m)
+    @test size(m_xy) == size(m)
+    for i in axes(m, 1)
+        @test allequal(first.(bounds_xy.(m_xy[i, :])))
+    end
+    for j in axes(m, 2)
+        @test allequal(last.(bounds_xy.(m_xy[:, j])))
+    end
+
+    @test bounds_xy.(sync_bounds(:xy, (m[i,j] for i in axes(m, 1), j in axes(m, 2)))) ==
+        bounds_xy.(m_xy)
+end

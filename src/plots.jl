@@ -6,10 +6,12 @@ module Plots
 
 # reexported as API
 export Plot, Tableau, Phantom, Lines, Scatter, Circles, Hline, Hgrid, LineThrough,
-    Annotation, Invisible, sync_bounds!
+    Annotation, Invisible, sync_bounds
 
+using Accessors: @insert
 using ArgCheck: @argcheck
-using DocStringExtensions: SIGNATURES
+import ConstructionBase
+using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using Unitful: mm
 
 using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, finalize,
@@ -50,7 +52,7 @@ Base.@kwdef struct PlotStyle
     margin_top::LENGTH = DEFAULTS.plot_style_margin_top
 end
 
-struct Plot <: AbstractVector{Any}
+struct Plot
     contents::Vector{Any}
     x_axis
     y_axis
@@ -69,29 +71,15 @@ struct Plot <: AbstractVector{Any}
     end
 end
 
+function ConstructionBase.constructorof(::Type{Plot})
+    (contents, x_axis, y_axis, style) -> Plot(contents; x_axis, y_axis, style)
+end
+
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
+bounds_xy(plot::Plot) = bounds_xy(plot.contents)
+
 @declare_showable Plot
-
-###
-### vector and dequeue API
-###
-
-Base.size(plot::Plot) = size(plot.contents)
-
-Base.getindex(plot::Plot, i::Integer) = Base.getindex(plot.contents, i)
-
-Base.setindex!(plot::Plot, value, i::Integer) = Base.setindex(plot.contents, value, i)
-
-Base.push!(plot::Plot, items...) = push!(plot.contents, items...)
-
-Base.pushfirst!(plot::Plot, items...) = pushfirst!(plot.contents, items...)
-
-Base.append!(plot::Plot, collections...) = pushfirst!(plot.contents, collections...)
-
-Base.pop!(plot::Plot) = pop!(plot.contents)
-
-Base.insert!(plot::Plot, i::Integer, item) = insert!(plot.contents, i, item)
 
 ###
 ### rendering and bounds
@@ -123,7 +111,7 @@ end
 #### Tableau
 ####
 
-struct Tableau <: AbstractMatrix{Any}
+struct Tableau
     contents::Matrix{Any}
     horizontal_divisions
     vertical_divisions
@@ -145,15 +133,14 @@ struct Tableau <: AbstractMatrix{Any}
     end
 end
 
+function ConstructionBase.constructorof(::Type{Tableau})
+    (contents, horizontal_divisions, vertical_divisions) ->
+        Tableau(contents; horizontal_divisions, vertical_divisions)
+end
+
 @declare_showable Tableau
 
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
-
-Base.size(tableau::Tableau) = size(tableau.contents)
-
-Base.getindex(tableau::Tableau, i::Vararg{Int}) = getindex(tableau.contents, i...)
-
-Base.setindex!(tableau::Tableau, item, i::Vararg{Int}) = setindex(tableau.contents, item, i...)
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau
@@ -275,7 +262,7 @@ struct Circles
     @doc """
     $(SIGNATURES)
 
-    Taking an iterator or vector aof `(x, y, w)` triplets (eg `NTuple{3}`, but anything
+    Taking an iterator or vector of `(x, y, w)` triplets (eg `NTuple{3}`, but anything
     iterable with 3 elements will do), draw circles centered on `(x, y)` coordinates
     with radius `scale * √w`.
 
@@ -556,63 +543,87 @@ PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
 """
 $(SIGNATURES)
 
-Add an `Invisible(xy)` to each plot in `itr`.
+Add an `Invisible(xy)` to each plot in `itr`. Internal helper function.
 """
-function _add_invisible!(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
+function _add_invisible(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
     invisible = Invisible(xy)
-    for i in itr
-        push!(i, invisible)
-    end
-    itr
+    map(x -> @insert(last(x.contents) = invisible), itr)
 end
 
 """
 $(SIGNATURES)
 
-Make sure that axis bounds are the same for axes `:x`, `:y`, or both (`:xy`), as determined
-by `tag`. Tag can be given in the form of `Val(tag)` too, this is a convenience wrapper.
+Make sure that axis bounds are the same for axes as determined
+by `tag` (see below).
 
-Matrices (like [`Tableau`](@ref) are synced by column- and row, according to the `tag`.
+Tag can be given in the form of `Val(tag)` too, this is a convenience wrapper.
 
-Vectors are just synced as specified.
+Possible tags:
 
-All methods return the (modified) second argument.
+- `:X`, `:Y`, `:XY`: make the specified axes in *all* items of the collection the same
+
+- `:x`, `:y`, `:xy`: make x/y axes the same in plots that are in the same column/row, only works for
+
+`:x`, `:y`, and `:xy` only work for matrix-like arguments.
+
+All methods return the (modified) first argument.
+
+# Explanation
+
+To illustrate the lowercase tags, consider the arrangement
+
+```ascii
+y/vertical axis
+│
+│ C  D
+│ A  B
+└────────x/horizontal axis
+```
+which could be entered as eg
+```julia
+t = Tableau([A C; B D])
+```
+Then `$(FUNCTIONNAME)(:x, t)` would ensure that A and C have the same bounds for the
+x-axis, and similarly B and D.
 """
-@inline function sync_bounds!(tag::Symbol, collection)
-    @argcheck tag ∈ (:x, :y, :xy)
-    sync_bounds!(Val(tag), collection)
+@inline function sync_bounds(tag::Symbol, collection)
+    @argcheck tag ∈ (:x, :y, :xy, :X, :Y, :XY)
+    sync_bounds(Val(tag), collection)
 end
 
-function sync_bounds!(::Val{:x}, v::AbstractVector)
-    xb, _ = bounds_xy(v)
-    _add_invisible!((xb, ∅), v)
+sync_bounds(tag::Val) = Base.Fix1(sync_bounds, tag)
+
+@inline sync_bounds(tag::Symbol) = sync_bounds(Val(tag))
+
+function sync_bounds(tag::Val{:X}, collection)
+    # vectors are treated like 1×N matrices, x axes are synced
+    xb, _ = bounds_xy(collection)
+    _add_invisible((xb, ∅), collection)
 end
 
-function sync_bounds!(::Val{:y}, v::AbstractVector)
-    _, yb = bounds_xy(v)
-    _add_invisible!((∅, yb), v)
+function sync_bounds(tag::Val{:Y}, collection)
+    _, yb = bounds_xy(collection)
+    _add_invisible((∅, yb), collection)
 end
 
-sync_bounds!(::Val{:xy}, v::AbstractVector) = _add_invisible!(bounds_xy(v), v)
+sync_bounds(tag::Val{:XY}, collection) = _add_invisible(bounds_xy(collection), collection)
 
-function sync_bounds!(::Val{:x}, m::AbstractMatrix)
-    for row in eachrow(m)
-        sync_bounds!(Val(:x), row)
+function sync_bounds(tag::Union{Val{:x},Val{:y},Val{:xy}}, collection::T) where T
+    if Base.IteratorSize(T) == Base.HasShape{2}()
+        sync_bounds(tag, collect(collection))
+    else
+        throw(ArgumentError("Tag $(tag) only works for matrix-like arguments."))
     end
-    m
 end
 
-function sync_bounds!(::Val{:y}, m::AbstractMatrix)
-    for col in eachcol(m)
-        sync_bounds!(Val(:y), col)
-    end
-    m
+function sync_bounds(::Val{:x}, m::AbstractMatrix)
+    mapreduce(row -> permutedims(sync_bounds(Val(:X), row)), vcat, eachrow(m))
 end
 
-function sync_bounds!(::Val{:xy}, m::AbstractMatrix)
-    sync_bounds!(Val(:x), m)
-    sync_bounds!(Val(:y), m)
-    m
+function sync_bounds(::Val{:y}, m::AbstractMatrix)
+    mapreduce(col -> sync_bounds(Val(:Y), col), hcat, eachcol(m))
 end
+
+sync_bounds(::Val{:xy}, m::AbstractMatrix) = sync_bounds(Val(:x), sync_bounds(Val(:y), m))
 
 end
