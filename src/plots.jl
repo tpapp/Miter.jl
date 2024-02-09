@@ -262,7 +262,7 @@ struct Circles
     @doc """
     $(SIGNATURES)
 
-    Taking an iterator or vector aof `(x, y, w)` triplets (eg `NTuple{3}`, but anything
+    Taking an iterator or vector of `(x, y, w)` triplets (eg `NTuple{3}`, but anything
     iterable with 3 elements will do), draw circles centered on `(x, y)` coordinates
     with radius `scale * √w`.
 
