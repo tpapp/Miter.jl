@@ -40,6 +40,12 @@ let c = [(0, 1, 2), (1, 2, 1), (2, 4, -0.5)]
 end
 ```
 
+Bar plots from a histogram.
+```@example all
+using StatsBase
+Plot(RelativeBars(:vertical, fit(Histogram, randn(100))))
+```
+
 Annotations.
 
 ```@example all
