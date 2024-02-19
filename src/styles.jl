@@ -59,7 +59,7 @@ Base.@kwdef mutable struct Options
     # elements
     line_width::LENGTH = 0.3mm
     line_color::COLOR = Gray(0.0)
-    fill_color::COLOR = Gray(0.5)
+    fill_color::COLOR = Gray(0.6)
 
     # guidelines
     "width for guidelines"
@@ -76,6 +76,9 @@ Base.@kwdef mutable struct Options
     grid_color::COLOR = Gray(0.75)
     "dash for gridlines"
     grid_dash::Dash = LINE_SOLID
+
+    # bars stroke color
+    bars_stroke_color::COLOR = Gray(1.0)
 
     # mark options
     mark_size::LENGTH = 2mm
@@ -99,6 +102,46 @@ function set_line_style(sink::PGF.Sink; color = nothing, width = nothing, dash =
     color ≢ nothing && PGF.setstrokecolor(sink, color)
     width ≢ nothing && PGF.setlinewidth(sink, width)
     dash ≢ nothing && PGF.setdash(sink, dash)
+end
+
+"""
+$(SIGNATURES)
+
+A utility function to
+
+1. set the stroke color when not `nothing`, and then also the line width,
+2. set the fill color when not `nothing
+
+For use by callers where the user specifies at least one of these. See also
+[`path_q_stroke_or_fill`](@ref).
+"""
+function set_stroke_or_fill_style(sink::PGF.Sink; stroke_color, fill_color, stroke_width)
+    if stroke_color ≡ nothing && fill_color ≡ nothing
+        error(ArgumentError("you need to set at least one stroke or fill color"))
+    end
+    if stroke_color ≢ nothing
+        set_line_style(sink; color = stroke_color, width = stroke_width)
+    end
+    if fill_color ≢ nothing
+        PGF.setfillcolor(sink, fill_color)
+    end
+end
+
+"""
+$(SIGNATURES)
+
+Quick stroke or fill whenever the respective color is not `nothing`.
+"""
+function path_q_stroke_or_fill(sink, stroke_color, fill_color)
+    if stroke_color ≡ nothing && fill_color ≡ nothing
+        error(ArgumentError("you need to set at least one stroke or fill color"))
+    elseif stroke_color ≢ nothing && fill_color ≢ nothing
+        PGF.usepathqfillstroke(sink)
+    elseif stroke_color ≢ nothing
+        PGF.usepathqstroke(sink)
+    else fill_color ≢ nothing
+        PGF.usepathqfill(sink)
+    end
 end
 
 end

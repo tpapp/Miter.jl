@@ -31,6 +31,21 @@ Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 
      Hline(0.0))
 ```
 
+Bar plots with bars directly specified.
+
+```@example all
+let c = [(0, 1, 2), (1, 2, 1), (2, 4, -0.5)]
+    Tableau([Plot(RelativeBars(:vertical, c)),
+             Plot(RelativeBars(:horizontal, c))])
+end
+```
+
+Bar plots from a histogram.
+```@example all
+using StatsBase
+Plot(RelativeBars(:vertical, fit(Histogram, randn(100))))
+```
+
 Annotations.
 
 ```@example all

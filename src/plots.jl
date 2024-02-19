@@ -5,8 +5,8 @@
 module Plots
 
 # reexported as API
-export Plot, Tableau, Phantom, Lines, Scatter, Circles, Hline, Hgrid, LineThrough,
-    Annotation, Invisible, sync_bounds
+export Plot, Tableau, Phantom, Lines, Scatter, Circles, RelativeBars, Hline, Hgrid,
+    LineThrough, Annotation, Invisible, sync_bounds
 
 using Accessors: @insert
 using ArgCheck: @argcheck
@@ -22,8 +22,9 @@ using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..PGF
-using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe, Point
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
+    path_q_stroke_or_fill
 
 ####
 #### input conversions
@@ -289,23 +290,75 @@ bounds_xy(circles::Circles) = bounds_xy(circles.x_y_w)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
-    if stroke_color ≢ nothing
-        set_line_style(sink; color = stroke_color, width = stroke_width)
-        do_stroke = true
-    else
-        do_stroke = false
-    end
-    do_fill = fill_color ≢ nothing
-    do_fill && PGF.setfillcolor(sink, fill_color)
+    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (x, y, w) in x_y_w
         PGF.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
-        if do_fill && do_stroke
-            PGF.usepathqfillstroke(sink)
-        elseif do_fill
-            PGF.usepathqfill(sink)
-        elseif do_stroke
-            PGF.usepathqstroke(sink)
-        end
+        path_q_stroke_or_fill(sink, stroke_color, fill_color)
+    end
+end
+
+###
+### RelativeBars
+###
+
+struct RelativeBars
+    orientation::Symbol
+    edges_and_values::Vector{Tuple{Float64,Float64,Float64}}
+    baseline::Float64
+    fill_color::Union{Nothing,COLOR}
+    stroke_color::Union{Nothing,COLOR}
+    stroke_width::LENGTH
+    """
+    $(SIGNATURES)
+
+    Draw bars relative to `baseline` with the given `orientation`, which may be
+    `:horizontal` or `:vertical`.
+
+    The second argument should be an iterable of `(e1, e2, v)` values, all finite, which
+    specify the edges and the value for each bar (`baseline` provides the other value).
+
+    At least `fill_color` or `stroke_color` should be specified.
+
+    Note that for most applications, an algorithm would calculate the edges and values,
+    and such a method should be provided. For example, when `StatsBase` is loaded, a
+    `Histogram` is a valid second argument and will be converted accordingly.
+    """
+    function RelativeBars(orientation::Symbol, edges_and_values; baseline = 0,
+                          stroke_color = DEFAULTS.bars_stroke_color,
+                          stroke_width = DEFAULTS.line_width,
+                          fill_color = DEFAULTS.fill_color)
+        @argcheck orientation ∈ (:vertical, :horizontal)
+        @argcheck isfinite(baseline)
+        new(orientation,
+            map(x -> (_x = convert(Tuple{Float64,Float64,Float64}, x);
+                      @argcheck all(isfinite, _x);
+                      @argcheck _x[1] < _x[2];
+                      _x),
+                edges_and_values),
+            convert(Float64, baseline),
+            convert_maybe(COLOR, fill_color),
+            convert_maybe(COLOR, stroke_color),
+            convert(LENGTH, stroke_width))
+    end
+end
+
+function bounds_xy(relative_bars::RelativeBars)
+    (; orientation, edges_and_values, baseline) = relative_bars
+    e = mapreduce(x -> Interval(x[1], x[2]), hull, edges_and_values)
+    v = Interval(extrema((baseline, extrema(x -> x[3], edges_and_values)...))...)
+    orientation ≡ :vertical ? (e, v) : (v, e)
+end
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, relative_bars::RelativeBars)
+    (; orientation, edges_and_values, baseline, stroke_color, stroke_width,
+     fill_color) = relative_bars
+    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    for (e1, e2, v) in edges_and_values
+        c1 = coordinates_to_point(drawing_area, orientation ≡ :vertical ?
+            (e1, baseline) : (baseline, e1))
+        c2 = coordinates_to_point(drawing_area, orientation ≡ :vertical ? (e2, v) : (v, e2))
+        PGF.path(sink, PGF.Rectangle(c1, c2))
+        path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 
