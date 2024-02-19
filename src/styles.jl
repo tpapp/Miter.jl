@@ -101,4 +101,44 @@ function set_line_style(sink::PGF.Sink; color = nothing, width = nothing, dash =
     dash ≢ nothing && PGF.setdash(sink, dash)
 end
 
+"""
+$(SIGNATURES)
+
+A utility function to
+
+1. set the stroke color when not `nothing`, and then also the line width,
+2. set the fill color when not `nothing
+
+For use by callers where the user specifies at least one of these. See also
+[`path_q_stroke_or_fill`](@ref).
+"""
+function set_stroke_or_fill_style(sink::PGF.Sink; stroke_color, fill_color, stroke_width)
+    if stroke_color ≡ nothing && fill_color ≡ nothing
+        error(ArgumentError("you need to set at least one stroke or fill color"))
+    end
+    if stroke_color ≢ nothing
+        set_line_style(sink; color = stroke_color, width = stroke_width)
+    end
+    if fill_color ≢ nothing
+        setfillcolor(sink, fill_color)
+    end
+end
+
+"""
+$(SIGNATURES)
+
+Quick stroke or fill whenever the respective color is not `nothing`.
+"""
+function path_q_stroke_or_fill(sink, stroke_color, fill_color)
+    if stroke_color ≡ nothing && fill_color ≡ nothing
+        error(ArgumentError("you need to set at least one stroke or fill color"))
+    elseif stroke_color ≢ nothing && fill_color ≢ nothing
+        PGF.usepathqfillstroke(sink)
+    elseif stroke_color ≢ nothing
+        PGF.usepathqstroke(sink)
+    else fill_color ≢ nothing
+        PGF.usepathqfill(sink)
+    end
+end
+
 end

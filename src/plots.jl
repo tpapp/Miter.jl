@@ -23,7 +23,8 @@ using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..PGF
 using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED
+using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
+    path_q_stroke_or_fill
 
 ####
 #### input conversions
@@ -289,23 +290,10 @@ bounds_xy(circles::Circles) = bounds_xy(circles.x_y_w)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
-    if stroke_color ≢ nothing
-        set_line_style(sink; color = stroke_color, width = stroke_width)
-        do_stroke = true
-    else
-        do_stroke = false
-    end
-    do_fill = fill_color ≢ nothing
-    do_fill && PGF.setfillcolor(sink, fill_color)
+    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (x, y, w) in x_y_w
         PGF.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
-        if do_fill && do_stroke
-            PGF.usepathqfillstroke(sink)
-        elseif do_fill
-            PGF.usepathqfill(sink)
-        elseif do_stroke
-            PGF.usepathqstroke(sink)
-        end
+        path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 
