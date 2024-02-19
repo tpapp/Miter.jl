@@ -256,12 +256,17 @@ struct Rectangle
     Create a rectangle with the given boundaries, which are `Unitful.Length` values.
     """
     function Rectangle(left, right, bottom, top)
-        result = new(_length(left), _length(right), _length(bottom), _length(top))
-        @argcheck result.left ≤ result.right
-        @argcheck result.bottom ≤ result.top
-        result
+        if left > right
+            left, right = right, left
+        end
+        if bottom > top
+            bottom, top = top, bottom
+        end
+        new(_length(left), _length(right), _length(bottom), _length(top))
     end
 end
+
+Rectangle(c1::Point, c2::Point) = Rectangle(c1.x, c2.x, c1.y, c2.y)
 
 Rectangle(; left, right, bottom, top) = Rectangle(left, right, bottom, top)
 
