@@ -13,8 +13,8 @@ import ConstructionBase
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using Unitful: mm
 
-using ..Axis: Linear, DrawingArea, y_coordinate_to_canvas, coordinates_to_point, finalize,
-    FinalizedLinear
+using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
+    coordinates_to_point, finalize, FinalizedLinear
 import ..Axis: bounds_xy
 using ..Intervals
 using ..Marks: MarkSymbol

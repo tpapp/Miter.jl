@@ -53,6 +53,8 @@ Base.@kwdef struct DrawingArea{TX,TY}
     rectangle::PGF.Rectangle
 end
 
+Broadcast.broadcastable(drawing_area::DrawingArea) = Ref(drawing_area)
+
 """
 $(SIGNATURES)
 

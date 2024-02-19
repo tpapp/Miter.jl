@@ -2,7 +2,7 @@
 #### common plot components to visualize data
 ####
 
-export Lines, Scatter, Circles, RelativeBars
+export Lines, Scatter, Circles, RelativeBars, ColorMatrix
 
 ####
 #### Lines
@@ -180,5 +180,55 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, relative_bars::Re
         c2 = coordinates_to_point(drawing_area, orientation ≡ :vertical ? (e2, v) : (v, e2))
         PGF.path(sink, PGF.Rectangle(c1, c2))
         path_q_stroke_or_fill(sink, stroke_color, fill_color)
+    end
+end
+
+####
+#### color matrix
+####
+
+struct ColorMatrix
+    x_edges::Vector{Float64}
+    y_edges::Vector{Float64}
+    colors::Matrix{Union{Nothing,COLOR}}
+    @doc """
+    $(SIGNATURES)
+
+    A “matrix” of colors, with the specified edges. Colors of `nothing` are not drawn.
+
+    *Note*: this is a building block for various plot types, including heatmaps.
+    """
+    function ColorMatrix(x_edges, y_edges, colors)
+        x_edges = Float64.(x_edges)
+        y_edges = Float64.(y_edges)
+        colors = collect(Union{Nothing,COLOR},
+                         convert_maybe(COLOR, c) for c in colors)
+        @argcheck x_edges isa Vector{Float64} && issorted(x_edges)
+        @argcheck y_edges isa Vector{Float64} && issorted(y_edges)
+        @argcheck colors isa Matrix{Union{Nothing,COLOR}}
+        @argcheck size(colors) == (length(x_edges) - 1, length(y_edges) - 1)
+        new(x_edges, y_edges, colors)
+    end
+end
+
+function bounds_xy(color_matrix::ColorMatrix)
+    (; x_edges, y_edges) = color_matrix
+    (Interval(x_edges[begin], x_edges[end]), Interval(y_edges[begin], y_edges[end]))
+end
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, color_matrix::ColorMatrix)
+    (; x_edges, y_edges, colors) = color_matrix
+    x_c = x_coordinate_to_canvas.(drawing_area, x_edges)
+    y_c = y_coordinate_to_canvas.(drawing_area, y_edges)
+    for i in axes(colors, 1)
+        for j in axes(colors, 2)
+            c = colors[i, j]
+            if c ≢ nothing
+                PGF.setfillcolor(sink, c)
+                PGF.path(sink, PGF.Rectangle(; left = x_c[i], right = x_c[i + 1],
+                                             bottom = y_c[j], top = y_c[j + 1]))
+                PGF.usepathqfill(sink)
+            end
+        end
     end
 end
