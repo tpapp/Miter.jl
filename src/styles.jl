@@ -120,7 +120,7 @@ function set_stroke_or_fill_style(sink::PGF.Sink; stroke_color, fill_color, stro
         set_line_style(sink; color = stroke_color, width = stroke_width)
     end
     if fill_color ≢ nothing
-        setfillcolor(sink, fill_color)
+        PGF.setfillcolor(sink, fill_color)
     end
 end
 
