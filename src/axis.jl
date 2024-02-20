@@ -16,6 +16,7 @@ import ..PGF
 using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
+using ..InternalUtilities
 
 ####
 #### Axis
@@ -54,13 +55,6 @@ Base.@kwdef struct DrawingArea{TX,TY}
 end
 
 Broadcast.broadcastable(drawing_area::DrawingArea) = Ref(drawing_area)
-
-"""
-$(SIGNATURES)
-
-Transform a coordinate in `[0,1]` to `[a,b]`.
-"""
-unit_to_canvas(a, b, z) = a + (b - a) * z
 
 function x_coordinate_to_canvas(drawing_area::DrawingArea, x::Real)
     @argcheck isfinite(x) "Non-finite x coordinate."

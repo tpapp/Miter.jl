@@ -54,7 +54,7 @@ Base.@kwdef mutable struct Options
     plot_style_axis_left::LENGTH = 20mm
     plot_style_axis_bottom::LENGTH = 15mm
     plot_style_margin_right::LENGTH = 5mm
-    plot_style_margin_top::LENGTH = 5mm
+    plot_style_margin_top::LENGTH = 7mm
 
     # elements
     line_width::LENGTH = 0.3mm
