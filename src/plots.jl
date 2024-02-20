@@ -13,6 +13,7 @@ import ConstructionBase
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using Unitful: mm
 
+using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
     coordinates_to_point, finalize, FinalizedLinear
 import ..Axis: bounds_xy
@@ -28,10 +29,6 @@ using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or
 ####
 #### input conversions
 ####
-
-ensure_vector(v::AbstractVector) = v
-
-ensure_vector(v) = collect(v)::AbstractVector
 
 function float64_xy(xy)
     @argcheck length(xy) == 2

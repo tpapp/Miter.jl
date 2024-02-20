@@ -131,6 +131,14 @@ Plot(ColorMatrix([0, 1, 3], [2, 4, 5],
                   colorant"blue" colorant"red"]))
 ```
 
+Color matrix built from a histogram.
+
+```@example all
+using StatsBase, ColorSchemes
+h = fit(Histogram, (randn(1000), randn(1000)); nbins = (15, 17))
+Plot(hpd_heatmap(h, range(0.2, 0.8; step = 0.2), ColorSchemes.OrRd_5))
+```
+
 ### Tableaus
 
 ```@example all
