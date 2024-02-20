@@ -54,22 +54,27 @@ struct Plot
     x_axis
     y_axis
     style
+    title
     @doc """
     $(SIGNATURES)
 
     Create a plot with the given `contents` (a vector, but a convenience form that accepts
     multiple arguments is available).
 
-    A plot behaves like a `Vector{Any}` and its contents be indexed as such. It also
-    supports `push!`, `pushfirst!`, `append!`, `pop!`, `insert!`.
+    Keyword arguments (with defaults):
+
+    - `x_axis = Axis.Linear()`, `y_axis = Axis.Linear()`: x and y axes
+    - `style = PlotStyle()`: plot style (eg margins)
+    - `title = nothing`: a title for the plot
     """
-    function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(), style = PlotStyle())
-        new(Vector{Any}(contents), x_axis, y_axis, style)
+    function Plot(contents::AbstractVector = []; x_axis = Linear(), y_axis = Linear(),
+                  style = PlotStyle(), title = nothing)
+        new(Vector{Any}(contents), x_axis, y_axis, style, title)
     end
 end
 
 function ConstructionBase.constructorof(::Type{Plot})
-    (contents, x_axis, y_axis, style) -> Plot(contents; x_axis, y_axis, style)
+    (contents, x_axis, y_axis, style, title) -> Plot(contents; x_axis, y_axis, style, title)
 end
 
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
@@ -83,7 +88,7 @@ bounds_xy(plot::Plot) = bounds_xy(plot.contents)
 ###
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
-    (; x_axis, y_axis, contents, style) = plot
+    (; x_axis, y_axis, contents, style, title) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
     grid = PGF.split_matrix(rectangle,
                          (axis_left, PGF.SPACER , margin_right),
@@ -91,6 +96,10 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
+    title_rectangle = grid[2, 3]
+    if title ≢ nothing
+        PGF.text(sink, PGF.relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
+    end
     x_interval, y_interval = bounds_xy(contents)
     @argcheck x_interval ≢ ∅ "empty x range"
     @argcheck y_interval ≢ ∅ "empty y range"
@@ -98,7 +107,8 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     finalized_y_axis = finalize(y_axis, y_interval)
     PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
     PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
-    drawing_area = DrawingArea(; rectangle = plot_rectangle, finalized_x_axis, finalized_y_axis)
+    drawing_area = DrawingArea(; rectangle = plot_rectangle,
+                               finalized_x_axis, finalized_y_axis)
     for c in contents
         PGF.render(sink, drawing_area, c)
     end

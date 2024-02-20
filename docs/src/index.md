@@ -20,7 +20,8 @@ to load the relevant packages.
 Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
       Scatter(MarkSymbol(; color = colorant"darkgreen"), (x, (x + 1) / 2) for x in -1:0.1:1)];
       x_axis = Axis.Linear(; label = math"x"),
-      y_axis = Axis.Linear(; label = math"y"))
+      y_axis = Axis.Linear(; label = math"y"),
+      title = "line and scatter")
 ```
 
 Horizontal lines and phantom objects (rendered, but ignored for boundary calculations).

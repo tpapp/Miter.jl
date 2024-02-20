@@ -25,6 +25,8 @@ using StaticArrays: SVector, SMatrix
 using Printf: @printf
 using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
+using ..InternalUtilities
+
 ####
 #### types and constants
 ####
@@ -269,6 +271,17 @@ end
 Rectangle(c1::Point, c2::Point) = Rectangle(c1.x, c2.x, c1.y, c2.y)
 
 Rectangle(; left, right, bottom, top) = Rectangle(left, right, bottom, top)
+
+"""
+$(SIGNATURES)
+
+A point relative to the boundaries of the rectangle (`x = 0` for left, `y = 0` for
+bottom).
+"""
+function relative_point(rectangle::Rectangle, (x, y))
+    (; left, right, bottom, top) = rectangle
+    Point(unit_to_canvas(left, right, x), unit_to_canvas(bottom, top, y))
+end
 
 """
 $(SIGNATURES)
