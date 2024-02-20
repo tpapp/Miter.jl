@@ -1,11 +1,14 @@
+"""
+Utilities for users of this package.
+"""
 module Utilities
 
 # reexported as API
-export balanced_rectangle
+export balanced_rectangle, hpd_heatmap
 
 using ArgCheck: @argcheck
 using ColorTypes: RGB24, Gray
-using DocStringExtensions: SIGNATURES
+using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 using Unitful: mm
 
 using ..PGF
@@ -96,5 +99,19 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, d::Dummy)
     # text
     PGF.text(sink, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
 end
+
+"""
+$(FUNCTIONNAME)(histogram, probabilities, colors)
+
+Generate a `ColorMatrix` from the histogram that highlights the various probability
+density regions with the given colors.
+
+`probabilities` should be increasing, between `0` and `1`, and have element *less* than
+`color`. Both can be iterables.
+
+!!! note
+    Methods are only defined when the package `StatsBase` is loaded.
+"""
+function hpd_heatmap end
 
 end
