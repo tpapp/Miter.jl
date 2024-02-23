@@ -14,7 +14,7 @@ struct Invisible
     $(SIGNATURES)
 
     Create an invisible object with the sole function of extending coordinate bounds to (x,
-    y), which should be `Interval`s or `∅`.
+    y), which should be `Interval`s or `∅` when used internally.
 
     You can also use `Invisible(bounds_xy(object))` to extend bounds to those in `object`.
     """
