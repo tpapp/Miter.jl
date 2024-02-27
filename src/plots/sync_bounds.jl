@@ -38,7 +38,7 @@ Add an `Invisible(xy)` to each plot in `itr`. Internal helper function.
 """
 function _add_invisible(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
     invisible = Invisible(xy)
-    map(x -> @insert(last(x.contents) = invisible), itr)
+    map(x -> x ≡ nothing ? x : @insert(last(x.contents) = invisible), itr)
 end
 
 """
