@@ -12,7 +12,7 @@ using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 using Unitful: mm
 
 using ..PGF
-using ..Utilities: ensure_vector
+using ..InternalUtilities: ensure_vector
 
 ####
 #### arrangement
@@ -21,8 +21,8 @@ using ..Utilities: ensure_vector
 """
 $(SIGNATURES)
 
-Arrange elements of a vector in a `(w, h)` matrix, such that `width / height ≈ width_bias`.
-Extra elements are filled with `nothing`.
+Arrange elements of a vector (or iterable) in a `(w, h)` matrix, such that `width /
+height ≈ width_bias`. Extra elements are filled with `nothing`.
 
 When `columns_down = true` (default), columns will be reversed, corresponding to a top-down
 visual arrangement.
@@ -38,7 +38,7 @@ The purpose of this function is to make balanced displays, eg in [`Tableau`](@re
 function balanced_rectangle(vector_or_itr; width_bias::Real = 1.0,
                             columns_down::Bool = true, row_major::Bool = false,
                             w::Union{Nothing,Integer} = nothing)
-    v = ensure_vector(v_or_itr)
+    v = ensure_vector(vector_or_itr)
     @argcheck !isempty(v)
     T = eltype(v)
     l = length(v)

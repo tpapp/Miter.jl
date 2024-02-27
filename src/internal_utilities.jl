@@ -9,11 +9,11 @@ export ensure_vector, unit_to_canvas
 
 ensure_vector(v::AbstractVector) = v
 
-ensure_vector(v) = collect(v)::AbstractVector
+ensure_vector(v) = vec(collect(v))
 
 ensure_vector(::Type{T}, v::AbstractVector{T}) where T = v
 
-ensure_vector(::Type{T}, v) where T = collect(T, v)
+ensure_vector(::Type{T}, v) where T = vec(collect(T, v))
 
 """
 $(SIGNATURES)

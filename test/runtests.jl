@@ -140,8 +140,12 @@ end
     HY = RelativeBars(:vertical, fit(Histogram, randn(100)))
     H2 = hpd_heatmap(fit(Histogram, (randn(100), randn(100))),
                      0.2:0.2:0.8, ColorSchemes.OrRd_5)
+    A = Annotation((1, 2), math"\cos(φ)")
+    HG = Hgrid()
+    HL = Hline(1.0)
+    LT = LineThrough((1.0, 2.0), 1.0)
 
-    plot = Plot(L, S;
+    plot = Plot(L, S, A, HG, HL, LT;
                 x_axis = Axis.Linear(; label = math"x"),
                 y_axis = Axis.Linear(; label = math"y"))
 
