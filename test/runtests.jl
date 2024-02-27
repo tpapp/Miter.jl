@@ -5,6 +5,7 @@ using Test
 using Unitful.DefaultSymbols
 using Colors, ColorSchemes
 using StatsBase: fit, Histogram
+using LaTeXStrings
 
 ####
 #### test utilities
@@ -207,4 +208,10 @@ end
 
     @test bounds_xy.(sync_bounds(:xy, (m[i,j] for i in axes(m, 1), j in axes(m, 2)))) ==
         bounds_xy.(m_xy)
+end
+
+@testset "strings" begin
+    s = latex"\textbf{A}" * math"\cos(\varphi)" * L"1+\sin(\alpha)" * raw"#$%&~_^{}"
+    @test s.latex == raw"\textbf{A}$\cos(\varphi)$$1+\sin(\alpha)$\#\$\%\&\textasciitilde{}\_\textasciicircum{}\{\}"
+    @test_throws MethodError "aa" * math"\alpha"
 end

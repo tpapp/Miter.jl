@@ -370,6 +370,20 @@ struct LaTeX{T<:AbstractString}
 
     It is the responsibility of the user to ensure that this is valid LaTeX code within the
     document.
+
+    The string literals `latex` and `math` provide a convenient way to enter raw
+    strings, with `math` wrapping its input in `\$`s.
+
+    ```jldoctest
+    julia> latex"\\cos(\\phi)"
+    LaTeX{String}("\\cos(\\phi)")
+
+    julia> math"\\cos(\\phi)"
+    LaTeX{String}("\$\\\\cos(\\\\phi)\$")
+    ```
+
+    The type supports concatenation with `*`, just ensure that the first argument is of
+    this type (can be empty).
     """
     LaTeX(latex::T) where T = new{T}(latex) # FIXME checks
 end
@@ -413,13 +427,19 @@ produce the expected output.
 function _print_escaped(io::IO, str::AbstractString)
     for c in str
         if c == '\\'
-            print(io, raw"\textbackslash")
+            print(io, raw"\textbackslash{}")
+        elseif c == '~'
+            print(io, raw"\textasciitilde{}")
+        elseif c == '^'
+            print(io, raw"\textasciicircum{}")
         else
-            c ∈ raw"#$%&~_^{}" && print(io, '\\')
+            c ∈ raw"#$%&_{}" && print(io, '\\')
             print(io, c)
         end
     end
 end
+
+_print_escaped(io::IO, x) = _print_escaped(io, string(x))
 
 function Base.:(*)(str1::LaTeX, str_rest...)
     io = IOBuffer()
