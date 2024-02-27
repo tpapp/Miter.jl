@@ -37,6 +37,8 @@ bounds_xy(a::AbstractArray) = isempty(a) ? (∅, ∅) : mapreduce(bounds_xy, hul
 # bounds for a coordinate pair
 bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
 
+bounds_xy(::Nothing) = (∅, ∅)
+
 function finalize end
 
 """

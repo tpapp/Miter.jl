@@ -14,7 +14,7 @@ struct Invisible
     $(SIGNATURES)
 
     Create an invisible object with the sole function of extending coordinate bounds to (x,
-    y), which should be `Interval`s or `∅`.
+    y), which should be `Interval`s or `∅` when used internally.
 
     You can also use `Invisible(bounds_xy(object))` to extend bounds to those in `object`.
     """
@@ -38,7 +38,7 @@ Add an `Invisible(xy)` to each plot in `itr`. Internal helper function.
 """
 function _add_invisible(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
     invisible = Invisible(xy)
-    map(x -> @insert(last(x.contents) = invisible), itr)
+    map(x -> x ≡ nothing ? x : @insert(last(x.contents) = invisible), itr)
 end
 
 """
