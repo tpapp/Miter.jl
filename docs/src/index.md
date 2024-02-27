@@ -11,10 +11,10 @@ TBW
 Strings (for axis labels, annotations, plot titles) can be provided three ways:
 
 1. using any `::AbstractString` (except for the types below), eg `"100%"` or `"$5"`. This will be automatically emitted to the \LaTeX engine in an **escaped** form, such as `100\%`or `\$5`. Use this for plain text (including Unicode). This is always valid.
-2. using the [`LaTeX`]@ref) wrapper that emits `str`**unchanged**, or one of the convenience string literals `latex"..."`or `math"...`, where the only difference is that the latter wraps the content in `$`s (for math). Be careful, as using incorrect raw LaTeX can lead to errors that are hard to trace.
+2. using the [`LaTeX`]@ref) wrapper that emits `str`**unchanged**, or one of the convenience string literals `latex"..."`or `math"...`, where the only difference is that the latter wraps the content in `$`s (for math). Be careful, as using incorrect raw LaTeX can lead to errors that are hard to trace. Some basic sanity checks are performed, unless you are using `LaTeX(str; skip_check = true)`.
 3. using `LaTeXString.LaTeXString`, especially if you want interpolation, but note that `L"..."` automatically wraps its input in `$`s and you may not want that.
 
-If you concatenate strings of the types above with the `*` operator, make sure you put a `LaTeX` first (you can always insert an empty one, eg `LaTeX()` or `latex""`. That way, the output is a `LaTeX` and everything will be correctly escaped. Other combinations are deliberately unsupported.
+If you concatenate strings of the types above with the `*` operator, make sure you put a `LaTeX` first (you can always insert an empty one, eg `LaTeX()` or `latex""`. That way, the output is a `LaTeX` and everything will be correctly escaped. Other combinations are deliberately unsupported. Please note that the `skip_check` flag is *contagious*: if any argument has it enabled, then so does the concatenated result.
 
 ```@docs
 LaTeX
