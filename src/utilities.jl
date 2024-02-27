@@ -12,6 +12,7 @@ using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 using Unitful: mm
 
 using ..PGF
+using ..Utilities: ensure_vector
 
 ####
 #### arrangement
@@ -34,10 +35,12 @@ The purpose of this function is to make balanced displays, eg in [`Tableau`](@re
 
 `w` can also be specified explicitly, in which case `width_bias` is not used.
 """
-function balanced_rectangle(v::AbstractVector{T}; width_bias::Real = 1.0,
+function balanced_rectangle(vector_or_itr; width_bias::Real = 1.0,
                             columns_down::Bool = true, row_major::Bool = false,
-                            w::Union{Nothing,Integer} = nothing) where T
+                            w::Union{Nothing,Integer} = nothing)
+    v = ensure_vector(v_or_itr)
     @argcheck !isempty(v)
+    T = eltype(v)
     l = length(v)
     if w ≡ nothing
         @argcheck width_bias > 0

@@ -3,7 +3,7 @@ using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.PGF: math
 using Test
 using Unitful.DefaultSymbols
-using Colors
+using Colors, ColorSchemes
 using StatsBase: fit, Histogram
 
 ####
@@ -138,8 +138,10 @@ end
     C = Circles([(randn(), randn(), abs(randn())) for _ in 1:10], 1mm)
     HX = RelativeBars(:horizontal, fit(Histogram, randn(100)))
     HY = RelativeBars(:vertical, fit(Histogram, randn(100)))
+    H2 = hpd_heatmap(fit(Histogram, (randn(100), randn(100))),
+                     0.2:0.2:0.8, ColorSchemes.OrRd_5)
 
-    plot = Plot(L, S, C, HX, HY;
+    plot = Plot(L, S;
                 x_axis = Axis.Linear(; label = math"x"),
                 y_axis = Axis.Linear(; label = math"y"))
 
@@ -158,7 +160,7 @@ end
         @test is_svg(filename)
     end
 
-    tableau = Tableau([Plot(L), Plot(S)])
+    tableau = Tableau(balanced_rectangle(Plot(e) for e in [L, S, C, HX, HY, H2]))
     filename = tempname() * ".pdf"
     Miter.save(filename, tableau)
     @test is_pdf(filename)
