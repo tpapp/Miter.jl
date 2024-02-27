@@ -147,7 +147,8 @@ end
 
     plot = Plot(L, S, A, HG, HL, LT;
                 x_axis = Axis.Linear(; label = math"x"),
-                y_axis = Axis.Linear(; label = math"y"))
+                y_axis = Axis.Linear(; label = math"y"),
+                title = "what a great title")
 
     let filename = tempname() * ".pdf"
         Miter.save(filename, plot)
