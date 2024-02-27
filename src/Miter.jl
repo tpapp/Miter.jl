@@ -5,6 +5,7 @@ module Miter
 
 include("internal_utilities.jl")
 include("compile.jl")
+include("raw_latex.jl")
 include("pgf.jl")
 include("intervals.jl")
 include("styles.jl")
@@ -21,6 +22,7 @@ include("utilities.jl")
 
 using Reexport: @reexport
 
+@reexport using .RawLaTeX
 @reexport using .PGF
 @reexport using .Output
 @reexport using .Axis

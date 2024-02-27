@@ -1,10 +1,12 @@
 using Miter, Miter.Intervals, Miter.Ticks, Miter.PGF
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
-using Miter.PGF: math
+using Miter.RawLaTeX: check_latex
 using Test
+using Printf: @sprintf
 using Unitful.DefaultSymbols
 using Colors, ColorSchemes
 using StatsBase: fit, Histogram
+using LaTeXStrings
 
 ####
 #### test utilities
@@ -99,36 +101,39 @@ end
             nontrivial_linear_tick_alternatives(Interval(-2.1, 7.3)))
 end
 
+macro unchecked_math_str(str)       # for testing, see below
+    LaTeX("\$" * str * "\$"; skip_check = true)
+end
+
 @testset "format ticks" begin
     # no outer exponent
-    @test format_latex(ShiftedDecimal(5, 0, 0)) == math"5"
-    @test format_latex(ShiftedDecimal(-5, 0, 0)) == math"-5"
-    @test format_latex(ShiftedDecimal(5, 3, 0)) == math"5000"
-    @test format_latex(ShiftedDecimal(-5, 3, 0)) == math"-5000"
-    @test format_latex(ShiftedDecimal(5, -1, 0)) == math"0.5"
-    @test format_latex(ShiftedDecimal(-5, -1, 0)) == math"-0.5"
-    @test format_latex(ShiftedDecimal(5, -2, 0)) == math"0.05"
-    @test format_latex(ShiftedDecimal(-5, -2, 0)) == math"-0.05"
-    @test format_latex(ShiftedDecimal(0, -2, 0)) == math"0.00"
+    @test format_latex(ShiftedDecimal(5, 0, 0)) == unchecked_math"5"
+    @test format_latex(ShiftedDecimal(-5, 0, 0)) == unchecked_math"-5"
+    @test format_latex(ShiftedDecimal(5, 3, 0)) == unchecked_math"5000"
+    @test format_latex(ShiftedDecimal(-5, 3, 0)) == unchecked_math"-5000"
+    @test format_latex(ShiftedDecimal(5, -1, 0)) == unchecked_math"0.5"
+    @test format_latex(ShiftedDecimal(-5, -1, 0)) == unchecked_math"-0.5"
+    @test format_latex(ShiftedDecimal(5, -2, 0)) == unchecked_math"0.05"
+    @test format_latex(ShiftedDecimal(-5, -2, 0)) == unchecked_math"-0.05"
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == unchecked_math"0.00"
 
     # outer exponent
-    @test format_latex(ShiftedDecimal(5, 0, 2)) == math"5\cdot 10^{2}"
-    @test format_latex(ShiftedDecimal(-5, 0, -2)) == math"-5\cdot 10^{-2}"
-    @test format_latex(ShiftedDecimal(5, 3, 2)) == math"5000\cdot 10^{2}"
-    @test format_latex(ShiftedDecimal(-5, 3, -2)) == math"-5000\cdot 10^{-2}"
+    @test format_latex(ShiftedDecimal(5, 0, 2)) == unchecked_math"5\cdot 10^{2}"
+    @test format_latex(ShiftedDecimal(-5, 0, -2)) == unchecked_math"-5\cdot 10^{-2}"
+    @test format_latex(ShiftedDecimal(5, 3, 2)) == unchecked_math"5000\cdot 10^{2}"
+    @test format_latex(ShiftedDecimal(-5, 3, -2)) == unchecked_math"-5000\cdot 10^{-2}"
 
     # zeros - outer exponent is always ignored
-    @test format_latex(ShiftedDecimal(0, 0, 0)) == math"0"
-    @test format_latex(ShiftedDecimal(0, -1, 0)) == math"0.0"
-    @test format_latex(ShiftedDecimal(0, -2, 0)) == math"0.00"
-    @test format_latex(ShiftedDecimal(0, 2, 0)) == math"0"
-    @test format_latex(ShiftedDecimal(0, 0, -2)) == math"0"
+    @test format_latex(ShiftedDecimal(0, 0, 0)) == unchecked_math"0"
+    @test format_latex(ShiftedDecimal(0, -1, 0)) == unchecked_math"0.0"
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == unchecked_math"0.00"
+    @test format_latex(ShiftedDecimal(0, 2, 0)) == unchecked_math"0"
+    @test format_latex(ShiftedDecimal(0, 0, -2)) == unchecked_math"0"
 end
 
 @testset "sensible linear ticks" begin
     @test sensible_linear_ticks(Interval(0, 1), TickFormat(), TickSelection()) ==
-        [0.0 => math("0.0"), 0.2 => math("0.2"), 0.4 => math("0.4"),
-         0.6000000000000001 => math("0.6"), 0.8 => math("0.8"), 1.0 => math("1.0")]
+        [i/10 => LaTeX(@sprintf("\$%.1f\$", i//10); skip_check = true) for i in 0:2:10]
 end
 
 @testset "API sanity checks" begin
@@ -207,4 +212,17 @@ end
 
     @test bounds_xy.(sync_bounds(:xy, (m[i,j] for i in axes(m, 1), j in axes(m, 2)))) ==
         bounds_xy.(m_xy)
+end
+
+@testset "strings" begin
+    s = latex"\textbf{A}" * math"\cos(\varphi)" * L"1+\sin(\alpha)" * raw"#$%&~_^{}"
+    @test s.latex == raw"\textbf{A}$\cos(\varphi)$$1+\sin(\alpha)$\#\$\%\&\textasciitilde{}\_\textasciicircum{}\{\}"
+    @test_throws MethodError "aa" * math"\alpha"
+end
+
+@testset "LaTeX validation" begin
+    @test check_latex(raw"\cos(\varphi)") ≡ nothing
+    @test_throws ArgumentError check_latex(raw"\frac{")
+    @test_throws ArgumentError check_latex(raw"\frac{}}")
+    @test_throws ArgumentError check_latex(raw"$\cos")
 end
