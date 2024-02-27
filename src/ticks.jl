@@ -17,6 +17,7 @@ using DocStringExtensions: SIGNATURES
 using ..Intervals
 using ..Styles: DEFAULTS
 using ..PGF
+using ..RawLaTeX
 
 """
 $(SIGNATURES)
@@ -112,7 +113,11 @@ $(SIGNATURES)
 Convert a representation to a coordinate. Does not need to be exact, `Float64` precision is
 sufficient.
 """
-coordinate(sd::ShiftedDecimal) = sd.significand * exp10(sd.inner_exponent + sd.outer_exponent)
+function coordinate(sd::ShiftedDecimal)
+    exponent = sd.inner_exponent + sd.outer_exponent
+    # NOTE branch for 6 / 10 == 0.6 etc
+    exponent ≥ 0 ? sd.significand * exp10(exponent) : sd.significand / exp10(-exponent)
+end
 
 function Base.show(io::IO, ::MIME"text/plain", sd::ShiftedDecimal)
     (; significand, outer_exponent) = sd
@@ -127,7 +132,7 @@ function format_latex(sd::ShiftedDecimal)
     show_mantissa(io, sd)
     significand ≠ 0 && outer_exponent ≠ 0 && print(io, raw"\cdot 10^{", outer_exponent, "}")
     print(io, '$')
-    PGF.LaTeX(String(take!(io)))
+    LaTeX(String(take!(io)); skip_check = true)
 end
 
 """
@@ -262,6 +267,7 @@ function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickForm
     else
         # note formatting here is really a heuristic, eg it cannot deal with Date, fix later
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
+        @show t
         [t => PGF.math(string(t))]
     end
 end

@@ -11,7 +11,7 @@ export Annotation, Hgrid, Hline, LineThrough
 struct Annotation
     x::Float64
     y::Float64
-    text::Union{AbstractString,PGF.LaTeX}
+    text::STRINGS
     top::Bool
     bottom::Bool
     base::Bool

@@ -16,7 +16,7 @@ FIXME document it
 module PGF
 
 # reexported as API
-export textcolor, @math_str, @latex_str, LaTeX
+export textcolor
 
 using ArgCheck: @argcheck
 using ColorTypes: Colorant, red, green, blue, RGB
@@ -26,6 +26,7 @@ using Printf: @printf
 using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
 using ..InternalUtilities
+using ..RawLaTeX: print_escaped, STRINGS
 
 ####
 #### types and constants
@@ -359,99 +360,6 @@ function usepath(sink::Sink, actions...)
     _print(sink, "}\n")
 end
 
-# NOTE: we don't make this <: AbstracString, as it is only used as a wrapped, and only within
-# this package, as an input.
-struct LaTeX{T<:AbstractString}
-    latex::T
-    @doc """
-    $(SIGNATURES)
-
-    A wrapper that allows its contents to be passed to LaTeX directly.
-
-    It is the responsibility of the user to ensure that this is valid LaTeX code within the
-    document.
-
-    The string literals `latex` and `math` provide a convenient way to enter raw
-    strings, with `math` wrapping its input in `\$`s.
-
-    ```jldoctest
-    julia> latex"\\cos(\\phi)"
-    LaTeX{String}("\\cos(\\phi)")
-
-    julia> math"\\cos(\\phi)"
-    LaTeX{String}("\$\\\\cos(\\\\phi)\$")
-    ```
-
-    The type supports concatenation with `*`, just ensure that the first argument is of
-    this type (can be empty).
-    """
-    LaTeX(latex::T) where T = new{T}(latex) # FIXME checks
-end
-
-Base.length(str::LaTeX) = length(str.latex)
-
-"""
-$(SIGNATURES)
-
-Put \$'s around the string, and wrap in `LaTeX`, to pass directly.
-"""
-math(str::AbstractString) = LaTeX("\$" * str * "\$")
-
-"""
-$(SIGNATURES)
-
-Enclose `str` in `\$`s and indicate that it is to be treated as (valid, self-contained) LaTeX
-code.
-"""
-macro math_str(str)
-    PGF.math(str)
-end
-
-"""
-$(SIGNATURES)
-
-Indicate the argument is to be treated as (valid, self-contained) LaTeX code.
-"""
-macro latex_str(str)
-    PGF.LaTeX(str)
-end
-
-_print_escaped(io::IO, str::LaTeX) = print(io, str.latex)
-
-"""
-$(SIGNATURES)
-
-Outputs a version of `str` to `io` so that special characters (in LaTeX) are escaped to
-produce the expected output.
-"""
-function _print_escaped(io::IO, str::AbstractString)
-    for c in str
-        if c == '\\'
-            print(io, raw"\textbackslash{}")
-        elseif c == '~'
-            print(io, raw"\textasciitilde{}")
-        elseif c == '^'
-            print(io, raw"\textasciicircum{}")
-        else
-            c ∈ raw"#$%&_{}" && print(io, '\\')
-            print(io, c)
-        end
-    end
-end
-
-_print_escaped(io::IO, x) = _print_escaped(io, string(x))
-
-function Base.:(*)(str1::LaTeX, str_rest...)
-    io = IOBuffer()
-    _print_escaped(io, str1)
-    for str in str_rest
-        _print_escaped(io, str)
-    end
-    LaTeX(String(take!(io)))
-end
-
-"String types we can use with [`text`](@ref)."
-const STRINGS = Union{AbstractString,LaTeX}
 
 """
 $(SIGNATURES)
@@ -482,7 +390,7 @@ function text(sink::Sink, at::Point, str::STRINGS;
     base && _print(sink, ",base")
     iszero(rotate) || _print(sink, ",rotate=", rotate)
     _print(sink, "]{")
-    _print_escaped(sink.io, str)
+    print_escaped(sink.io, str, true)
     _println(sink, "}")
 end
 
@@ -495,7 +403,7 @@ function textcolor(color::COLOR, text)
     io = IOBuffer()
     print(io, raw"\textcolor[rgb]{", Float64(red(color)), ",", Float64(green(color)), ",",
           Float64(blue(color)), "}{")
-    _print_escaped(io, text)
+    print_escaped(io, text, false)
     print(io, "}")
     LaTeX(String(take!(io)))
 end

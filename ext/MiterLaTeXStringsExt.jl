@@ -3,6 +3,9 @@ module MiterLaTeXStringsExt
 import Miter
 using LaTeXStrings: LaTeXString
 
-Miter.PGF._print_escaped(io::IO, str::LaTeXString) = write(io, str)
+function Miter.RawLaTeX.print_escaped(io::IO, str::LaTeXString, check)
+    check && Miter.RawLaTeX.check_latex(str)
+    write(io, str)
+end
 
 end

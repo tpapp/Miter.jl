@@ -25,6 +25,7 @@ using ..PGF
 using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe, Point
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
     path_q_stroke_or_fill
+using ..RawLaTeX: STRINGS
 
 ####
 #### input conversions

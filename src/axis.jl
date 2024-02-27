@@ -17,6 +17,7 @@ using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
 using ..InternalUtilities
+using ..RawLaTeX: STRINGS
 
 ####
 #### Axis
@@ -100,14 +101,14 @@ Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
-    label::PGF.STRINGS = ""
+    label::STRINGS = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
     interval::Interval
     ticks::TT
     style::Style
-    label::PGF.STRINGS = ""
+    label::STRINGS = ""
 end
 
 function finalize(axis::Linear, interval::Interval)
