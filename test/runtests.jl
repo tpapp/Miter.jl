@@ -3,7 +3,8 @@ using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.PGF: math
 using Test
 using Unitful.DefaultSymbols
-using ColorTypes
+using Colors, ColorSchemes
+using StatsBase: fit, Histogram
 
 ####
 #### test utilities
@@ -131,11 +132,23 @@ end
 end
 
 @testset "API sanity checks" begin
+    # throw elements in a plot and make sure it compiles
     L = Lines((x, abs2(x)) for x in -1:0.1:1)
     S = Scatter((x, (x + 1) / 2) for x in -1:0.1:1)
+    C = Circles([(randn(), randn(), abs(randn())) for _ in 1:10], 1mm)
+    HX = RelativeBars(:horizontal, fit(Histogram, randn(100)))
+    HY = RelativeBars(:vertical, fit(Histogram, randn(100)))
+    H2 = hpd_heatmap(fit(Histogram, (randn(100), randn(100))),
+                     0.2:0.2:0.8, ColorSchemes.OrRd_5)
+    A = Annotation((1, 2), math"\cos(φ)")
+    HG = Hgrid()
+    HL = Hline(1.0)
+    LT = LineThrough((1.0, 2.0), 1.0)
 
-    plot = Plot(L, S; x_axis = Axis.Linear(; label = math"x"),
-                y_axis = Axis.Linear(; label = math"y"))
+    plot = Plot(L, S, A, HG, HL, LT;
+                x_axis = Axis.Linear(; label = math"x"),
+                y_axis = Axis.Linear(; label = math"y"),
+                title = "what a great title")
 
     let filename = tempname() * ".pdf"
         Miter.save(filename, plot)
@@ -152,7 +165,7 @@ end
         @test is_svg(filename)
     end
 
-    tableau = Tableau([Plot(L), Plot(S)])
+    tableau = Tableau(balanced_rectangle(Plot(e) for e in [L, S, C, HX, HY, H2]))
     filename = tempname() * ".pdf"
     Miter.save(filename, tableau)
     @test is_pdf(filename)
