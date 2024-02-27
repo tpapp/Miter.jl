@@ -3,7 +3,8 @@ using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.PGF: math
 using Test
 using Unitful.DefaultSymbols
-using ColorTypes
+using Colors
+using StatsBase: fit, Histogram
 
 ####
 #### test utilities
@@ -131,10 +132,15 @@ end
 end
 
 @testset "API sanity checks" begin
+    # throw elements in a plot and make sure it compiles
     L = Lines((x, abs2(x)) for x in -1:0.1:1)
     S = Scatter((x, (x + 1) / 2) for x in -1:0.1:1)
+    C = Circles([(randn(), randn(), abs(randn())) for _ in 1:10], 1mm)
+    HX = RelativeBars(:horizontal, fit(Histogram, randn(100)))
+    HY = RelativeBars(:vertical, fit(Histogram, randn(100)))
 
-    plot = Plot(L, S; x_axis = Axis.Linear(; label = math"x"),
+    plot = Plot(L, S, C, HX, HY;
+                x_axis = Axis.Linear(; label = math"x"),
                 y_axis = Axis.Linear(; label = math"y"))
 
     let filename = tempname() * ".pdf"
