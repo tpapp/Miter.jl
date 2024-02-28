@@ -26,7 +26,7 @@ using Printf: @printf
 using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
 using ..InternalUtilities
-using ..RawLaTeX: print_escaped, STRINGS
+using ..RawLaTeX: print_escaped, STRINGS, LaTeX
 
 ####
 #### types and constants
