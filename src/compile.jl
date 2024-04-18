@@ -18,6 +18,24 @@ end
 """
 $(SIGNATURES)
 
+Run the specified command, capturing stderr and stdout, returning them as `stdout_log`
+and `stderr_log`, along with `process_error` for exit status, in a `NamedTuple`.
+"""
+function run_with_logging(cmd::Cmd)
+    stdout_pipe = Pipe()
+    stderr_pipe = Pipe()
+    process = run(pipeline(ignorestatus(cmd); stdout = stdout_pipe, stderr = stderr_pipe))
+    # FIXME using fields, cf https://github.com/JuliaLang/julia/issues/54133
+    close(stdout_pipe.in)
+    close(stderr_pipe.in)
+    stdout_log = String(read(stdout_pipe))
+    stderr_log = String(read(stderr_pipe))
+    (; stdout_log, stderr_log, process_error = !success(process))
+end
+
+"""
+$(SIGNATURES)
+
 Call `f(io)` to write LaTeX code, then compile to a PDF at `output_path`. If anything
 goes wrong, throw an error.
 """
@@ -28,10 +46,10 @@ function pdf(f, output_path::AbstractString; tmp_dir = nothing)
     maybe_tmpdir(tmp_dir) do dir
         tex_file = joinpath(dir, out_basename .* ".tex")
         open(f, tex_file, "w")
-        redirect_stdio(; stdout = devnull, stderr = devnull) do
-            if !success(`$(tectonic()) -X compile --outdir $(out_dir) $(tex_file)`)
-                error("Error running tectonic")
-            end
+        tectonic_cmd = `$(tectonic()) -X compile --outdir $(out_dir) $(tex_file)`
+        (; stderr_log, process_error) = run_with_logging(tectonic_cmd)
+        if process_error
+            error("Error running tectonic:\n$(stderr_log)")
         end
     end
     output_path
