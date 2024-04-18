@@ -36,6 +36,10 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
     @test is_pdf(pdf_path)
 end
 
+@testset "compile error" begin
+    p = Plot(Lines((x,x) for x in 1:3); title = Miter.LaTeX(raw"$unfinished"; skip_check = true))
+    @test_throws raw"Extra }, or forgotten $" Miter.save(tempname() * ".pdf", p)
+end
 
 ####
 #### pgf
