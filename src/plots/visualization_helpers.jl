@@ -2,7 +2,7 @@
 ##### visualization helpers
 #####
 
-export Annotation, Hgrid, Hline, LineThrough
+export Annotation, Hgrid, Hline, Vgrid, Vline, LineThrough
 
 ####
 #### Annotation
@@ -40,7 +40,6 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, text::Annotation)
              left, right, rotate)
 end
 
-
 ####
 #### Hgrid
 ####
@@ -62,6 +61,19 @@ struct Hgrid
 end
 
 bounds_xy(hgrid::Hgrid) = (∅, ∅)
+
+"""
+$(SIGNATURES)
+
+Internal utility function to draw a horizontal line at `y`. Caller should set the line style.
+"""
+function _hline(sink::PGF.Sink, drawing_area::DrawingArea, y::Real)
+    (; left, right) = drawing_area.rectangle
+    y_c = y_coordinate_to_canvas(drawing_area, y)
+    PGF.pathmoveto(sink, PGF.Point(left, y_c))
+    PGF.pathlineto(sink, PGF.Point(right, y_c))
+    PGF.usepathqstroke(sink)
+end
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hgrid::Hgrid)
     (; color, width, dash) = hgrid
@@ -95,23 +107,84 @@ end
 
 bounds_xy(hline::Hline) = (∅, Interval(hline.y))
 
-"""
-$(SIGNATURES)
-
-Internal utility function to draw a horizontal line at `y`. Caller should set the line style.
-"""
-function _hline(sink::PGF.Sink, drawing_area::DrawingArea, y::Real)
-    (; left, right) = drawing_area.rectangle
-    y_c = y_coordinate_to_canvas(drawing_area, y)
-    PGF.pathmoveto(sink, PGF.Point(left, y_c))
-    PGF.pathlineto(sink, PGF.Point(right, y_c))
-    PGF.usepathqstroke(sink)
-end
-
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     (; y, color, width, dash) = hline
     set_line_style(sink; color, width, dash)
     _hline(sink, drawing_area, y)
+end
+
+####
+#### Vgrid
+####
+
+struct Vgrid
+    color::COLOR
+    width::LENGTH
+    dash::PGF.Dash
+    @doc """
+    $(SIGNATURES)
+
+    A horizontal grid at the ticks of the ``y`` axis.
+    """
+    function Vgrid(; color = DEFAULTS.grid_color,
+                   width = DEFAULTS.grid_width,
+                   dash = DEFAULTS.grid_dash)
+        new(COLOR(color), _length_positive(width), dash)
+    end
+end
+
+bounds_xy(vgrid::Vgrid) = (∅, ∅)
+
+
+"""
+$(SIGNATURES)
+
+Internal utility function to draw a vertical line at `x`. Caller should set the line style.
+"""
+function _vline(sink::PGF.Sink, drawing_area::DrawingArea, x::Real)
+    (; bottom, top) = drawing_area.rectangle
+    x_c = x_coordinate_to_canvas(drawing_area, x)
+    PGF.pathmoveto(sink, PGF.Point(x_c, bottom))
+    PGF.pathlineto(sink, PGF.Point(x_c, top))
+    PGF.usepathqstroke(sink)
+end
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, vgrid::Vgrid)
+    (; color, width, dash) = vgrid
+    set_line_style(sink; color, width, dash)
+    # FIXME code below relies on nested properties of types, define an API
+    for (pos, _) in drawing_area.finalized_x_axis.ticks
+        _vline(sink, drawing_area, pos)
+    end
+end
+
+####
+#### Vline
+####
+
+struct Vline
+    x::Real
+    color::COLOR
+    width::LENGTH
+    dash::PGF.Dash
+    @doc """
+    $(SIGNATURES)
+
+    A vertical line at `x` with the given parameters.
+    """
+    function Vline(x::Real; color = DEFAULTS.guide_color, width = DEFAULTS.guide_width,
+                   dash = DEFAULTS.guide_dash)
+        @argcheck isfinite(x)
+        new(x, COLOR(color), _length_positive(width), dash)
+    end
+end
+
+bounds_xy(vline::Vline) = (Interval(vline.x), ∅)
+
+function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, vline::Vline)
+    (; x, color, width, dash) = vline
+    set_line_style(sink; color, width, dash)
+    _vline(sink, drawing_area, x)
 end
 
 ####
