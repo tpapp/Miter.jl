@@ -42,12 +42,12 @@ Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
       title = "line and scatter")
 ```
 
-Horizontal lines and phantom objects (rendered, but ignored for boundary calculations).
+Horizontal and vertical lines, and phantom objects (rendered, but ignored for boundary calculations).
 
 ```@example all
 Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 100)),
      Phantom(Hline(12.0)),      # does not show, it is outside the boundaries
-     Hline(0.0))
+     Hline(0.0), Vline(0.0))
 ```
 
 Bar plots with bars directly specified.
@@ -101,7 +101,7 @@ end
 Grids.
 
 ```@example all
-Plot(Hgrid(), # specified first; renders first
+Plot(Hgrid(), Vgrid(), # specified first; renders first
      Scatter((x, expm1(x) + randn() / 10)
              for x in range(0, 1; length = 100)))
 ```
