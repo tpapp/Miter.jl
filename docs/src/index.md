@@ -116,7 +116,7 @@ function wobbler(x, y, r, rotate)
                 for θ in range(0, 2*π; length = 200)]))
 end
 
-m = Tableau(balanced_rectangle([wobbler(0, 0, 2, 0),
+m = Tableau(balanced_matrix([wobbler(0, 0, 2, 0),
                                 wobbler(1, 0, 1, π/2),
                                 wobbler(-1, 0, 3, -π/2),
                                 wobbler(1, 3, 1, π)]));
@@ -161,7 +161,7 @@ Plot(hpd_heatmap(h, range(0.2, 0.8; step = 0.2), ColorSchemes.OrRd_5))
 ### Tableaus
 
 ```@example all
-Tableau(balanced_rectangle(
+Tableau(balanced_matrix(
         [Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π))
                      for x in range(-2, 2; length = 101)]);
               y_axis = Axis.Linear(; label = "pdf of normal distribution")),

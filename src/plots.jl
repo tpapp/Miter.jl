@@ -126,17 +126,22 @@ struct Tableau
     @doc """
     $(SIGNATURES)
 
-    Make a *tableau*, an arrangement of plots on a matrix-like grid. Axes are not aligned.
-    See [`balanced_rectangle`](@ref) for arranging a vector.
+    Make a *tableau*, an arrangement of plots on a matrix-like grid. Visually, the
+    arrangement corresponds to how Julia would display a matrix: rows are rendered as
+    rows, columns as columns.
 
-    Contents are exposed via the array interface as a matrix.
+    See [`balanced_matrix`](@ref) for arranging a vector.
+
+    Axes are not aligned automatically, use [`sync_bounds`](@ref).
+
+    `contents` are exposed via the array interface as a matrix.
     """
     function Tableau(contents::AbstractMatrix;
-                     horizontal_divisions = fill(PGF.SPACER, size(contents, 1)),
-                     vertical_divisions = fill(PGF.SPACER, size(contents, 2)))
-        x_n, y_n = size(contents)
-        @argcheck length(horizontal_divisions) == x_n
-        @argcheck length(vertical_divisions) == y_n
+                     horizontal_divisions = fill(PGF.SPACER, size(contents, 2)),
+                     vertical_divisions = fill(PGF.SPACER, size(contents, 1)))
+        v_n, h_n = size(contents)
+        @argcheck length(horizontal_divisions) == h_n
+        @argcheck length(vertical_divisions) == v_n
         new(Matrix(contents), horizontal_divisions, vertical_divisions)
     end
 end
@@ -148,21 +153,22 @@ end
 
 @declare_showable Tableau
 
-Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, 1, :); kwargs...)
+Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, :, 1); kwargs...)
 
 function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau
     grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
-    for (subrectangle, subplot) in zip(grid, contents)
+    grid_visual = reverse(permutedims(grid); dims = 1)
+    for (subrectangle, subplot) in zip(grid_visual, contents)
         PGF.render(sink, subrectangle, subplot)
     end
 end
 
 function print_tex(sink::PGF.Sink, tableau::Tableau; standalone::Bool = false)
-    x_n, y_n = size(tableau.contents)
+    v_n, h_n = size(tableau.contents)
     canvas = Canvas(tableau;
-                         width = x_n * DEFAULTS.canvas_width,
-                         height = y_n * DEFAULTS.canvas_height)
+                    width = h_n * DEFAULTS.canvas_width,
+                    height = v_n * DEFAULTS.canvas_height)
     print_tex(sink, canvas; standalone)
 end
 
