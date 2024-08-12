@@ -102,8 +102,8 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
         PGF.text(sink, PGF.relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
     end
     x_interval, y_interval = bounds_xy(contents)
-    @argcheck x_interval ≢ ∅ "empty x range"
-    @argcheck y_interval ≢ ∅ "empty y range"
+    @argcheck x_interval ≢ nothing "empty x range"
+    @argcheck y_interval ≢ nothing "empty y range"
     finalized_x_axis = finalize(x_axis, x_interval)
     finalized_y_axis = finalize(y_axis, y_interval)
     PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
@@ -190,7 +190,7 @@ struct Phantom
     Phantom(object) = new(object)
 end
 
-bounds_xy(::Phantom) = (∅, ∅)
+bounds_xy(::Phantom) = (nothing, nothing)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
     PGF.render(sink, drawing_area, phantom.object)

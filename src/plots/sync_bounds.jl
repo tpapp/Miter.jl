@@ -9,21 +9,23 @@ export Invisible, sync_bounds
 ####
 
 struct Invisible
-    xy::Tuple{CoordinateBounds,CoordinateBounds}
+    x::CoordinateBounds
+    y::CoordinateBounds
     @doc """
     $(SIGNATURES)
 
-    Create an invisible object with the sole function of extending coordinate bounds to (x,
-    y), which should be `Interval`s or `∅` when used internally.
+    Create an invisible object with the sole function of extending coordinate bounds to
+    `x, y`, which should be `Interval`s or `nothing`.
 
-    You can also use `Invisible(bounds_xy(object))` to extend bounds to those in `object`.
+    You can also use `Invisible(bounds_xy(object)...)` to extend bounds to those in `object`,
+    or `Invisible(bounds_xy(object)[1], nothing)` to extend only the `x` axes, etc.
     """
-    function Invisible(xy::Tuple{CoordinateBounds,CoordinateBounds})
-        new(xy)
+    function Invisible(x::CoordinateBounds, y::CoordinateBounds)
+        new(x, y)
     end
 end
 
-bounds_xy(invisible::Invisible) = invisible.xy
+bounds_xy(invisible::Invisible) = (invisible.x, invisible.y)
 
 PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
 
@@ -36,8 +38,8 @@ $(SIGNATURES)
 
 Add an `Invisible(xy)` to each plot in `itr`. Internal helper function.
 """
-function _add_invisible(xy::Tuple{CoordinateBounds,CoordinateBounds}, itr)
-    invisible = Invisible(xy)
+function _add_invisible(x::CoordinateBounds, y::CoordinateBounds, itr)
+    invisible = Invisible(x, y)
     map(x -> x ≡ nothing ? x : @insert(last(x.contents) = invisible), itr)
 end
 
@@ -89,15 +91,15 @@ sync_bounds(tag::Val) = Base.Fix1(sync_bounds, tag)
 function sync_bounds(tag::Val{:X}, collection)
     # vectors are treated like 1×N matrices, x axes are synced
     xb, _ = bounds_xy(collection)
-    _add_invisible((xb, ∅), collection)
+    _add_invisible(xb, nothing, collection)
 end
 
 function sync_bounds(tag::Val{:Y}, collection)
     _, yb = bounds_xy(collection)
-    _add_invisible((∅, yb), collection)
+    _add_invisible(nothing, yb, collection)
 end
 
-sync_bounds(tag::Val{:XY}, collection) = _add_invisible(bounds_xy(collection), collection)
+sync_bounds(tag::Val{:XY}, collection) = _add_invisible(bounds_xy(collection)..., collection)
 
 function sync_bounds(tag::Union{Val{:x},Val{:y},Val{:xy}}, collection::T) where T
     if Base.IteratorSize(T) == Base.HasShape{2}()

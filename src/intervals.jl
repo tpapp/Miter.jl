@@ -1,13 +1,11 @@
 module Intervals
 
-export Interval, ∅, is_nonzero, hull, hull_xy, CoordinateBounds
+export Interval, is_nonzero, hull, hull_xy, CoordinateBounds
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 
-abstract type CoordinateBounds end
-
-struct Interval{T} <: CoordinateBounds
+struct Interval{T}
     min::T
     max::T
     @doc """
@@ -31,11 +29,7 @@ Base.minimum(a::Interval) = a.min
 Base.maximum(a::Interval) = a.max
 Base.extrema(a::Interval) = (a.min, a.max)
 
-"The empty set, use `∅` for a value."
-struct EmptySet <: CoordinateBounds end
-
-"Singleton for the empty set."
-const ∅ = EmptySet()
+const CoordinateBounds = Union{Interval,Nothing}
 
 """
 $(SIGNATURES)
@@ -53,11 +47,11 @@ function hull(a::Interval, b::Interval)
     Interval(min(a.min, b.min), max(a.max, b.max))
 end
 
-hull(::EmptySet, a::Interval) = a
+hull(::Nothing, a::Interval) = a
 
-hull(a::Interval, ::EmptySet) = a
+hull(a::Interval, ::Nothing) = a
 
-hull(::EmptySet, ::EmptySet) = ∅
+hull(::Nothing, ::Nothing) = nothing
 
 """
 $(SIGNATURES)
