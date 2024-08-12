@@ -2,6 +2,8 @@
 
 using Documenter, Miter, Colors
 
+DocMeta.setdocmeta!(Miter, :DocTestSetup, :(using Miter); recursive=true)
+
 makedocs(
     modules = [Miter],
     format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true",
@@ -11,6 +13,7 @@ makedocs(
     pages = Any["index.md"],
     # strict = true,
     clean = true,
+    warnonly = true,
     # checkdocs = :exports,
 )
 

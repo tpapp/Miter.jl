@@ -81,10 +81,10 @@ struct LaTeX
 
     ```jldoctest
     julia> latex"\\cos(\\phi)"
-    LaTeX{String}("\\cos(\\phi)")
+    LaTeX("\\\\cos(\\\\phi)")
 
     julia> math"\\cos(\\phi)"
-    LaTeX{String}("\$\\\\cos(\\\\phi)\$")
+    LaTeX("\\\$\\\\cos(\\\\phi)\\\$")
     ```
 
     The type supports concatenation with `*`, just ensure that the first argument is of
@@ -96,6 +96,16 @@ struct LaTeX
         end
         new(latex, skip_check)
     end
+end
+
+function Base.show(io::IO, str::LaTeX)
+    Base.show_type_name(io, LaTeX.name)
+    print(io, "(")
+    show(io, str.latex)
+    if str.skip_check
+        print(io, ", true")
+    end
+    print(io, ")")
 end
 
 skip_check(::AbstractString) = false
