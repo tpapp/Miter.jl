@@ -1,7 +1,7 @@
 name = "Miter"
 uuid = "e2c39885-2134-4813-a274-cbd32ca8996e"
 authors = ["Tamás K. Papp <tkpapp@gmail.com>"]
-version = "0.11.1"
+version = "0.12.0"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"

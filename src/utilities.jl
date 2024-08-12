@@ -4,7 +4,7 @@ Utilities for users of this package.
 module Utilities
 
 # reexported as API
-export balanced_rectangle, hpd_heatmap
+export balanced_matrix, hpd_heatmap
 
 using ArgCheck: @argcheck
 using ColorTypes: RGB24, Gray
@@ -21,45 +21,46 @@ using ..InternalUtilities: ensure_vector
 """
 $(SIGNATURES)
 
-Arrange elements of a vector (or iterable) in a `(w, h)` matrix, such that `width /
-height ≈ width_bias`. Extra elements are filled with `nothing`.
+Arrange elements of a vector (or iterable) in a `(height, width)` matrix, such that
+`width / height ≈ width_bias`. Extra elements are filled with `nothing`.
 
-When `columns_down = true` (default), columns will be reversed, corresponding to a top-down
-visual arrangement.
-
-When `row_major = false` (default), elements are arranged row-major. Note that in this
-package, the `x` coordinate is the first, so for left-right top-down arrangements you
-usually don't want this.
+When `row_major = true` (default), elements are arranged row-major.
 
 The purpose of this function is to make balanced displays, eg in [`Tableau`](@ref).
 
-`w` can also be specified explicitly, in which case `width_bias` is not used.
+`width` and `height` can also be specified explicitly, in which case `width_bias` is not
+used.
 """
-function balanced_rectangle(vector_or_itr; width_bias::Real = 1.0,
-                            columns_down::Bool = true, row_major::Bool = false,
-                            w::Union{Nothing,Integer} = nothing)
+function balanced_matrix(vector_or_itr; width_bias::Real = 1.0,
+                         row_major::Bool = true,
+                         width::Union{Nothing,Integer} = nothing,
+                         height::Union{Nothing,Integer} = nothing)
     v = ensure_vector(vector_or_itr)
     @argcheck !isempty(v)
     T = eltype(v)
     l = length(v)
-    if w ≡ nothing
-        @argcheck width_bias > 0
-        w = round(Int, sqrt(l / width_bias))
+    if width ≢ nothing
+        @argcheck width > 0
+        @argcheck height ≡ nothing
+        w = Int(width)
+        h = cld(l, w)
+    elseif height ≢ nothing
+        # NOTE: in this branch, we know that width ≡ nothing
+        @argcheck height > 0
+        h = Int(height)
+        w = cld(l, h)
     else
-        @argcheck w > 0
-        w = Int(w)
+        @argcheck isfinite(width_bias) && width_bias > 0
+        h = min(round(Int, sqrt(l / width_bias)), l)
+        w = cld(l, h)
     end
-    h = cld(l, w)
+    R = Vector{Union{T,Nothing}}
     if row_major
-        m_c = reshape(vcat(Vector{Union{T,Nothing}}(v), fill(nothing, h * w - l)), h, w)
-        m = collect(PermutedDimsArray(m_c, (2, 1)))
+        m_c = reshape(vcat(R(v), fill(nothing, h * w - l)), w, h)
+        collect(PermutedDimsArray(m_c, (2, 1)))
     else
-        m = collect(reshape(vcat(Vector{Union{T,Nothing}}(v), fill(nothing, h * w - l)), w, h))
+        collect(reshape(vcat(R(v), fill(nothing, h * w - l)), h, w))
     end
-    if columns_down
-        reverse!(m; dims = 2 - row_major)
-    end
-    m
 end
 
 ####

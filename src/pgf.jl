@@ -479,6 +479,19 @@ function split_interval(a::LENGTH, b::LENGTH, divisions)
     accumulate(((a, b), d) -> (b, b + _resolve2(d)), divisions; init = (a, a))
 end
 
+"""
+$(SIGNATURES)
+
+Split `rectangle` along `x_divisions` and `y_divisions`. Return the result as a
+`Matrix`, or `SMatrix` when both divisions are specified as `Tuple`s.
+
+Note: the matrix is indexed with *horizontal* and *vertical* coordinates (in this
+order), and indexing conventions follow the Cartesian coordinate system. If you want the
+arrangement of how matrices are usually displayed, use
+```julia
+reverse(permutedims(split_matrix(...)); dims = 1)
+```
+"""
 function split_matrix(rectangle::Rectangle,
                       x_divisions::Union{NTuple{N,Any},AbstractVector},
                       y_divisions::Union{NTuple{M,Any},AbstractVector}) where {N,M}

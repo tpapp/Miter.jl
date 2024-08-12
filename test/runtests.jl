@@ -174,14 +174,17 @@ end
         @test is_svg(filename)
     end
 
-    tableau = Tableau(balanced_rectangle(Plot(e) for e in [L, S, C, HX, HY, H2]))
+    tableau = Tableau(balanced_matrix(Plot(e) for e in [L, S, C, HX, HY, H2]))
     filename = tempname() * ".pdf"
     Miter.save(filename, tableau)
     @test is_pdf(filename)
 end
 
 @testset "balanced rectangle" begin
-    @test @inferred(balanced_rectangle(1:3)) == [3 1; nothing 2]
+    @test @inferred(balanced_matrix(1:3)) == [1 2; 3 nothing]
+    @test balanced_matrix(1:3; width_bias = 0.0001) == reshape(1:3, :, 1)
+    @test balanced_matrix(1:3; width = 1) == reshape(1:3, :, 1)
+    @test balanced_matrix(1:3; height = 1) == reshape(1:3, 1, :)
 end
 
 @testset "sync bounds" begin
