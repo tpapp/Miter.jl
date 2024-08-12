@@ -31,10 +31,13 @@ using Reexport: @reexport
 @reexport using .Styles
 @reexport using .Utilities
 
+# reexport single symbols
+
+@reexport using .Intervals: Interval
+
 # modules that prefix symbols
 
 export Axis
-export Intervals
 
 # symbols meant to be used with a Miter. prefix
 

@@ -60,7 +60,7 @@ struct Hgrid
     end
 end
 
-bounds_xy(hgrid::Hgrid) = (∅, ∅)
+bounds_xy(hgrid::Hgrid) = (nothing, nothing)
 
 """
 $(SIGNATURES)
@@ -105,7 +105,7 @@ struct Hline
     end
 end
 
-bounds_xy(hline::Hline) = (∅, Interval(hline.y))
+bounds_xy(hline::Hline) = (nothing, Interval(hline.y))
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, hline::Hline)
     (; y, color, width, dash) = hline
@@ -133,7 +133,7 @@ struct Vgrid
     end
 end
 
-bounds_xy(vgrid::Vgrid) = (∅, ∅)
+bounds_xy(vgrid::Vgrid) = (nothing, nothing)
 
 
 """
@@ -179,7 +179,7 @@ struct Vline
     end
 end
 
-bounds_xy(vline::Vline) = (Interval(vline.x), ∅)
+bounds_xy(vline::Vline) = (Interval(vline.x), nothing)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, vline::Vline)
     (; x, color, width, dash) = vline
@@ -212,7 +212,7 @@ struct LineThrough
     end
 end
 
-bounds_xy(::LineThrough) = (∅, ∅)
+bounds_xy(::LineThrough) = (nothing, nothing)
 
 """
 $(SIGNATURES)
