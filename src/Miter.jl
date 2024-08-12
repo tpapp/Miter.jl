@@ -33,7 +33,7 @@ using Reexport: @reexport
 
 # reexport single symbols
 
-@eexport using .Intervals: Interval
+@reexport using .Intervals: Interval
 
 # modules that prefix symbols
 

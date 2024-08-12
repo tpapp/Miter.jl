@@ -126,7 +126,8 @@ m = Tableau(balanced_matrix([wobbler(0, 0, 2, 0),
 Add an invisible object to extend the `y` axis.
 
 ```@example all
-Plot([Lines((x, x^2) for x in range(0, 1; length = 20)), Invisible(nothing, Interval(-1, 1))])
+Plot([Lines((x, x^2) for x in range(0, 1; length = 20)),
+      Invisible(nothing, Interval(-1, 1))])
 ```
 
 Q5 (five quantiles) plots.
