@@ -121,8 +121,8 @@ end
 
 struct Tableau
     contents::Matrix{Any}
-    horizontal_divisions
-    vertical_divisions
+    horizontal_divisions::Vector{Any}
+    vertical_divisions::Vector{Any}
     @doc """
     $(SIGNATURES)
 
@@ -134,7 +134,15 @@ struct Tableau
 
     Axes are not aligned automatically, use [`sync_bounds`](@ref).
 
+    # Divisions
+
+    FIXME explain how the divisions syntax works
+
+    # Supported API
+
     `contents` are exposed via the array interface as a matrix.
+
+    You can merge `Tableau`s with `hcat`, `vcat`, and `hvcat` (`[...; ...]`).
     """
     function Tableau(contents::AbstractMatrix;
                      horizontal_divisions = fill(PGF.SPACER, size(contents, 2)),
@@ -171,6 +179,34 @@ function print_tex(sink::PGF.Sink, tableau::Tableau; standalone::Bool = false)
                     height = v_n * DEFAULTS.canvas_height)
     print_tex(sink, canvas; standalone)
 end
+
+function Base.hcat(tableaus::Tableau...)
+    Tableau(mapreduce(x -> x.contents, hcat, tableaus),
+            horizontal_divisions = mapreduce(x -> x.horizontal_divisions, vcat, tableaus),
+            vertical_divisions = first(tableaus).vertical_divisions)
+end
+
+function Base.vcat(tableaus::Tableau...)
+    Tableau(mapreduce(x -> x.contents, vcat, tableaus),
+            horizontal_divisions = first(tableaus).horizontal_divisions,
+            vertical_divisions = mapreduce(x -> x.vertical_divisions, vcat, tableaus))
+end
+
+function Base.hvcat(blocks_per_row::Tuple{Vararg{Int}}, tableaus::Tableau...)
+    horizontal_divisions = mapreduce(x -> x.horizontal_divisions, vcat,
+                                     tableaus[1:blocks_per_row[1]])
+    _vertical_divisions = []
+    i = 1
+    for b in blocks_per_row
+        push!(_vertical_divisions, tableaus[i].vertical_divisions)
+        i += b
+    end
+    vertical_divisions = reduce(vcat, _vertical_divisions)
+    Tableau(hvcat(blocks_per_row, map(x -> x.contents, tableaus)...);
+            horizontal_divisions, vertical_divisions)
+end
+
+
 
 ####
 #### plot elements

@@ -267,8 +267,7 @@ function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickForm
     else
         # note formatting here is really a heuristic, eg it cannot deal with Date, fix later
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
-        @show t
-        [t => PGF.math(string(t))]
+        [t => RawLaTeX.math(string(t))]
     end
 end
 

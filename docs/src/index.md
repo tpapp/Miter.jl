@@ -186,3 +186,11 @@ Tableau(balanced_matrix(
 Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]),
        width = 100mm, height = 100mm)
 ```
+
+### Corner cases
+
+#### Handle collapsing axes gracefully
+
+```@example all
+Plot(Scatter([(0.49999,0.49999)]))
+```
