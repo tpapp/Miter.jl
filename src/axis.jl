@@ -105,15 +105,35 @@ Base.@kwdef struct Linear
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
-    interval::Interval
+    interval::Interval          # FIXME check positive length in constructor
     ticks::TT
     style::Style
     label::STRINGS = ""
 end
 
+"""
+$(SIGNATURES)
+
+En
+"""
+function ensure_nonempty_interval(interval::Interval)
+    mi, ma = extrema(interval)
+    if mi == ma
+        mi = floor(mi)
+        ma = ceil(ma)
+        if mi == ma
+            ma += one(ma)
+        end
+        Interval(mi, ma)
+    else
+        interval
+    end
+end
+
 function finalize(axis::Linear, interval::Interval)
     (; tick_selection, tick_format, style, label) = axis
     ticks = sensible_linear_ticks(interval, tick_format, tick_selection)
+    interval = ensure_nonempty_interval(interval) # NOTE: after tick selection
     FinalizedLinear(; interval, ticks, style, label)
 end
 

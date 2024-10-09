@@ -3,7 +3,7 @@ using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.RawLaTeX: check_latex
 using Test
 using Printf: @sprintf
-using Unitful.DefaultSymbols
+using Unitful.DefaultSymbols: mm
 using Colors, ColorSchemes
 using StatsBase: fit, Histogram
 using LaTeXStrings
@@ -232,4 +232,26 @@ end
     @test_throws ArgumentError check_latex(raw"\frac{")
     @test_throws ArgumentError check_latex(raw"\frac{}}")
     @test_throws ArgumentError check_latex(raw"$\cos")
+end
+
+@testset "plot with collapsed axis" begin
+    p = Plot(Scatter([(0.5, 0.5)]))
+    filename = tempname() * ".pdf"
+    Miter.save(filename, p)
+    @test is_pdf(filename)
+end
+
+@testset "Tableau concatenation" begin
+    # FIXME not testing divisions
+    _t(nrow = 2, ncol = 2) = Tableau([Plot(Scatter([(rand(), rand())])) for _ in 1:nrow, _ in 1:ncol])
+    A = _t(2, 2)
+    B = _t(2, 2)
+    C = _t(2, 2)
+    D = _t(2, 2)
+    E = _t(1, 1)
+    F = _t(1, 2)
+    @test vcat(A, B).contents == vcat(A.contents, B.contents)
+    @test hcat(A, B).contents == hcat(A.contents, B.contents)
+    @test [A B; C D].contents == [A.contents B.contents; C.contents D.contents]
+    @test [F; E E].contents == [F.contents; E.contents E.contents]
 end
