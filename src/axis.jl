@@ -10,6 +10,7 @@ export bounds_xy
 using ArgCheck: @argcheck
 using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
+using LaTeXEscapes: LaTeX
 using Unitful: mm
 
 import ..PGF
@@ -17,7 +18,6 @@ using ..Intervals
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
 using ..InternalUtilities
-using ..RawLaTeX: STRINGS
 
 ####
 #### Axis
@@ -101,14 +101,14 @@ Base.@kwdef struct Linear
     tick_selection::TickSelection = TickSelection()
     tick_format::TickFormat = TickFormat()
     style::Style = Style()
-    label::STRINGS = ""
+    label = ""
 end
 
 Base.@kwdef struct FinalizedLinear{TT}
     interval::Interval          # FIXME check positive length in constructor
     ticks::TT
     style::Style
-    label::STRINGS = ""
+    label = ""
 end
 
 """

@@ -11,7 +11,7 @@ export Annotation, Hgrid, Hline, Vgrid, Vline, LineThrough
 struct Annotation
     x::Float64
     y::Float64
-    text::STRINGS
+    text
     top::Bool
     bottom::Bool
     base::Bool
