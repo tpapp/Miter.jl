@@ -5,4 +5,5 @@
 /deps/deps.jl
 /docs/build
 /docs/Manifest.toml
+/test/Manifest.tomlx
 /test/coverage/Manifest.toml
