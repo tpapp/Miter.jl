@@ -10,6 +10,7 @@ Automa = "67c07d97-cdcb-5c2c-af73-a7f9c32a568b"
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+LaTeXEscapes = "cf6549fa-34fa-4b85-907d-0f184605242c"
 Poppler_jll = "9c32591e-4766-534b-9725-b71a8799265b"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
@@ -19,11 +20,9 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 tectonic_jll = "d7dd28d6-a5e6-559c-9131-7eb760cdacc5"
 
 [weakdeps]
-LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [extensions]
-MiterLaTeXStringsExt = "LaTeXStrings"
 MiterStatsBaseExt = "StatsBase"
 
 [compat]
@@ -33,7 +32,7 @@ Automa = "1"
 ColorTypes = "0.11"
 ConstructionBase = "1"
 DocStringExtensions = "0.9"
-LaTeXStrings = "1"
+LaTeXEscapes = "0.2.0"
 Poppler_jll = "21,22"
 Printf = "1.8"
 Reexport = "1"

@@ -17,7 +17,7 @@ using DocStringExtensions: SIGNATURES
 using ..Intervals
 using ..Styles: DEFAULTS
 using ..PGF
-using ..RawLaTeX
+using LaTeXEscapes: wrap_math, LaTeX
 
 """
 $(SIGNATURES)
@@ -132,7 +132,7 @@ function format_latex(sd::ShiftedDecimal)
     show_mantissa(io, sd)
     significand ≠ 0 && outer_exponent ≠ 0 && print(io, raw"\cdot 10^{", outer_exponent, "}")
     print(io, '$')
-    LaTeX(String(take!(io)); skip_check = true)
+    LaTeX(String(take!(io)))
 end
 
 """
@@ -267,7 +267,7 @@ function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickForm
     else
         # note formatting here is really a heuristic, eg it cannot deal with Date, fix later
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
-        [t => RawLaTeX.math(string(t))]
+        [t => wrap_math(string(t))]
     end
 end
 
