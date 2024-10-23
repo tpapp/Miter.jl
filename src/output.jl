@@ -6,7 +6,7 @@ export Canvas
 using DocStringExtensions: SIGNATURES
 using Unitful: mm
 
-using ..Compile
+using LaTeXCompilers: pdf, svg, png
 using ..PGF
 using ..Styles: DEFAULTS
 
@@ -38,7 +38,7 @@ function print_tex(filename::AbstractString, object; standalone::Bool = false)
 end
 
 function _show_as_svg(svg_io::IO, object)
-    Compile.svg(io -> print_tex(io, object), svg_io)
+    svg(io -> print_tex(io, object), svg_io)
 end
 
 """
@@ -71,11 +71,11 @@ function save(filename::AbstractString, object; ext = lstrip(splitext(filename)[
     _print_tex = Base.Fix2(print_tex, object)
     ext = lowercase(ext)
     if ext == ".pdf"
-        Compile.pdf(_print_tex, filename)
+        pdf(_print_tex, filename)
     elseif ext == ".svg"
-        Compile.svg(_print_tex, filename)
+        svg(_print_tex, filename)
     elseif ext == ".png"
-        Compile.png(_print_tex, filename)
+        png(_print_tex, filename)
     elseif ext == ".tex"
         open(_print_tex, filename, "w")
     elseif ext == ".tikz"

@@ -23,18 +23,6 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 #### compilation
 ####
 
-@testset "compile" begin
-    LATEX_MWE = raw"""
-              \documentclass{article}
-              \begin{document}
-              Hello world
-              \end{document}
-              """
-    pdf_path = tempname() * ".pdf"
-    @time Miter.Compile.pdf(io -> write(io, LATEX_MWE), pdf_path)
-    @test is_pdf(pdf_path)
-end
-
 @testset "compile error" begin
     p = Plot(Lines((x,x) for x in 1:3); title = lx"$unfinished")
     @test_throws LaTeXError Miter.save(tempname() * ".pdf", p)
