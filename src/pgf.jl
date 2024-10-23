@@ -26,7 +26,7 @@ using Printf: @printf
 using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
 using ..InternalUtilities
-using ..RawLaTeX: print_escaped, STRINGS, LaTeX
+using LaTeXEscapes: print_escaped, @lx_str
 
 ####
 #### types and constants
@@ -375,8 +375,11 @@ end
 $(SIGNATURES)
 
 Text output.
+
+`str` can be anything that `LaTeXEscapes.print_escaped` handles, including
+`AbstractString`, `LaTeXEscapes.LaTeX`, and `LaTeXStrings.LaTeXString`.
 """
-function text(sink::Sink, at::Point, str::STRINGS;
+function text(sink::Sink, at::Point, str;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false, base::Bool = false,
               rotate = 0)
@@ -390,7 +393,7 @@ function text(sink::Sink, at::Point, str::STRINGS;
     base && _print(sink, ",base")
     iszero(rotate) || _print(sink, ",rotate=", rotate)
     _print(sink, "]{")
-    print_escaped(sink.io, str, true)
+    print_escaped(sink.io, str; check = true)
     _println(sink, "}")
 end
 
@@ -400,12 +403,9 @@ $(SIGNATURES)
 Wrap text (`LaTeX`, or plain text) in the LaTeX command that makes it have the given `color`.
 """
 function textcolor(color::COLOR, text)
-    io = IOBuffer()
-    print(io, raw"\textcolor[rgb]{", Float64(red(color)), ",", Float64(green(color)), ",",
-          Float64(blue(color)), "}{")
-    print_escaped(io, text, false)
-    print(io, "}")
-    LaTeX(String(take!(io)))
+    (lx"\textcolor[rgb]{" *
+        Float64(red(color)) * "," * Float64(green(color)) * "," * Float64(blue(color)) *
+        lx"}{" * text * lx"}")
 end
 
 textcolor(color::Colorant, text) = textcolor(COLOR(color), text)

@@ -4,7 +4,6 @@ A Julia plotting package using the PGF Basic Layer Core.
 module Miter
 
 include("internal_utilities.jl")
-include("raw_latex.jl")
 include("pgf.jl")
 include("intervals.jl")
 include("styles.jl")
@@ -21,7 +20,6 @@ include("utilities.jl")
 
 using Reexport: @reexport
 
-@reexport using .RawLaTeX
 @reexport using .PGF
 @reexport using .Output
 @reexport using .Axis

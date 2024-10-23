@@ -1,12 +1,11 @@
 using Miter, Miter.Intervals, Miter.Ticks, Miter.PGF
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
-using Miter.RawLaTeX: check_latex
 using Test
+using LaTeXEscapes: @lx_str, LaTeX, LaTeXError
 using Printf: @sprintf
 using Unitful.DefaultSymbols: mm
 using Colors, ColorSchemes
 using StatsBase: fit, Histogram
-using LaTeXStrings
 
 ####
 #### test utilities
@@ -25,8 +24,8 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 ####
 
 @testset "compile error" begin
-    p = Plot(Lines((x,x) for x in 1:3); title = Miter.LaTeX(raw"$unfinished"; skip_check = true))
-    @test_throws raw"Extra }, or forgotten $" Miter.save(tempname() * ".pdf", p)
+    p = Plot(Lines((x,x) for x in 1:3); title = lx"$unfinished")
+    @test_throws LaTeXError Miter.save(tempname() * ".pdf", p)
 end
 
 ####
@@ -93,39 +92,35 @@ end
             nontrivial_linear_tick_alternatives(Interval(-2.1, 7.3)))
 end
 
-macro unchecked_math_str(str)       # for testing, see below
-    LaTeX("\$" * str * "\$"; skip_check = true)
-end
-
 @testset "format ticks" begin
     # no outer exponent
-    @test format_latex(ShiftedDecimal(5, 0, 0)) == unchecked_math"5"
-    @test format_latex(ShiftedDecimal(-5, 0, 0)) == unchecked_math"-5"
-    @test format_latex(ShiftedDecimal(5, 3, 0)) == unchecked_math"5000"
-    @test format_latex(ShiftedDecimal(-5, 3, 0)) == unchecked_math"-5000"
-    @test format_latex(ShiftedDecimal(5, -1, 0)) == unchecked_math"0.5"
-    @test format_latex(ShiftedDecimal(-5, -1, 0)) == unchecked_math"-0.5"
-    @test format_latex(ShiftedDecimal(5, -2, 0)) == unchecked_math"0.05"
-    @test format_latex(ShiftedDecimal(-5, -2, 0)) == unchecked_math"-0.05"
-    @test format_latex(ShiftedDecimal(0, -2, 0)) == unchecked_math"0.00"
+    @test format_latex(ShiftedDecimal(5, 0, 0)) == lx"5"m
+    @test format_latex(ShiftedDecimal(-5, 0, 0)) == lx"-5"m
+    @test format_latex(ShiftedDecimal(5, 3, 0)) == lx"5000"m
+    @test format_latex(ShiftedDecimal(-5, 3, 0)) == lx"-5000"m
+    @test format_latex(ShiftedDecimal(5, -1, 0)) == lx"0.5"m
+    @test format_latex(ShiftedDecimal(-5, -1, 0)) == lx"-0.5"m
+    @test format_latex(ShiftedDecimal(5, -2, 0)) == lx"0.05"m
+    @test format_latex(ShiftedDecimal(-5, -2, 0)) == lx"-0.05"m
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == lx"0.00"m
 
     # outer exponent
-    @test format_latex(ShiftedDecimal(5, 0, 2)) == unchecked_math"5\cdot 10^{2}"
-    @test format_latex(ShiftedDecimal(-5, 0, -2)) == unchecked_math"-5\cdot 10^{-2}"
-    @test format_latex(ShiftedDecimal(5, 3, 2)) == unchecked_math"5000\cdot 10^{2}"
-    @test format_latex(ShiftedDecimal(-5, 3, -2)) == unchecked_math"-5000\cdot 10^{-2}"
+    @test format_latex(ShiftedDecimal(5, 0, 2)) == lx"5\cdot 10^{2}"m
+    @test format_latex(ShiftedDecimal(-5, 0, -2)) == lx"-5\cdot 10^{-2}"m
+    @test format_latex(ShiftedDecimal(5, 3, 2)) == lx"5000\cdot 10^{2}"m
+    @test format_latex(ShiftedDecimal(-5, 3, -2)) == lx"-5000\cdot 10^{-2}"m
 
     # zeros - outer exponent is always ignored
-    @test format_latex(ShiftedDecimal(0, 0, 0)) == unchecked_math"0"
-    @test format_latex(ShiftedDecimal(0, -1, 0)) == unchecked_math"0.0"
-    @test format_latex(ShiftedDecimal(0, -2, 0)) == unchecked_math"0.00"
-    @test format_latex(ShiftedDecimal(0, 2, 0)) == unchecked_math"0"
-    @test format_latex(ShiftedDecimal(0, 0, -2)) == unchecked_math"0"
+    @test format_latex(ShiftedDecimal(0, 0, 0)) == lx"0"m
+    @test format_latex(ShiftedDecimal(0, -1, 0)) == lx"0.0"m
+    @test format_latex(ShiftedDecimal(0, -2, 0)) == lx"0.00"m
+    @test format_latex(ShiftedDecimal(0, 2, 0)) == lx"0"m
+    @test format_latex(ShiftedDecimal(0, 0, -2)) == lx"0"m
 end
 
 @testset "sensible linear ticks" begin
     @test sensible_linear_ticks(Interval(0, 1), TickFormat(), TickSelection()) ==
-        [i/10 => LaTeX(@sprintf("\$%.1f\$", i//10); skip_check = true) for i in 0:2:10]
+        [i/10 => LaTeX(@sprintf("\$%.1f\$", i//10)) for i in 0:2:10]
 end
 
 @testset "API sanity checks" begin
@@ -137,14 +132,14 @@ end
     HY = RelativeBars(:vertical, fit(Histogram, randn(100)))
     H2 = hpd_heatmap(fit(Histogram, (randn(100), randn(100))),
                      0.2:0.2:0.8, ColorSchemes.OrRd_5)
-    A = Annotation((1, 2), math"\cos(φ)")
+    A = Annotation((1, 2), lx"\cos(φ)"m)
     HG = Hgrid()
     HL = Hline(1.0)
     LT = LineThrough((1.0, 2.0), 1.0)
 
     plot = Plot(L, S, A, HG, HL, LT;
-                x_axis = Axis.Linear(; label = math"x"),
-                y_axis = Axis.Linear(; label = math"y"),
+                x_axis = Axis.Linear(; label = lx"x"m),
+                y_axis = Axis.Linear(; label = lx"y"m),
                 title = textcolor(colorant"steelblue", "what a great title"))
 
     let filename = tempname() * ".pdf"
@@ -207,19 +202,6 @@ end
 
     @test bounds_xy.(sync_bounds(:xy, (m[i,j] for i in axes(m, 1), j in axes(m, 2)))) ==
         bounds_xy.(m_xy)
-end
-
-@testset "strings" begin
-    s = latex"\textbf{A}" * math"\cos(\varphi)" * L"1+\sin(\alpha)" * raw"#$%&~_^{}"
-    @test s.latex == raw"\textbf{A}$\cos(\varphi)$$1+\sin(\alpha)$\#\$\%\&\textasciitilde{}\_\textasciicircum{}\{\}"
-    @test_throws MethodError "aa" * math"\alpha"
-end
-
-@testset "LaTeX validation" begin
-    @test check_latex(raw"\cos(\varphi)") ≡ nothing
-    @test_throws ArgumentError check_latex(raw"\frac{")
-    @test_throws ArgumentError check_latex(raw"\frac{}}")
-    @test_throws ArgumentError check_latex(raw"$\cos")
 end
 
 @testset "plot with collapsed axis" begin
