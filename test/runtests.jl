@@ -1,5 +1,6 @@
 using Miter, Miter.Intervals, Miter.Ticks, Miter.PGF
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
+using Miter.Plots: line_through_endpoints
 using Test
 using LaTeXEscapes: @lx_str, LaTeX, LaTeXError
 using Printf: @sprintf
@@ -224,4 +225,14 @@ end
     @test hcat(A, B).contents == hcat(A.contents, B.contents)
     @test [A B; C D].contents == [A.contents B.contents; C.contents D.contents]
     @test [F; E E].contents == [F.contents; E.contents E.contents]
+end
+
+@testset "line_through_endpoints" begin
+    I1 = Interval(0.0, 1.0)
+    I2 = Interval(-1.0, 1.0)
+    @test line_through_endpoints(LineThrough((0.0, 0.0), 0.5), I1, I2) ==
+        ((0.0, 0.0), (1.0, 0.5))
+    @test line_through_endpoints(LineThrough((0.0, 0.0), 2.0), I1, I2) ==
+        ((0.0, 0.0), (0.5, 1.0))
+    @test line_through_endpoints(LineThrough((4.0, 4.0), -1.0), I1, I2) == nothing
 end

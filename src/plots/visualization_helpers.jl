@@ -217,9 +217,13 @@ bounds_xy(::LineThrough) = (nothing, nothing)
 """
 $(SIGNATURES)
 
-Return two points where `line_through` crosses the rectangle defined by intervals.
+Return two points where `line_through` crosses the rectangle defined by intervals,
+ordered by the `x` coordinate.
+
+If there is no crossing, return `nothing`.
 """
-function line_through_endpoints(line_through::LineThrough, x_interval::Interval,
+function line_through_endpoints(line_through::LineThrough,
+                                x_interval::Interval,
                                 y_interval::Interval)
     (; x, y, slope) = line_through
     if slope == 0               # horizontal line
@@ -266,9 +270,13 @@ function line_through_endpoints(line_through::LineThrough, x_interval::Interval,
             _find_x_crossing(y_interval.max) ||
             _find_y_crossing(x_interval.min) ||
             _find_y_crossing(x_interval.max)
+            if x1 > x2
+                x1, x2 = x2, x1
+                y1, y2 = y2, y1
+            end
             return (x1, y1), (x2, y2)
         else
-            error("internal error: no valid crossing found, investigate numerical error")
+            return nothing
         end
     end
 end
@@ -278,10 +286,14 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, line_through::Lin
     (; color, width, dash) = line_through
     @argcheck(finalized_x_axis isa FinalizedLinear && finalized_y_axis isa FinalizedLinear,
               "LineThrough only supported for linear axes.")
-    z1, z2 = line_through_endpoints(line_through, finalized_x_axis.interval,
-                                    finalized_y_axis.interval)
-    set_line_style(sink; color, width, dash)
-    PGF.pathmoveto(sink, coordinates_to_point(drawing_area, z1))
-    PGF.pathlineto(sink, coordinates_to_point(drawing_area, z2))
-    PGF.usepathqstroke(sink)
+    z1z2 = line_through_endpoints(line_through,
+                                  finalized_x_axis.interval,
+                                  finalized_y_axis.interval)
+    if z1z2 ≢ nothing
+        z1, z2 = z1z2
+        set_line_style(sink; color, width, dash)
+        PGF.pathmoveto(sink, coordinates_to_point(drawing_area, z1))
+        PGF.pathlineto(sink, coordinates_to_point(drawing_area, z2))
+        PGF.usepathqstroke(sink)
+    end
 end
