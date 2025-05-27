@@ -15,7 +15,6 @@ makedocs(
     clean = true,
     warnonly = true,
     # checkdocs = :exports,
-    push_preview = true,
 )
 
 # Some setup is needed for documentation deployment, see “Hosting Documentation” and
