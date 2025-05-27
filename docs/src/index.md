@@ -184,6 +184,17 @@ Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]),
        width = 100mm, height = 100mm)
 ```
 
+### Contour plots
+
+The package [Contour.jl](https://github.com/JuliaGeometry/Contour.jl) is easy to interface with directly.
+```@example all
+using Contour, Miter
+x = range(-1, 1; length = 100)
+z = [(θ = atan(y, x); (0.6 * abs(θ)^0.5) / (0.2 * x^2 + y^2)^(1/3)) for x in x, y in x]
+c = contours(x, x, z)
+Plot(mapreduce(l -> [Lines(vertices(l)) for l in lines(l)], vcat, levels(c)))
+```
+
 ### Corner cases
 
 #### Handle collapsing axes gracefully
