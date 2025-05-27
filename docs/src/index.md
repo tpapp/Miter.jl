@@ -34,8 +34,8 @@ to load the relevant packages.
 ```@example all
 Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
       Scatter(MarkSymbol(; color = colorant"darkgreen"), (x, (x + 1) / 2) for x in -1:0.1:1)];
-      x_axis = Axis.Linear(; label = math"x"),
-      y_axis = Axis.Linear(; label = math"y"),
+      x_axis = Axis.Linear(; label = lx"x"m),
+      y_axis = Axis.Linear(; label = lx"y"m),
       title = "line and scatter")
 ```
 
@@ -68,7 +68,7 @@ Annotations.
 let c = colorant"teal",
     xy = collect((x,  0.5 * x + 0.1 * randn()) for x in range(-1, 1; length = 30))
     Plot(Scatter(MarkSymbol(; color = c), xy),
-         Annotation((0, 0.3), textcolor(c, latex"random dots $y = 0.5\cdot x + N(0, 0.1)$");
+         Annotation((0, 0.3), textcolor(c, lx"random dots $y = 0.5\cdot x + N(0, 0.1)$");
                     rotate = 30))
 end
 ```
