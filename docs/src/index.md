@@ -34,8 +34,8 @@ to load the relevant packages.
 ```@example all
 Plot([Lines((x, abs2(x)) for x in -1:0.02:1; color = colorant"red"),
       Scatter(MarkSymbol(; color = colorant"darkgreen"), (x, (x + 1) / 2) for x in -1:0.1:1)];
-      x_axis = Axis.Linear(; label = math"x"),
-      y_axis = Axis.Linear(; label = math"y"),
+      x_axis = Axis.Linear(; label = lx"x"m),
+      y_axis = Axis.Linear(; label = lx"y"m),
       title = "line and scatter")
 ```
 
@@ -68,7 +68,7 @@ Annotations.
 let c = colorant"teal",
     xy = collect((x,  0.5 * x + 0.1 * randn()) for x in range(-1, 1; length = 30))
     Plot(Scatter(MarkSymbol(; color = c), xy),
-         Annotation((0, 0.3), textcolor(c, latex"random dots $y = 0.5\cdot x + N(0, 0.1)$");
+         Annotation((0, 0.3), textcolor(c, lx"random dots $y = 0.5\cdot x + N(0, 0.1)$");
                     rotate = 30))
 end
 ```
@@ -182,6 +182,17 @@ Tableau(balanced_matrix(
 ```@example all
 Canvas(Tableau([Miter.dummy("$(x), $(y)") for x in 1:3, y in 1:4]),
        width = 100mm, height = 100mm)
+```
+
+### Contour plots
+
+The package [Contour.jl](https://github.com/JuliaGeometry/Contour.jl) is easy to interface with directly.
+```@example all
+using Contour, Miter
+x = range(-1, 1; length = 100)
+z = [(θ = atan(y, x); (0.6 * abs(θ)^0.5) / (0.2 * x^2 + y^2)^(1/3)) for x in x, y in x]
+c = contours(x, x, z)
+Plot(mapreduce(l -> [Lines(vertices(l)) for l in lines(l)], vcat, levels(c)))
 ```
 
 ### Corner cases
