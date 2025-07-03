@@ -22,7 +22,7 @@ struct Lines
     end
 end
 
-bounds_xy(lines::Lines) = bounds_xy(lines.coordinates)
+Coordinates.bounds_xy(lines::Lines) = Coordinates.all_coordinate_bounds_xy(lines.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
@@ -58,7 +58,7 @@ end
 
 Scatter(coordinates) = Scatter(MarkSymbol(), coordinates)
 
-bounds_xy(scatter::Scatter) = bounds_xy(scatter.coordinates)
+Coordinates.bounds_xy(scatter::Scatter) = Coordinates.all_coordinate_bounds_xy(scatter.coordinates)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; mark, coordinates) = scatter
@@ -107,7 +107,7 @@ struct Circles
     end
 end
 
-bounds_xy(circles::Circles) = bounds_xy(circles.x_y_w)
+Coordinates.bounds_xy(circles::Circles) = Coordinates.all_coordinate_bounds_xy(circles.x_y_w)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
@@ -163,9 +163,9 @@ struct RelativeBars
     end
 end
 
-function bounds_xy(relative_bars::RelativeBars)
+function Coordinates.bounds_xy(relative_bars::RelativeBars)
     (; orientation, edges_and_values, baseline) = relative_bars
-    e = mapreduce(x -> Interval(x[1], x[2]), hull, edges_and_values)
+    e = mapreduce(x -> Interval(x[1], x[2]), Coordinates.combine_bounds, edges_and_values)
     v = Interval(extrema((baseline, extrema(x -> x[3], edges_and_values)...))...)
     orientation ≡ :vertical ? (e, v) : (v, e)
 end
@@ -211,7 +211,7 @@ struct ColorMatrix
     end
 end
 
-function bounds_xy(color_matrix::ColorMatrix)
+function Coordinates.bounds_xy(color_matrix::ColorMatrix)
     (; x_edges, y_edges) = color_matrix
     (Interval(x_edges[begin], x_edges[end]), Interval(y_edges[begin], y_edges[end]))
 end

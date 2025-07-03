@@ -4,6 +4,8 @@
 
 export Invisible, sync_bounds
 
+using ..Coordinates: CoordinateBounds
+
 ####
 #### Invisible
 ####
@@ -25,7 +27,7 @@ struct Invisible
     end
 end
 
-bounds_xy(invisible::Invisible) = (invisible.x, invisible.y)
+Coordinates.bounds_xy(invisible::Invisible) = (invisible.x, invisible.y)
 
 PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
 

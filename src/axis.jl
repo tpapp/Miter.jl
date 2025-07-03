@@ -4,9 +4,6 @@ FIXME document
 """
 module Axis
 
-# reexported as API
-export bounds_xy
-
 using ArgCheck: @argcheck
 using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
@@ -22,23 +19,6 @@ using ..InternalUtilities
 ####
 #### Axis
 ####
-
-"""
-$(SIGNATURES)
-
-Return two intervals for the axis bounds of the plot contents.
-
-# Extending
-
-User defined types `T` can either define a `bounds_xy(::Tuple{T,T})` method (or other
-applicable combinations), or a method for `extrema(::T)`.
-"""
-bounds_xy(a::AbstractArray) = isempty(a) ? (nothing, nothing) : mapreduce(bounds_xy, hull_xy, vec(a))
-
-# bounds for a coordinate pair
-bounds_xy(xy::Tuple) = (Interval(extrema(xy[1])...), Interval(extrema(xy[2])...))
-
-bounds_xy(::Nothing) = (nothing, nothing)
 
 function finalize end
 
