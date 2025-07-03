@@ -17,7 +17,7 @@ using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
     coordinates_to_point, finalize, FinalizedLinear
 import ..Axis: bounds_xy
-using ..Intervals
+using ..Coordinates
 using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas

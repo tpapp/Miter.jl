@@ -14,7 +14,7 @@ using LaTeXEscapes: LaTeX
 using Unitful: mm
 
 import ..PGF
-using ..Intervals
+using ..Coordinates
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
 using ..Ticks
 using ..InternalUtilities

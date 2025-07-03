@@ -1,4 +1,4 @@
-using Miter, Miter.Intervals, Miter.Ticks, Miter.PGF
+using Miter, Miter.Coordinates, Miter.Ticks, Miter.PGF
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.Plots: line_through_endpoints
 using Test

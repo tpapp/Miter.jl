@@ -1,4 +1,4 @@
-module Intervals
+module Coordinates
 
 export Interval, is_nonzero, hull, hull_xy, CoordinateBounds
 

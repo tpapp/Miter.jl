@@ -5,7 +5,7 @@ module Miter
 
 include("internal_utilities.jl")
 include("pgf.jl")
-include("intervals.jl")
+include("coordinates.jl")
 include("styles.jl")
 include("ticks.jl")
 include("axis.jl")
@@ -30,7 +30,7 @@ using Reexport: @reexport
 
 # reexport single symbols
 
-@reexport using .Intervals: Interval
+@reexport using .Coordinates: Interval
 
 # modules that prefix symbols
 

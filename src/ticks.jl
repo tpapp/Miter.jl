@@ -14,7 +14,7 @@ export nontrivial_linear_tick_alternatives, TickSelection, TickFormat, sensible_
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
 
-using ..Intervals
+using ..Coordinates
 using ..Styles: DEFAULTS
 using ..PGF
 using LaTeXEscapes: wrap_math, LaTeX
