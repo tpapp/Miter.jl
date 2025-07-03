@@ -1,9 +1,16 @@
 module Coordinates
 
-export Interval, is_nonzero, hull, hull_xy, CoordinateBounds
+export Interval, bounds_xy
+
+public is_nonzero, coordinate_x, coordinate_y, combine_bounds_xy, all_bounds_xy,
+    coordinate_bounds_xy, all_coordinate_bounds_xy
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES
+
+####
+#### intervals
+####
 
 struct Interval{T}
     min::T
@@ -29,8 +36,6 @@ Base.minimum(a::Interval) = a.min
 Base.maximum(a::Interval) = a.max
 Base.extrema(a::Interval) = (a.min, a.max)
 
-const CoordinateBounds = Union{Interval,Nothing}
-
 """
 $(SIGNATURES)
 
@@ -38,28 +43,71 @@ Test whether the interval has positive length.
 """
 is_nonzero(a::Interval) = a.min < a.max
 
+####
+#### coordinate bounds
+####
+
+const CoordinateBounds = Union{Interval,Nothing}
+
+const EMPTY_XY = (nothing, nothing)
+
 """
 $(SIGNATURES)
 
-The convex hull, ie the narrowest interval that contains all arguments.
+Combine coordinate bounds into the narrowest interval that contains all arguments.
+
+This is a utility funtion for use in [`combine_bounds_xy`](@ref).
 """
-function hull(a::Interval, b::Interval)
+function combine_bounds(a::Interval, b::Interval)
     Interval(min(a.min, b.min), max(a.max, b.max))
 end
 
-hull(::Nothing, a::Interval) = a
+combine_bounds(::Nothing, a::Interval) = a
 
-hull(a::Interval, ::Nothing) = a
+combine_bounds(a::Interval, ::Nothing) = a
 
-hull(::Nothing, ::Nothing) = nothing
+combine_bounds(::Nothing, ::Nothing) = nothing
 
 """
 $(SIGNATURES)
 
-Convex hull for a 2-tuple of intervals.
+Return two intervals for the coordinate bounds of the arguments.
+
+For the default behavior, types should define [`bounds_xy`](@ref). For something
+different (eg overriding bounds), define [`combine_bounds_xy`](@ref).
 """
-function hull_xy((ax, ay), (bx, by))
-    (hull(ax, bx), hull(ay, by))
+bounds_xy(::Nothing) = (nothing, nothing)
+
+function combine_bounds_xy((ax, ay)::Tuple{CoordinateBounds,CoordinateBounds}, b)
+    bx, by = bounds_xy(b)
+    combine_bounds(ax, bx), combine_bounds(ay, by)
+end
+
+"""
+$(SIGNATURES)
+"""
+bounds_xy(itr) = reduce(combine_bounds_xy, itr; init = EMPTY_XY)
+
+####
+#### coordinate accessors and bounds
+####
+
+"""
+$(SIGNATURES)
+
+Coordinate bounds for a coordinate `xy`. Used only in [`all_coordinate_bounds`](@ref).
+"""
+coordinate_bounds_xy(xy) = Interval(xy[1]), Interval(xy[2])
+
+"""
+$(SIGNATURES)
+
+Helper function to calculate all coordinate bounds from coordinates.
+"""
+function all_coordinate_bounds_xy(itr)
+    mapreduce(coordinate_bounds_xy,
+              ((ax, ay), (bx, by)) -> (combine_bounds(ax, bx), combine_bounds(ay, by)),
+              itr; init = EMPTY_XY)
 end
 
 end

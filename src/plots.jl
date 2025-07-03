@@ -16,7 +16,6 @@ using Unitful: mm
 using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
     coordinates_to_point, finalize, FinalizedLinear
-import ..Axis: bounds_xy
 using ..Coordinates
 using ..Marks: MarkSymbol
 using ..Output: @declare_showable
@@ -79,7 +78,7 @@ end
 
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
-bounds_xy(plot::Plot) = bounds_xy(plot.contents)
+Coordinates.bounds_xy(plot::Plot) = Coordinates.bounds_xy(plot.contents)
 
 @declare_showable Plot
 
@@ -100,7 +99,7 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     if title ≢ nothing
         PGF.text(sink, PGF.relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
     end
-    x_interval, y_interval = bounds_xy(contents)
+    x_interval, y_interval = Coordinates.bounds_xy(contents)
     @argcheck x_interval ≢ nothing "empty x range"
     @argcheck y_interval ≢ nothing "empty y range"
     finalized_x_axis = finalize(x_axis, x_interval)
@@ -225,7 +224,7 @@ struct Phantom
     Phantom(object) = new(object)
 end
 
-bounds_xy(::Phantom) = (nothing, nothing)
+Coordinates.bounds_xy(::Phantom) = (nothing, nothing)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
     PGF.render(sink, drawing_area, phantom.object)

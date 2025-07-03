@@ -4,6 +4,8 @@
 
 export Invisible, sync_bounds
 
+using ..Coordinates: CoordinateBounds
+
 ####
 #### Invisible
 ####
@@ -25,7 +27,7 @@ struct Invisible
     end
 end
 
-bounds_xy(invisible::Invisible) = (invisible.x, invisible.y)
+Coordinates.bounds_xy(invisible::Invisible) = (invisible.x, invisible.y)
 
 PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::Invisible) = nothing
 
@@ -99,7 +101,9 @@ function sync_bounds(tag::Val{:Y}, collection)
     _add_invisible(nothing, yb, collection)
 end
 
-sync_bounds(tag::Val{:XY}, collection) = _add_invisible(bounds_xy(collection)..., collection)
+function sync_bounds(tag::Val{:XY}, collection)
+    _add_invisible(bounds_xy(collection)..., collection)
+end
 
 function sync_bounds(tag::Union{Val{:x},Val{:y},Val{:xy}}, collection::T) where T
     if Base.IteratorSize(T) == Base.HasShape{2}()
