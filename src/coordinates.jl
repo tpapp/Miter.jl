@@ -96,8 +96,15 @@ bounds_xy(itr) = reduce(combine_bounds_xy, itr; init = EMPTY_XY)
 $(SIGNATURES)
 
 Coordinate bounds for a coordinate `xy`. Used only in [`all_coordinate_bounds`](@ref).
+
+Scalar-like quantities should define a method for `Base.extrema`, which has the right
+fallback for reals by default.
+
+!!! NOTE
+    Future extensions with coordinate types `(:x 1 :y 2 :size 3)` etc can go through
+    this function.
 """
-coordinate_bounds_xy(xy) = Interval(xy[1]), Interval(xy[2])
+coordinate_bounds_xy(xy) = Interval(extrema(xy[1])...), Interval(extrema(xy[2])...)
 
 """
 $(SIGNATURES)
