@@ -15,22 +15,23 @@ using DocStringExtensions: SIGNATURES
 struct Interval{T}
     min::T
     max::T
+    level::Int
     @doc """
     $(SIGNATURES)
 
     A representation of the numbers `[min, max]`. It is required that `min ≤ max`, but
     `min == max` is allowed.
     """
-    function Interval(min::T, max::T) where T
+    function Interval(min::T, max::T; level = 0) where T
         @argcheck isfinite(min) && isfinite(max)
         @argcheck min ≤ max
-        new{T}(min, max)
+        new{T}(min, max, Int(level))
     end
 end
 
-Interval(a, b) = Interval(promote(a, b)...)
+Interval(a, b; level = 0) = Interval(promote(a, b)...; level)
 
-Interval(a) = Interval(a, a)
+Interval(a; level = 0) = Interval(a, a; level)
 
 Base.minimum(a::Interval) = a.min
 Base.maximum(a::Interval) = a.max
@@ -59,7 +60,13 @@ Combine coordinate bounds into the narrowest interval that contains all argument
 This is a utility funtion for use in [`combine_bounds_xy`](@ref).
 """
 function combine_bounds(a::Interval, b::Interval)
-    Interval(min(a.min, b.min), max(a.max, b.max))
+    if a.level == b.level
+        Interval(min(a.min, b.min), max(a.max, b.max))
+    elseif a.level > b.level
+        a
+    else
+        b
+    end
 end
 
 combine_bounds(::Nothing, a::Interval) = a
