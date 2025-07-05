@@ -123,6 +123,18 @@ end
 """
 $(SIGNATURES)
 
+Reset the state that the sink remembers.
+"""
+function reset!(sink::Sink)
+    sink.line_width = nothing
+    sink.stroke_color = nothing
+    sink.fill_color = nothing
+    sink.dash = nothing
+end
+
+"""
+$(SIGNATURES)
+
 Wrap an `io` in a `Sink` for outputting PGF primitives.
 
 A `Sink` records various drawing properties, so it can omit superfluous set commands.
@@ -360,6 +372,24 @@ function usepath(sink::Sink, actions...)
     _print(sink, "}\n")
 end
 
+###
+### scope
+###
+
+begin_scope(sink::Sink) = _print(sink, "\\begin{pgfscope}")
+
+end_scope(sink::Sink) = (_print(sink, "\\end{pgfscope}"); reset!(sink))
+
+function with_scope(f, sink::Sink)
+    begin_scope(sink)
+    f()
+    end_scope(sink)
+end
+
+
+###
+### text
+###
 
 """
 $(SIGNATURES)
@@ -578,7 +608,6 @@ end
 ####
 #### marks
 ####
-
 
 function setdash(sink::Sink, dash::Dash)
     if sink.dash ≠ dash

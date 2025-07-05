@@ -90,8 +90,8 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style, title) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
     grid = PGF.split_matrix(rectangle,
-                         (axis_left, PGF.SPACER , margin_right),
-                         (axis_bottom, PGF.SPACER, margin_top))
+                            (axis_left, PGF.SPACER , margin_right),
+                            (axis_bottom, PGF.SPACER, margin_top))
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
@@ -108,9 +108,13 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = DrawingArea(; rectangle = plot_rectangle,
                                finalized_x_axis, finalized_y_axis)
-    for c in contents
-        PGF.render(sink, drawing_area, c)
-    end
+    PGF.with_scope(sink) do
+        PGF.path(sink, plot_rectangle)
+        PGF.usepathqclip(sink)
+        for c in contents
+            PGF.render(sink, drawing_area, c)
+        end
+   end
 end
 
 ####
