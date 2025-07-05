@@ -21,6 +21,8 @@ struct Interval{T}
 
     A representation of the numbers `[min, max]`. It is required that `min ≤ max`, but
     `min == max` is allowed.
+
+    The single-argument convenience constructer uses the extrema of the argument.
     """
     function Interval(min::T, max::T; level = 0) where T
         @argcheck isfinite(min) && isfinite(max)
@@ -31,7 +33,7 @@ end
 
 Interval(a, b; level = 0) = Interval(promote(a, b)...; level)
 
-Interval(a; level = 0) = Interval(a, a; level)
+Interval(a; level = 0) = Interval(extrema(a)...; level)
 
 Base.minimum(a::Interval) = a.min
 Base.maximum(a::Interval) = a.max
