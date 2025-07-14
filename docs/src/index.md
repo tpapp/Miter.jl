@@ -25,7 +25,7 @@ A plot is rendered in the following manner:
 
 The bounds of a plot element are determined using `Miter.combine_bounds_xy`. The default uses `Miter.bounds_xy` and combines the result, special cases can be handled by using something other than combination. Plot elements need to be in containers which are iterable for deterministic results.
 
-Individual coordinate bounds are determined using `Miter.Coordinates.coordinate_bounds_xy`.
+Individual coordinate bounds are determined using `Miter.Coordinates.coordinate_bounds_xy`. The default calls `extrema` on the first and second element of coordinates.
 
 ## Gallery
 
