@@ -16,6 +16,13 @@ Strings (for axis labels, annotations, plot titles) can be provided three ways:
 
 If you concatenate strings of the types above with the `*` operator, make sure you put a `LaTeX` first (you can always insert an empty one, eg `LaTeX()` or `lx""`. That way, the output is a `LaTeX` and everything will be correctly escaped. Other combinations are deliberately unsupported.
 
+### Coordinates and bounds
+
+A plot is rendered in the following manner:
+
+1. The coordinate bound is determined using all elements.
+2. Axes are set up based on the calculated bounds.
+
 ## Gallery
 
 What you see below is a gallery of plots. These serve as examples, and are also useful for visual inspection of plots.
