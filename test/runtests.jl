@@ -1,4 +1,4 @@
-using Miter, Miter.Coordinates, Miter.Ticks, Miter.PGF
+using Miter, Miter.Coordinates, Miter.Ticks, Miter.PGF, Miter.Lengths
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.Plots: line_through_endpoints
 using Test
@@ -68,6 +68,25 @@ end
 #     render(ts, pa, lp)
 #     Miter.tex_postamble(ts)
 # end
+
+####
+#### test Lengths
+####
+
+using Miter.Lengths: Length
+
+@testset "Lengths" begin
+    @test 2inch / 1mm ≈ 50.8
+    @test 3inch / 5pt ≈ (3*72/5)
+    @test 5mm / mm ≈ 5
+    @test 1mm + 2mm == Length(3, :mm)
+    @test 1inch + 3mm == Length(25.4 + 3, :mm)
+    @test 1inch + 3mm == Length(25.4 + 3, :mm)
+    @test 1inch + 2pt == Length(25.4 + 25.4*2/72, :mm)
+    @test -(3inch) == Length(-3, :inch)
+    @test 1mm - 4mm == -3mm
+    @test 1mm - 4pt == Length(1 - 4*25.4/72, :mm)
+end
 
 ####
 #### test ticks
