@@ -24,6 +24,15 @@
 <path d="M 1.90625 -0.53125 C 1.90625 -0.8125 1.671875 -1.046875 1.375 -1.046875 C 1.09375 -1.046875 0.859375 -0.8125 0.859375 -0.53125 C 0.859375 -0.234375 1.09375 0 1.375 0 C 1.671875 0 1.90625 -0.234375 1.90625 -0.53125 Z M 1.90625 -0.53125 "/>
 </g>
 </g>
+<clipPath id="clip-0">
+<path clip-rule="nonzero" d="M 56.585938 19.902344 L 128 19.902344 L 128 75 L 56.585938 75 Z M 56.585938 19.902344 "/>
+</clipPath>
+<clipPath id="clip-1">
+<path clip-rule="nonzero" d="M 127 74 L 268.78125 74 L 268.78125 184 L 127 184 Z M 127 74 "/>
+</clipPath>
+<clipPath id="clip-2">
+<path clip-rule="nonzero" d="M 127 19.902344 L 268.78125 19.902344 L 268.78125 75 L 127 75 Z M 127 19.902344 "/>
+</clipPath>
 </defs>
 <path fill="none" stroke-width="0.28345" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.693735 36.849527 L 269.293287 36.849527 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
 <path fill="none" stroke-width="0.28345" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.693735 36.849527 L 56.693735 31.182502 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
@@ -167,7 +176,13 @@
 <g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
 <use xlink:href="#glyph-0-0" x="36.052699" y="23.105405"/>
 </g>
+<g clip-path="url(#clip-0)">
 <path fill-rule="nonzero" fill="rgb(0%, 50.196838%, 0%)" fill-opacity="1" d="M 56.585938 74.601562 L 127.316406 74.601562 L 127.316406 19.902344 L 56.585938 19.902344 Z M 56.585938 74.601562 "/>
+</g>
+<g clip-path="url(#clip-1)">
 <path fill-rule="nonzero" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 127.316406 184 L 268.78125 184 L 268.78125 74.601562 L 127.316406 74.601562 Z M 127.316406 184 "/>
+</g>
+<g clip-path="url(#clip-2)">
 <path fill-rule="nonzero" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 127.316406 74.601562 L 268.78125 74.601562 L 268.78125 19.902344 L 127.316406 19.902344 Z M 127.316406 74.601562 "/>
+</g>
 </svg>
