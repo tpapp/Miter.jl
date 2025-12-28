@@ -19,8 +19,8 @@ struct Interval{T}
     @doc """
     $(SIGNATURES)
 
-    A representation of the numbers `[min, max]`. It is required that `min ≤ max`, but
-    `min == max` is allowed.
+    A representation of the numbers in the interval `[min, max]`. It is required that
+    `min ≤ max`, but `min == max` is allowed.
 
     The single-argument convenience constructer uses the extrema of the argument.
     """
@@ -94,8 +94,10 @@ end
 
 """
 $(SIGNATURES)
+
+Combine XY bounds of the argument, from left to right.
 """
-bounds_xy(itr) = reduce(combine_bounds_xy, itr; init = EMPTY_XY)
+bounds_xy(itr) = foldl(combine_bounds_xy, itr; init = EMPTY_XY)
 
 ####
 #### coordinate accessors and bounds

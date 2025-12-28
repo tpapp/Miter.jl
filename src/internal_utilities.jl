@@ -3,10 +3,16 @@ Utilities used by the implementation of the package, not exported outside it.
 """
 module InternalUtilities
 
-using DocStringExtensions: SIGNATURES
+using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 
 export ensure_vector, unit_to_canvas
 
+"""
+$(FUNCTIONNAME)([T], v)
+
+Convert the argument `v` to a vector (optionally with the given type) if necessary,
+otherwise return it as is.
+"""
 ensure_vector(v::AbstractVector) = v
 
 ensure_vector(v) = vec(collect(v))
