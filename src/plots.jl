@@ -16,8 +16,7 @@ using Unitful: mm
 using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
     coordinates_to_point, finalize, FinalizedLinear
-import ..Axis: bounds_xy
-using ..Intervals
+using ..Coordinates
 using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
@@ -79,7 +78,7 @@ end
 
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
-bounds_xy(plot::Plot) = bounds_xy(plot.contents)
+Coordinates.bounds_xy(plot::Plot) = Coordinates.bounds_xy(plot.contents)
 
 @declare_showable Plot
 
@@ -91,8 +90,8 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style, title) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
     grid = PGF.split_matrix(rectangle,
-                         (axis_left, PGF.SPACER , margin_right),
-                         (axis_bottom, PGF.SPACER, margin_top))
+                            (axis_left, PGF.SPACER , margin_right),
+                            (axis_bottom, PGF.SPACER, margin_top))
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
@@ -100,7 +99,7 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     if title ≢ nothing
         PGF.text(sink, PGF.relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
     end
-    x_interval, y_interval = bounds_xy(contents)
+    x_interval, y_interval = Coordinates.bounds_xy(contents)
     @argcheck x_interval ≢ nothing "empty x range"
     @argcheck y_interval ≢ nothing "empty y range"
     finalized_x_axis = finalize(x_axis, x_interval)
@@ -109,9 +108,13 @@ function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
     PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = DrawingArea(; rectangle = plot_rectangle,
                                finalized_x_axis, finalized_y_axis)
-    for c in contents
-        PGF.render(sink, drawing_area, c)
-    end
+    PGF.with_scope(sink) do
+        PGF.path(sink, plot_rectangle)
+        PGF.usepathqclip(sink)
+        for c in contents
+            PGF.render(sink, drawing_area, c)
+        end
+   end
 end
 
 ####
@@ -225,7 +228,7 @@ struct Phantom
     Phantom(object) = new(object)
 end
 
-bounds_xy(::Phantom) = (nothing, nothing)
+Coordinates.bounds_xy(::Phantom) = (nothing, nothing)
 
 function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
     PGF.render(sink, drawing_area, phantom.object)

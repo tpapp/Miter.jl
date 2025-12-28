@@ -16,6 +16,17 @@ Strings (for axis labels, annotations, plot titles) can be provided three ways:
 
 If you concatenate strings of the types above with the `*` operator, make sure you put a `LaTeX` first (you can always insert an empty one, eg `LaTeX()` or `lx""`. That way, the output is a `LaTeX` and everything will be correctly escaped. Other combinations are deliberately unsupported.
 
+### Coordinates and bounds
+
+A plot is rendered in the following manner:
+
+1. The coordinate bound is determined using all elements.
+2. Axes are set up based on the calculated bounds.
+
+The bounds of a plot element are determined using `Miter.combine_bounds_xy`. The default uses `Miter.bounds_xy` and combines the result, special cases can be handled by using something other than combination. Plot elements need to be in containers which are iterable for deterministic results.
+
+Individual coordinate bounds are determined using `Miter.Coordinates.coordinate_bounds_xy`. The default calls `extrema` on the first and second element of coordinates. Other coordinate formats should customize this function.
+
 ## Gallery
 
 What you see below is a gallery of plots. These serve as examples, and are also useful for visual inspection of plots.
@@ -120,11 +131,11 @@ m = Tableau(balanced_matrix([wobbler(0, 0, 2, 0),
 @modify(sync_bounds(:xy), m.contents) # sync columns and rows
 ```
 
-Add an invisible object to extend the `y` axis.
+Add bounds to extend the `y` axis.
 
 ```@example all
 Plot([Lines((x, x^2) for x in range(0, 1; length = 20)),
-      Invisible(nothing, Interval(-1, 1))])
+      JustBounds(nothing, Interval(-1, 1))])
 ```
 
 Q5 (five quantiles) plots.
