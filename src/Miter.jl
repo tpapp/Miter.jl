@@ -6,7 +6,7 @@ module Miter
 include("internal_utilities.jl")
 include("lengths.jl")
 include("coordinates.jl")
-include("sinks.jl")
+include("draw.jl")
 include("styles.jl")
 include("ticks.jl")
 include("axis.jl")
