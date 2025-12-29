@@ -9,10 +9,10 @@ export balanced_matrix, hpd_heatmap
 using ArgCheck: @argcheck
 using ColorTypes: RGB24, Gray
 using DocStringExtensions: SIGNATURES, FUNCTIONNAME
-using Unitful: mm
 
-using ..PGF
 using ..InternalUtilities: ensure_vector
+using ..Lengths: mm, Length
+using ..PGF
 
 ####
 #### arrangement
@@ -73,7 +73,7 @@ Visual debugging, use [`dummy`](@ref) to create.
 struct Dummy
     label::AbstractString
     color::PGF.COLOR
-    margin::PGF.LENGTH
+    margin::Length
 end
 
 """

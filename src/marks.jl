@@ -9,14 +9,15 @@ using DocStringExtensions: SIGNATURES
 using Statistics: quantile
 
 using ..Axis: DrawingArea, coordinates_to_point
-using ..PGF: COLOR, LENGTH, Point, Sink, _length_positive, PGF
+using ..PGF: COLOR, Point, Sink, PGF
+using ..Lengths: Length, mm
 import ..PGF: render
 using ..Styles: set_line_style, LINE_SOLID, DEFAULTS
 
 struct MarkSymbol{S}
-    line_width::LENGTH
+    line_width::Length
     color::COLOR
-    size::LENGTH
+    size::Length
     @doc """
     $(SIGNATURES)
 
@@ -27,10 +28,12 @@ struct MarkSymbol{S}
     - `:*` a filled circle
     """
     @inline function MarkSymbol(S = DEFAULTS.mark_symbol;
-                        line_width = DEFAULTS.line_width,
-                        color = DEFAULTS.line_color,
-                        size = DEFAULTS.mark_size)
-        new{S}(_length_positive(line_width), COLOR(color), _length_positive(size))
+                                line_width::Length = DEFAULTS.line_width,
+                                color = DEFAULTS.line_color,
+                                size::Length = DEFAULTS.mark_size)
+        @argcheck line_width > 0mm
+        @argcheck size > 0mm
+        new{S}(line_width, COLOR(color), size)
     end
 end
 
@@ -43,27 +46,24 @@ circle/square that contains the mark). Caller should set color, line width, etc.
 This is a helper function for `MarkSymbol` marks. It assumes that the line width, color,
 dash have been set by the caller.
 """
-function draw_mark_symbol(sink::Sink, ::Val{K}, xy::Point, size::T) where {K,T}
-    if T ≡ LENGTH
-        error("Don't know how to draw a mark of type $K, define a method for this function.")
-    else
-        mark(sink, Val(K), xy, _length_positive(size))
-    end
+function draw_mark_symbol(sink::Sink, ::Val{K}, xy::Point, size::Length) where K
+    @argcheck size > 0mm
+    mark(sink, Val(K), xy, size)
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:+}, xy::Point, size::LENGTH)
+function draw_mark_symbol(sink::Sink, ::Val{:+}, xy::Point, size::Length)
     (; x, y) = xy
     h = size / 2
     PGF.segment(sink, Point(x - h, y), Point(x + h, y))
     PGF.segment(sink, Point(x, y - h), Point(x, y + h))
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:o}, xy::Point, size::LENGTH)
+function draw_mark_symbol(sink::Sink, ::Val{:o}, xy::Point, size::Length)
     PGF.pathcircle(sink, xy, size / 2)
     PGF.usepathqstroke(sink)
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:*}, xy::Point, size::LENGTH)
+function draw_mark_symbol(sink::Sink, ::Val{:*}, xy::Point, size::Length)
     PGF.pathcircle(sink, xy, size / 2)
     PGF.usepathqfill(sink)
 end
@@ -106,21 +106,22 @@ struct MarkQ5
     "color of the lines and the circle"
     color::COLOR
     "width of the thinner 5%-95% line"
-    width05::LENGTH
+    width05::Length
     "width of the thicker 25%-75% line"
-    width25::LENGTH
+    width25::Length
     "size (diameter) of the circle"
-    size50::LENGTH
+    size50::Length
     @doc """
     $(SIGNATURES)
     """
-    function MarkQ5(; color = DEFAULTS.line_color, width05 = DEFAULTS.line_width * 0.5,
-                    width25 = DEFAULTS.line_width * 1.5, size50 = DEFAULTS.line_width * 4.0)
-        _width05 = _length_positive(width05)
-        _width25 = _length_positive(width25)
-        _size50 = _length_positive(size50)
-        @argcheck _size50 / 2 ≥ _width25 ≥ _width05
-        new(COLOR(color), _width05, _width25, _size50)
+    function MarkQ5(; color = DEFAULTS.line_color,
+                    width05::Length = DEFAULTS.line_width * 0.5,
+                    width25::Length = DEFAULTS.line_width * 1.5,
+                    size50::Length = DEFAULTS.line_width * 4.0)
+        @argcheck width05 > 0mm
+        @argcheck width25 > 0mm
+        @argcheck size50 / 2 ≥ width25 ≥ width05
+        new(COLOR(color), width05, width25, size50)
     end
 end
 

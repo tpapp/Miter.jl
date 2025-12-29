@@ -2,6 +2,18 @@
 ##### specification of lengths
 #####
 
+"""
+This module defines `Length`, a container for lengths.
+
+The preferred way to construct `Length`s is using the exported constants `mm`, `inch`,
+and `pt`, eg `100mm` (`cm == 10mm` is provided for convenience). An effort is made to
+preserve the original unit with arithmetic operators `*`, `/`, `+`, `-` when it makes
+sense, otherwise conversion is to `mm`.
+
+Comparisons with `>`, `≥`, `==` are supported.
+
+`/` should be used to obtain the dimensionless length, eg `1inch/mm == 25.4`.
+"""
 module Lengths
 
 using ArgCheck: @argcheck
@@ -30,13 +42,20 @@ function Base.show(io::IO, l::Length)
     print(io, scale, unit)
 end
 
+Base.:(*)(l::Length, v::Real) = Length(l.scale * v, l.unit)
+
+Base.:(*)(v::Real, l::Length) = l * v
+
+Base.:(/)(l::Length, v::Real) = Length(l.scale / v, l.unit)
+
+const INCH2MM = 25.4
+const INCH2PT = 72.27
+
 function Base.:(/)(A::Length, B::Length)
     r = A.scale / B.scale
     @argcheck isfinite(r) "Non-finite unit ratio"
     au = A.unit
     bu = B.unit
-    INCH2MM = 25.4
-    INCH2PT = 72.0
     if au ≡ bu
         r
     elseif au ≡ :mm && bu ≡ :inch
@@ -57,10 +76,6 @@ function Base.:(/)(A::Length, B::Length)
     end
 end
 
-Base.:(*)(l::Length, v::Real) = Length(l.scale * v, l.unit)
-
-Base.:(*)(v::Real, l::Length) = l * v
-
 function Base.:(+)(ls::Length...)
     if allequal(x -> x.unit, ls)
         Length(mapreduce(x -> x.scale, +, ls), first(ls).unit)
@@ -72,5 +87,22 @@ end
 Base.:(-)(l::Length) = Length(-l.scale, l.unit)
 
 Base.:(-)(l1::Length, l2::Length) = l1 + (-l2)
+
+"""
+$(SIGNATURES)
+
+The scales of the two lengths in the same unit (the unit of the first one). For comparisons.
+"""
+function _scale_in_same_unit(l1::Length, l2::Length)
+    if l1.unit ≡ l2.unit
+        l1.scale, l2.scale
+    else
+        l1.scale, (l2 / Length(1.00, l1.unit))
+    end
+end
+
+Base.:(≤)(l1::Length, l2::Length) = ≤(_scale_in_same_unit(l1, l2)...)
+Base.:(==)(l1::Length, l2::Length) = ==(_scale_in_same_unit(l1, l2)...)
+Base.:(<)(l1::Length, l2::Length) = <(_scale_in_same_unit(l1, l2)...)
 
 end

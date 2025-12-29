@@ -10,15 +10,16 @@ export Lines, Scatter, Circles, RelativeBars, ColorMatrix
 
 struct Lines
     coordinates
-    line_width::LENGTH
+    line_width::Length
     color
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
     """
-    function Lines(coordinates; line_width = DEFAULTS.line_width,
+    function Lines(coordinates; line_width::Length = DEFAULTS.line_width,
                    color = DEFAULTS.line_color, dash::PGF.Dash = LINE_SOLID)
-        new(ensure_vector(coordinates), _length_positive(line_width), color, dash)
+        @argcheck line_width > 0mm
+        new(ensure_vector(coordinates), line_width, color, dash)
     end
 end
 
@@ -77,10 +78,10 @@ end
 
 struct Circles
     x_y_w::AbstractVector
-    scale::LENGTH
+    scale::Length
     fill_color::Union{Nothing,COLOR}
     stroke_color::Union{Nothing,COLOR}
-    stroke_width::LENGTH
+    stroke_width::Length
     @doc """
     $(SIGNATURES)
 
@@ -95,15 +96,17 @@ struct Circles
 
     `fill_color` determines the fill color of circles.
     """
-    function Circles(x_y_w, scale;
+    function Circles(x_y_w, scale::Length;
                      stroke_color = nothing,
-                     stroke_width = DEFAULTS.line_width,
+                     stroke_width::Length = DEFAULTS.line_width,
                      fill_color = DEFAULTS.fill_color)
+        @argcheck scale > 0mm
+        @argcheck stroke_width > 0mm
         new(collect(x_y_w),
-            _length_positive(scale),
+            scale,
             convert_maybe(COLOR, fill_color),
             convert_maybe(COLOR, stroke_color),
-            _length_positive(stroke_width))
+            stroke_width)
     end
 end
 
@@ -128,7 +131,7 @@ struct RelativeBars
     baseline::Float64
     fill_color::Union{Nothing,COLOR}
     stroke_color::Union{Nothing,COLOR}
-    stroke_width::LENGTH
+    stroke_width::Length
     """
     $(SIGNATURES)
 
@@ -159,7 +162,7 @@ struct RelativeBars
             convert(Float64, baseline),
             convert_maybe(COLOR, fill_color),
             convert_maybe(COLOR, stroke_color),
-            convert(LENGTH, stroke_width))
+            convert(Length, stroke_width))
     end
 end
 

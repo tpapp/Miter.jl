@@ -11,7 +11,6 @@ using Accessors: @insert
 using ArgCheck: @argcheck
 import ConstructionBase
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
-using Unitful: mm
 
 using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
@@ -20,8 +19,9 @@ using ..Coordinates
 using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
+using ..Lengths: Length, mm
 using ..PGF
-using ..PGF: COLOR, LENGTH, _length_positive, convert_maybe, Point
+using ..PGF: COLOR, convert_maybe, Point
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
     path_q_stroke_or_fill
 
@@ -42,10 +42,10 @@ end
 ####
 
 Base.@kwdef struct PlotStyle
-    axis_left::LENGTH = DEFAULTS.plot_style_axis_left
-    axis_bottom::LENGTH = DEFAULTS.plot_style_axis_bottom
-    margin_right::LENGTH = DEFAULTS.plot_style_margin_right
-    margin_top::LENGTH = DEFAULTS.plot_style_margin_top
+    axis_left::Length = DEFAULTS.plot_style_axis_left
+    axis_bottom::Length = DEFAULTS.plot_style_axis_bottom
+    margin_right::Length = DEFAULTS.plot_style_margin_right
+    margin_top::Length = DEFAULTS.plot_style_margin_top
 end
 
 struct Plot

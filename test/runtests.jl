@@ -4,7 +4,6 @@ using Miter.Plots: line_through_endpoints
 using Test
 using LaTeXEscapes: @lx_str, LaTeX, LaTeXError
 using Printf: @sprintf
-using Unitful.DefaultSymbols: mm
 using Colors, ColorSchemes
 using StatsBase: fit, Histogram
 
@@ -77,15 +76,28 @@ using Miter.Lengths: Length
 
 @testset "Lengths" begin
     @test 2inch / 1mm ≈ 50.8
-    @test 3inch / 5pt ≈ (3*72/5)
+    @test 3inch / 5pt ≈ (3*72.27/5)
     @test 5mm / mm ≈ 5
+    @test 7mm * 2 == 2 * 7mm == 14mm
+    @test 8mm / 2 == 4mm
     @test 1mm + 2mm == Length(3, :mm)
     @test 1inch + 3mm == Length(25.4 + 3, :mm)
     @test 1inch + 3mm == Length(25.4 + 3, :mm)
-    @test 1inch + 2pt == Length(25.4 + 25.4*2/72, :mm)
+    @test 1inch + 2pt == Length(25.4 + 25.4*2/72.27, :mm)
     @test -(3inch) == Length(-3, :inch)
     @test 1mm - 4mm == -3mm
-    @test 1mm - 4pt == Length(1 - 4*25.4/72, :mm)
+    @test 1mm - 4pt == Length(1 - 4*25.4/72.27, :mm)
+    @test 1mm ≤ 1mm
+    @test 1mm ≤ 2mm
+    @test 1mm ≥ 0.5mm
+    @test 1mm ≤ 1inch
+    @test -1mm ≤ 0inch
+    @test -3mm ≥ -5inch
+    @test !(1mm < 1mm)
+    @test 2mm > 1mm
+    @test 1inch > 1mm
+    @test 1mm ≠ 2mm
+    @test !(1mm ≠ 1mm)
 end
 
 ####

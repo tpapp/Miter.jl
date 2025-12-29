@@ -7,7 +7,7 @@ PGF command names translate with the prefix, eg "pgfpathclose" is `PGF.pathclose
 
 Each function takes an `IO` argument, where it writes the relevant output to it.
 
-**Coordinates** should be subtypes of `Unitful.Length`, and will be converted internally.
+**Coordinates** should be subtypes of `Lengths.Length`, and will be converted internally.
 
 # API
 
@@ -23,8 +23,8 @@ using ColorTypes: Colorant, red, green, blue, RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using StaticArrays: SVector, SMatrix
 using Printf: @printf
-using Unitful: mm, ustrip, Length, Quantity, 𝐋
 
+using ..Lengths: mm, pt, Length
 using ..InternalUtilities
 using LaTeXEscapes: print_escaped, @lx_str
 
@@ -38,43 +38,6 @@ $(SIGNATURES)
 Convert user-specified arguments to types we use internally, passing through `nothing`.
 """
 convert_maybe(::Type{T}, value) where T = value ≡ nothing ? value : convert(T, value)
-
-###
-### length
-###
-
-"""
-The length type we use internally in this module. Not exposed outside this module.
-"""
-const LENGTH = typeof(1.0mm)
-
-const LENGTH0 = zero(LENGTH)
-
-is_positive(x::LENGTH) = x > LENGTH0
-
-"""
-All quantities we accept as lengths, for conversion with `_length`.
-"""
-const INPUT_LENGTH = Quantity{T,𝐋} where T
-
-"""
-$(SIGNATURES)
-
-Convert to `LENGTH`, ensuring an inferrable type.
-"""
-@inline _length(x::INPUT_LENGTH) = LENGTH(x)::LENGTH
-
-"""
-$(SIGNATURES)
-
-Convert to `LENGTH`, checking that the result is (strictly) positive.
-"""
-function _length_positive(x)
-    y = _length(x)
-    @argcheck is_positive(y)
-    y
-end
-
 
 ###
 ### colors
@@ -91,16 +54,17 @@ const COLOR = RGB{Float64}
 ####
 
 struct Dash
-    dimensions::Vector{LENGTH}
-    offset::LENGTH
+    dimensions::Vector{Length}
+    offset::Length
     @doc """
     $(SIGNATURES)
 
     A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
     """
-    function Dash(dimensions...; offset = LENGTH0)
+    function Dash(dimensions::Length...; offset::Length = 0mm)
         @argcheck iseven(length(dimensions)) "Dashes need an even number of dimensions."
-        new([_length_positive(d) for d in dimensions], _length(offset))
+        @argcheck all(d -> d > 0mm, dimensions) "Dash lengths need to be positive."
+        new([d for d in dimensions], offset)
     end
 end
 
@@ -111,7 +75,7 @@ end
 Base.@kwdef mutable struct Sink{T}
     io::T
     "last line width set"
-    line_width::Union{Nothing,LENGTH} = nothing
+    line_width::Union{Nothing,Length} = nothing
     "last stroke color set"
     stroke_color::Union{Nothing,COLOR} = nothing
     "last fill color set"
@@ -157,7 +121,7 @@ _println(sink::Sink, xs...) = (foreach(x -> _print(sink, x), xs); _print(sink, '
 
 _print(sink::Sink, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(sink.io, x)
 
-_print(sink::Sink, x::LENGTH) = @printf(sink.io, "%fbp", ustrip(mm, x) * (72 / 25.4))
+_print(sink::Sink, x::Length) = @printf(sink.io, "%fpt", x / pt)
 
 function _print(sink::Sink, color::COLOR)
     _print(sink, "rgb,1:red,", Float64(red(color)),
@@ -209,33 +173,26 @@ $(SIGNATURES)
 
 Set line width, converting to `mm` if necessary.
 """
-function setlinewidth(sink::Sink, line_width::LENGTH)
+function setlinewidth(sink::Sink, line_width::Length)
     if sink.line_width ≠ line_width
         sink.line_width = line_width
         _print(sink, raw"\pgfsetlinewidth{", line_width, "}")
     end
 end
 
-setlinewidth(sink::Sink, line_width) = setlinewidth(sink, _length(line_width))
-
 ####
 #### points
 ####
 
 struct Point
-    x::LENGTH
-    y::LENGTH
+    x::Length
+    y::Length
     @doc """
     $(SIGNATURES)
 
     Create a point at the `x` and `y` coordinates.
     """
-    function Point(x, y)
-        result = new(_length(x), _length(y))
-        @argcheck isfinite(result.x)
-        @argcheck isfinite(result.y)
-        result
-    end
+    Point(x::Length, y::Length) = new(x, y)
 end
 
 function _print(sink::Sink, point::Point)
@@ -261,23 +218,23 @@ flip(a::Point) = Point(a.y, a.x)
 ####
 
 struct Rectangle
-    left::LENGTH
-    right::LENGTH
-    bottom::LENGTH
-    top::LENGTH
+    left::Length
+    right::Length
+    bottom::Length
+    top::Length
     @doc """
     $(SIGNATURES)
 
-    Create a rectangle with the given boundaries, which are `Unitful.Length` values.
+    Create a rectangle with the given boundaries, which are `Length` values.
     """
-    function Rectangle(left, right, bottom, top)
+    function Rectangle(left::Length, right::Length, bottom::Length, top::Length)
         if left > right
             left, right = right, left
         end
         if bottom > top
             bottom, top = top, bottom
         end
-        new(_length(left), _length(right), _length(bottom), _length(top))
+        new(left, right, bottom, top)
     end
 end
 
@@ -303,7 +260,7 @@ When only the width and the height are given, create a rectangle where bottom le
 origin.
 """
 function canvas(width, height)
-    Rectangle(; left = LENGTH0, right = width, bottom = LENGTH0, top = height)
+    Rectangle(; left = 0mm, right = width, bottom = 0mm, top = height)
 end
 
 ###
@@ -318,7 +275,7 @@ function pathlineto(sink::Sink, point::Point)
     _println(sink, raw"\pgfpathlineto{", point, "}")
 end
 
-function pathcircle(sink::Sink, point::Point, radius::LENGTH)
+function pathcircle(sink::Sink, point::Point, radius::Length)
     _println(sink, raw"\pgfpathcircle{", point, "}{", radius, "}")
 end
 
@@ -478,28 +435,28 @@ struct Relative
     end
 end
 
-function split_interval(a::LENGTH, b::LENGTH, divisions)
+function split_interval(a::Length, b::Length, divisions)
     total = b - a
-    @argcheck total ≥ LENGTH0
+    @argcheck total ≥ 0mm
     function _resolve1(d)       # first pass: everything but Spacer
-        if d isa INPUT_LENGTH
-            @argcheck d ≥ LENGTH0
-            _length(d)
+        if d isa Length
+            @argcheck d ≥ 0mm
+            d
         elseif d isa Relative
             d.factor * total
         else
             error("Invalid division specification $(d).")
         end
     end
-    absolute_sum = sum(_resolve1(d) for d in divisions if !(d isa Spacer); init = LENGTH0)
+    absolute_sum = sum(_resolve1(d) for d in divisions if !(d isa Spacer); init = 0mm)
     @argcheck absolute_sum ≤ total
     spacer_sum = sum(d.factor for d in divisions if d isa Spacer; init = 0.0)
     remainder = total - absolute_sum
     @argcheck spacer_sum > 0 || remainder ≈ 0
     spacer_coefficient = remainder / spacer_sum
     function _resolve2(d)       # second pass
-        if d isa INPUT_LENGTH
-            _length(d)          # has been checked before
+        if d isa Length
+            d                   # has been checked before
         elseif d isa Relative
             d.factor * total
         else
@@ -552,7 +509,7 @@ The preamble that should precede output generated by this module to compile in L
 After the preamble, bounding box calculations are suspended.
 """
 function preamble(sink::Sink, bounding_box::Rectangle;
-                  standalone::Bool, baseline = LENGTH(0))
+                  standalone::Bool, baseline::Length = 0mm)
     standalone || _print(sink, raw"""
 \documentclass{standalone}
 \usepackage{pgfcore}
@@ -563,7 +520,7 @@ function preamble(sink::Sink, bounding_box::Rectangle;
 """)
     PGF.path(sink, bounding_box)
     _println(sink, raw"\pgfusepath{use as bounding box}",
-           raw"\pgfsetbaseline{", LENGTH(baseline), "}\n",
+           raw"\pgfsetbaseline{", baseline, "}\n",
            raw"\begin{pgfinterruptboundingbox}")
 end
 
