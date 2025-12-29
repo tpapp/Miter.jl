@@ -17,12 +17,21 @@ Comparisons with `>`, `≥`, `==` are supported.
 module Lengths
 
 using ArgCheck: @argcheck
+using DocStringExtensions: SIGNATURES
 
 export mm, cm, inch, pt
 
 struct Length
     scale::Float64
     unit::Symbol
+    @doc """
+    $(SIGNATURES)
+
+    Construct a length with the given unit, which can be one of `:mm`, `:inch`, `:pt`.
+
+    Note that the preferred constructor is using the constants `mm` (`cm`), `inch`, and
+    `pt`, eg `100mm`.
+    """
     function Length(scale::Float64, unit::Symbol)
         @argcheck isfinite(scale)
         @argcheck unit ∈ (:mm, :inch, :pt)
