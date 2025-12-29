@@ -46,7 +46,7 @@ end
 
 struct Hgrid
     color::COLOR
-    width::LENGTH
+    width::Length
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -54,9 +54,10 @@ struct Hgrid
     A horizontal grid at the ticks of the ``y`` axis.
     """
     function Hgrid(; color = DEFAULTS.grid_color,
-                   width = DEFAULTS.grid_width,
+                   width::Length = DEFAULTS.grid_width,
                    dash = DEFAULTS.grid_dash)
-        new(COLOR(color), _length_positive(width), dash)
+        @argcheck width > 0mm
+        new(COLOR(color), width, dash)
     end
 end
 
@@ -91,17 +92,19 @@ end
 struct Hline
     y::Real
     color::COLOR
-    width::LENGTH
+    width::Length
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
 
     A horizontal line at `y` with the given parameters.
     """
-    function Hline(y::Real; color = DEFAULTS.guide_color, width = DEFAULTS.guide_width,
+    function Hline(y::Real; color = DEFAULTS.guide_color,
+                   width::Length = DEFAULTS.guide_width,
                    dash = DEFAULTS.guide_dash)
         @argcheck isfinite(y)
-        new(y, COLOR(color), _length_positive(width), dash)
+        @argcheck width > 0mm
+        new(y, COLOR(color), width, dash)
     end
 end
 
@@ -119,7 +122,7 @@ end
 
 struct Vgrid
     color::COLOR
-    width::LENGTH
+    width::Length
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -127,9 +130,10 @@ struct Vgrid
     A horizontal grid at the ticks of the ``y`` axis.
     """
     function Vgrid(; color = DEFAULTS.grid_color,
-                   width = DEFAULTS.grid_width,
+                   width::Length = DEFAULTS.grid_width,
                    dash = DEFAULTS.grid_dash)
-        new(COLOR(color), _length_positive(width), dash)
+        @argcheck width > 0mm
+        new(COLOR(color), width, dash)
     end
 end
 
@@ -165,7 +169,7 @@ end
 struct Vline
     x::Real
     color::COLOR
-    width::LENGTH
+    width::Length
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)
@@ -175,7 +179,8 @@ struct Vline
     function Vline(x::Real; color = DEFAULTS.guide_color, width = DEFAULTS.guide_width,
                    dash = DEFAULTS.guide_dash)
         @argcheck isfinite(x)
-        new(x, COLOR(color), _length_positive(width), dash)
+        @argcheck width > 0mm
+        new(x, COLOR(color), width, dash)
     end
 end
 
@@ -196,7 +201,7 @@ struct LineThrough
     y::Float64
     slope::Float64
     color::COLOR
-    width::LENGTH
+    width::Length
     dash::PGF.Dash
     @doc """
     $(SIGNATURES)

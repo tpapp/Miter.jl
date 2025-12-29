@@ -9,9 +9,9 @@ export DEFAULTS, LINE_SOLID, LINE_DASHED
 
 using ColorTypes: RGB, Gray
 using DocStringExtensions: SIGNATURES
-using Unitful: mm
+using ..Lengths: mm, Length
+using ..PGF: COLOR, Dash, PGF
 
-using ..PGF: LENGTH, COLOR, Dash, PGF
 
 const LINE_SOLID = Dash()
 
@@ -25,8 +25,8 @@ Documentation for fields:
 """
 Base.@kwdef mutable struct Options
     # canvas
-    canvas_width::LENGTH = 100mm
-    canvas_height::LENGTH = 80mm
+    canvas_width::Length = 100mm
+    canvas_height::Length = 80mm
 
     # tick format
     tick_format_max_exponent::Int = 5
@@ -43,27 +43,27 @@ Base.@kwdef mutable struct Options
     tick_selection_exponent_penalty::Float64 = 3.0
 
     # axis style
-    axis_style_line_width::LENGTH = 0.1mm
+    axis_style_line_width::Length = 0.1mm
     axis_style_line_color::COLOR = Gray(0.0)
-    axis_style_line_gap::LENGTH = 2.0mm
-    axis_style_tick_length::LENGTH = 2.0mm
-    axis_style_tick_label_gap::LENGTH = 1.5mm
-    axis_style_axis_label_gap::LENGTH = 2mm
+    axis_style_line_gap::Length = 2.0mm
+    axis_style_tick_length::Length = 2.0mm
+    axis_style_tick_label_gap::Length = 1.5mm
+    axis_style_axis_label_gap::Length = 2mm
 
     # plot style
-    plot_style_axis_left::LENGTH = 20mm
-    plot_style_axis_bottom::LENGTH = 15mm
-    plot_style_margin_right::LENGTH = 5mm
-    plot_style_margin_top::LENGTH = 7mm
+    plot_style_axis_left::Length = 20mm
+    plot_style_axis_bottom::Length = 15mm
+    plot_style_margin_right::Length = 5mm
+    plot_style_margin_top::Length = 7mm
 
     # elements
-    line_width::LENGTH = 0.3mm
+    line_width::Length = 0.3mm
     line_color::COLOR = Gray(0.0)
     fill_color::COLOR = Gray(0.6)
 
     # guidelines
     "width for guidelines"
-    guide_width::LENGTH = 0.15mm
+    guide_width::Length = 0.15mm
     "color for guidelines"
     guide_color::COLOR = Gray(0.5)
     "dash for guidelines"
@@ -71,7 +71,7 @@ Base.@kwdef mutable struct Options
 
     # grid lines
     "width for gridlines"
-    grid_width::LENGTH = 0.1mm
+    grid_width::Length = 0.1mm
     "color for gridlines"
     grid_color::COLOR = Gray(0.75)
     "dash for gridlines"
@@ -81,7 +81,7 @@ Base.@kwdef mutable struct Options
     bars_stroke_color::COLOR = Gray(1.0)
 
     # mark options
-    mark_size::LENGTH = 2mm
+    mark_size::Length = 2mm
     mark_symbol::Symbol = :+
 end
 

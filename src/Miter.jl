@@ -4,6 +4,7 @@ A Julia plotting package using the PGF Basic Layer Core.
 module Miter
 
 include("internal_utilities.jl")
+include("lengths.jl")
 include("pgf.jl")
 include("coordinates.jl")
 include("styles.jl")

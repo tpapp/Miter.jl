@@ -22,7 +22,7 @@ A closely related package is [PGFPlotsX.jl](https://github.com/KristofferC/PGFPl
 |----------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | uses `pgfplots`                                          | uses the basic layer primitives of `pgf`, doing calculations in Julia whenever possible, may be faster |
 | options and syntax can match `pgfplots` closely          | not related to `pgfplots` in any way, uses only Julia syntax                                           |
-| units passed as text strings                             | uses [Unitful.jl](https://painterqubits.github.io/Unitful.jl/stable/) for units                        |
+| units passed as text strings                             | uses units like `mm`, `inch`, `pt` defined in this package                                             |
 | colors need to be expanded to text strings in some cases | uses [ColorTypes.jl](https://github.com/JuliaGraphics/ColorTypes.jl) for colors                        |
 | needs a local LaTeX installation, `pdf2svg`, etc         | uses binaries from jlls (*planned: optionally uses local installation*)                                |
 | strings passed through as is                             | special chars in strings (`#`, `$`, ...) escaped by default, use `math` or `latex`                     |

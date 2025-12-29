@@ -8,11 +8,11 @@ using ArgCheck: @argcheck
 using ColorTypes: RGB
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using LaTeXEscapes: LaTeX
-using Unitful: mm
 
 import ..PGF
 using ..Coordinates
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
+using ..Lengths: Length
 using ..Ticks
 using ..InternalUtilities
 
@@ -64,17 +64,17 @@ end
 
 Base.@kwdef struct Style
     "line width"
-    line_width::PGF.LENGTH = DEFAULTS.axis_style_line_width
+    line_width::Length = DEFAULTS.axis_style_line_width
     "line color"
     line_color::RGB = DEFAULTS.axis_style_line_color
     "gap between the plotting area and the axis line"
-    line_gap::PGF.LENGTH = DEFAULTS.axis_style_line_gap
+    line_gap::Length = DEFAULTS.axis_style_line_gap
     "tick length"
-    tick_length::PGF.LENGTH = DEFAULTS.axis_style_tick_length
+    tick_length::Length = DEFAULTS.axis_style_tick_length
     "gap for labels"
-    tick_label_gap::PGF.LENGTH = DEFAULTS.axis_style_tick_label_gap
+    tick_label_gap::Length = DEFAULTS.axis_style_tick_label_gap
     "gap for axis labels"
-    axis_label_gap::PGF.LENGTH = DEFAULTS.axis_style_axis_label_gap
+    axis_label_gap::Length = DEFAULTS.axis_style_axis_label_gap
 end
 
 Base.@kwdef struct Linear

@@ -34,9 +34,8 @@ What you see below is a gallery of plots. These serve as examples, and are also 
 All should be preceded by
 
 ```@example all
-using Miter, Colors
+using Miter, Colors, Miter.Lengths
 using LaTeXEscapes
-using Unitful: mm
 ```
 to load the relevant packages.
 

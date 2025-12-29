@@ -4,9 +4,9 @@ module Output
 export Canvas
 
 using DocStringExtensions: SIGNATURES
-using Unitful: mm
 
 using LaTeXCompilers: pdf, svg, png
+using ..Lengths: Length
 using ..PGF
 using ..Styles: DEFAULTS
 
@@ -89,8 +89,8 @@ end
 
 struct Canvas
     content::Any
-    width::PGF.LENGTH
-    height::PGF.LENGTH
+    width::Length
+    height::Length
     @doc """
     $(SIGNATURES)
 
