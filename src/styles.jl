@@ -10,8 +10,8 @@ export DEFAULTS, LINE_SOLID, LINE_DASHED
 using ColorTypes: RGB, Gray
 using DocStringExtensions: SIGNATURES
 using ..Lengths: mm, Length
-using ..PGF: COLOR, Dash, PGF
-
+using ..DrawTypes
+import ..Draw
 
 const LINE_SOLID = Dash()
 
@@ -98,10 +98,10 @@ $(SIGNATURES)
 
 Helper function to set line style parameters (when `≢ nothing`).
 """
-function set_line_style(sink::PGF.Sink; color = nothing, width = nothing, dash = nothing)
-    color ≢ nothing && PGF.setstrokecolor(sink, color)
-    width ≢ nothing && PGF.setlinewidth(sink, width)
-    dash ≢ nothing && PGF.setdash(sink, dash)
+function set_line_style(sink::Draw.Sink; color = nothing, width = nothing, dash = nothing)
+    color ≢ nothing && Draw.setstrokecolor(sink, color)
+    width ≢ nothing && Draw.setlinewidth(sink, width)
+    dash ≢ nothing && Draw.setdash(sink, dash)
 end
 
 """
@@ -115,7 +115,7 @@ A utility function to
 For use by callers where the user specifies at least one of these. See also
 [`path_q_stroke_or_fill`](@ref).
 """
-function set_stroke_or_fill_style(sink::PGF.Sink; stroke_color, fill_color, stroke_width)
+function set_stroke_or_fill_style(sink::Draw.Sink; stroke_color, fill_color, stroke_width)
     if stroke_color ≡ nothing && fill_color ≡ nothing
         error(ArgumentError("you need to set at least one stroke or fill color"))
     end
@@ -123,7 +123,7 @@ function set_stroke_or_fill_style(sink::PGF.Sink; stroke_color, fill_color, stro
         set_line_style(sink; color = stroke_color, width = stroke_width)
     end
     if fill_color ≢ nothing
-        PGF.setfillcolor(sink, fill_color)
+        Draw.setfillcolor(sink, fill_color)
     end
 end
 
@@ -136,11 +136,11 @@ function path_q_stroke_or_fill(sink, stroke_color, fill_color)
     if stroke_color ≡ nothing && fill_color ≡ nothing
         error(ArgumentError("you need to set at least one stroke or fill color"))
     elseif stroke_color ≢ nothing && fill_color ≢ nothing
-        PGF.usepathqfillstroke(sink)
+        Draw.usepathqfillstroke(sink)
     elseif stroke_color ≢ nothing
-        PGF.usepathqstroke(sink)
+        Draw.usepathqstroke(sink)
     else fill_color ≢ nothing
-        PGF.usepathqfill(sink)
+        Draw.usepathqfill(sink)
     end
 end
 

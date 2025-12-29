@@ -12,7 +12,8 @@ using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 
 using ..InternalUtilities: ensure_vector
 using ..Lengths: mm, Length
-using ..PGF
+using ..DrawTypes
+import ..Draw
 
 ####
 #### arrangement
@@ -72,7 +73,7 @@ Visual debugging, use [`dummy`](@ref) to create.
 """
 struct Dummy
     label::AbstractString
-    color::PGF.COLOR
+    color::Draw.COLOR
     margin::Length
 end
 
@@ -85,23 +86,23 @@ label and the given color (derived from the hash by default, deterministic to th
 """
 function dummy(label::AbstractString; color = reinterpret(RGB24, (hash(label) % UInt32)),
                margin = 5mm)
-    Dummy(label, PGF.COLOR(color), margin)
+    Dummy(label, Draw.COLOR(color), margin)
 end
 
-function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, d::Dummy)
+function Draw.render(sink::Draw.Sink, rectangle::Rectangle, d::Dummy)
     (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle
-    PGF.setfillcolor(sink, color)
-    PGF.path(sink, rectangle)
-    PGF.usepathqfill(sink)
+    Draw.setfillcolor(sink, color)
+    Draw.path(sink, rectangle)
+    Draw.usepathqfill(sink)
     # inner
-    PGF.setfillcolor(sink, Gray(1))
-    PGF.path(sink, PGF.Rectangle(; top = top - margin, bottom = bottom + margin,
+    Draw.setfillcolor(sink, Gray(1))
+    Draw.path(sink, Rectangle(; top = top - margin, bottom = bottom + margin,
                                left = left + margin, right = right - margin))
-    PGF.usepathqfill(sink)
+    Draw.usepathqfill(sink)
     # text
-    PGF.text(sink, PGF.Point((left + right) / 2, (bottom + top) / 2), label)
+    Draw.text(sink, Point((left + right) / 2, (bottom + top) / 2), label)
 end
 
 """

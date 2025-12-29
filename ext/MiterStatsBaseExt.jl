@@ -2,6 +2,7 @@ module MiterStatsBaseExt
 
 import Miter, StatsBase
 using Miter.InternalUtilities: ensure_vector
+using Miter.DrawTypes: COLOR
 using ArgCheck: @argcheck
 
 function Miter.Plots.RelativeBars(orientation::Symbol, histogram::StatsBase.Histogram{T,1};
@@ -17,7 +18,7 @@ function Miter.Utilities.hpd_heatmap(histogram::StatsBase.Histogram{T,2},
                                      probabilities, colors) where T
     # check argument consistency
     p = ensure_vector(Float64, probabilities)
-    c = ensure_vector(Miter.PGF.COLOR, colors)
+    c = ensure_vector(COLOR, colors)
     Base.require_one_based_indexing(p, c)
     @argcheck issorted(p; lt = <) && p[begin] > 0 && p[end] < 1
     @argcheck length(p) + 1 == length(c) ≥ 1

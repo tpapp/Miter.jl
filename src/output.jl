@@ -6,8 +6,9 @@ export Canvas
 using DocStringExtensions: SIGNATURES
 
 using LaTeXCompilers: pdf, svg, png
-using ..Lengths: Length
-using ..PGF
+using ..Lengths: Length, mm
+using ..DrawTypes
+import ..Draw
 using ..Styles: DEFAULTS
 
 """
@@ -16,7 +17,7 @@ $(SIGNATURES)
 Objects that can produce graphical output (eg a plot) should define
 
 ```julia
-print_tex(sink::PGF.Sink, object; standalone::Bool = false)
+print_tex(sink::Draw.Sink, object; standalone::Bool = false)
 ```
 
 where `standalone` determines whether the output should be a standalone document.
@@ -29,7 +30,7 @@ elements.
 The `print_tex(sink::Sink, object; standalone)` method should be defined for objects,
 methods called with other argument types will call this one.
 """
-print_tex(io::IO, object; standalone = false) = print_tex(PGF.sink(io), object; standalone)
+print_tex(io::IO, object; standalone = false) = print_tex(Draw.sink(io), object; standalone)
 
 function print_tex(filename::AbstractString, object; standalone::Bool = false)
     open(filename, "w") do io
@@ -101,12 +102,12 @@ struct Canvas
     end
 end
 
-function print_tex(sink::PGF.Sink, canvas::Canvas; standalone::Bool = false)
+function print_tex(sink::Draw.Sink, canvas::Canvas; standalone::Bool = false)
     (; content, width, height) = canvas
-    _canvas = PGF.canvas(width, height)
-    PGF.preamble(sink, _canvas; standalone)
-    PGF.render(sink, _canvas, content)
-    PGF.postamble(sink; standalone)
+    _canvas = Rectangle(; left = 0mm, right = width, bottom = 0mm, top = height)
+    Draw.preamble(sink, _canvas; standalone)
+    Draw.render(sink, _canvas, content)
+    Draw.postamble(sink; standalone)
 end
 
 @declare_showable Canvas

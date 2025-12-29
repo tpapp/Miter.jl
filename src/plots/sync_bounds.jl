@@ -34,7 +34,7 @@ end
 
 Coordinates.bounds_xy(invisible::JustBounds) = (invisible.x, invisible.y)
 
-PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, ::JustBounds) = nothing
+Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, ::JustBounds) = nothing
 
 ####
 #### sync_bounds

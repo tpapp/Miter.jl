@@ -16,12 +16,12 @@ using ..InternalUtilities
 using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canvas,
     coordinates_to_point, finalize, FinalizedLinear
 using ..Coordinates
+using ..DrawTypes
 using ..Marks: MarkSymbol
 using ..Output: @declare_showable
 import ..Output: print_tex, Canvas
 using ..Lengths: Length, mm
-using ..PGF
-using ..PGF: COLOR, convert_maybe, Point
+import ..Draw
 using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
     path_q_stroke_or_fill
 
@@ -86,33 +86,33 @@ Coordinates.bounds_xy(plot::Plot) = Coordinates.bounds_xy(plot.contents)
 ### rendering and bounds
 ###
 
-function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, plot::Plot)
+function Draw.render(sink::Draw.Sink, rectangle::Rectangle, plot::Plot)
     (; x_axis, y_axis, contents, style, title) = plot
     (; axis_left, axis_bottom, margin_top, margin_right) = style
-    grid = PGF.split_matrix(rectangle,
-                            (axis_left, PGF.SPACER , margin_right),
-                            (axis_bottom, PGF.SPACER, margin_top))
+    grid = split_matrix(rectangle,
+                        (axis_left, Draw.Spacer() , margin_right),
+                        (axis_bottom, Draw.Spacer(), margin_top))
     plot_rectangle = grid[2, 2]
     x_axis_rectangle = grid[2, 1]
     y_axis_rectangle = grid[1, 2]
     title_rectangle = grid[2, 3]
     if title ≢ nothing
-        PGF.text(sink, PGF.relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
+        Draw.text(sink, relative_point(title_rectangle, (0.5, 0.3)), title; base = true)
     end
     x_interval, y_interval = Coordinates.bounds_xy(contents)
     @argcheck x_interval ≢ nothing "empty x range"
     @argcheck y_interval ≢ nothing "empty y range"
     finalized_x_axis = finalize(x_axis, x_interval)
     finalized_y_axis = finalize(y_axis, y_interval)
-    PGF.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
-    PGF.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
+    Draw.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
+    Draw.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = DrawingArea(; rectangle = plot_rectangle,
                                finalized_x_axis, finalized_y_axis)
-    PGF.with_scope(sink) do
-        PGF.path(sink, plot_rectangle)
-        PGF.usepathqclip(sink)
+    Draw.with_scope(sink) do
+        Draw.path(sink, plot_rectangle)
+        Draw.usepathqclip(sink)
         for c in contents
-            PGF.render(sink, drawing_area, c)
+            Draw.render(sink, drawing_area, c)
         end
    end
 end
@@ -147,8 +147,8 @@ struct Tableau
     You can merge `Tableau`s with `hcat`, `vcat`, and `hvcat` (`[...; ...]`).
     """
     function Tableau(contents::AbstractMatrix;
-                     horizontal_divisions = fill(PGF.SPACER, size(contents, 2)),
-                     vertical_divisions = fill(PGF.SPACER, size(contents, 1)))
+                     horizontal_divisions = fill(Spacer(), size(contents, 2)),
+                     vertical_divisions = fill(Spacer(), size(contents, 1)))
         v_n, h_n = size(contents)
         @argcheck length(horizontal_divisions) == h_n
         @argcheck length(vertical_divisions) == v_n
@@ -165,16 +165,16 @@ end
 
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, :, 1); kwargs...)
 
-function PGF.render(sink::PGF.Sink, rectangle::PGF.Rectangle, tableau::Tableau)
+function Draw.render(sink::Draw.Sink, rectangle::Rectangle, tableau::Tableau)
     (; contents, horizontal_divisions, vertical_divisions) =  tableau
-    grid = PGF.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
+    grid = Draw.split_matrix(rectangle, horizontal_divisions, vertical_divisions)
     grid_visual = reverse(permutedims(grid); dims = 1)
     for (subrectangle, subplot) in zip(grid_visual, contents)
-        PGF.render(sink, subrectangle, subplot)
+        Draw.render(sink, subrectangle, subplot)
     end
 end
 
-function print_tex(sink::PGF.Sink, tableau::Tableau; standalone::Bool = false)
+function print_tex(sink::Draw.Sink, tableau::Tableau; standalone::Bool = false)
     v_n, h_n = size(tableau.contents)
     canvas = Canvas(tableau;
                     width = h_n * DEFAULTS.canvas_width,
@@ -230,8 +230,8 @@ end
 
 Coordinates.bounds_xy(::Phantom) = (nothing, nothing)
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, phantom::Phantom)
-    PGF.render(sink, drawing_area, phantom.object)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, phantom::Phantom)
+    Draw.render(sink, drawing_area, phantom.object)
 end
 
 include("plots/elements.jl")

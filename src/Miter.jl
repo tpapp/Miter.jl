@@ -6,6 +6,7 @@ module Miter
 include("internal_utilities.jl")
 include("lengths.jl")
 include("coordinates.jl")
+include("draw_types.jl")
 include("draw.jl")
 include("styles.jl")
 include("ticks.jl")
@@ -21,7 +22,7 @@ include("utilities.jl")
 
 using Reexport: @reexport
 
-@reexport using .PGF
+@reexport using .DrawTypes
 @reexport using .Output
 @reexport using .Axis
 @reexport using .Marks

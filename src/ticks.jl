@@ -16,7 +16,6 @@ using DocStringExtensions: SIGNATURES
 
 using ..Coordinates: Interval, is_nonzero
 using ..Styles: DEFAULTS
-using ..PGF
 using LaTeXEscapes: wrap_math, LaTeX
 
 """
