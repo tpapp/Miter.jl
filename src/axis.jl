@@ -12,7 +12,7 @@ using LaTeXEscapes: LaTeX
 import ..Draw
 using ..DrawTypes
 using ..Coordinates
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID
+using ..Styles
 using ..Lengths: Length
 using ..Ticks
 using ..InternalUtilities
@@ -134,7 +134,7 @@ function Draw.render(sink::Draw.Sink, rectangle::Rectangle, axis::FinalizedLinea
     y1 = y_top_edge - line_gap  # line, tick start
     y2 = y1 - tick_length       # tick end
     y3 = y2 - tick_label_gap    # tick labels start here
-    set_line_style(sink, width = line_width, color = line_color, dash = LINE_SOLID)
+    Draw.set_line_style(sink, width = line_width, color = line_color, dash = LINE_SOLID)
     Draw.segment(sink, _point(a, y1), _point(b, y1))
     for (pos, label) in ticks
         x = unit_to_canvas(a, b, coordinate_to_unit(axis, pos))

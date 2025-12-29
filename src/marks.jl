@@ -12,7 +12,7 @@ using ..Axis: DrawingArea, coordinates_to_point
 using ..DrawTypes
 using ..Lengths: Length, mm
 import ..Draw
-using ..Styles: set_line_style, LINE_SOLID, DEFAULTS
+using ..Styles
 
 struct MarkSymbol{S}
     line_width::Length
@@ -71,7 +71,7 @@ end
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea,
                      mark::MarkSymbol{S}, xy) where S
     (; line_width, size, color) = mark
-    set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
+    Draw.set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
     Draw.setfillcolor(sink, color)   # NOTE currently same fill and stroke color
     draw_mark_symbol(sink, Val(S), coordinates_to_point(drawing_area, xy), size)
 end

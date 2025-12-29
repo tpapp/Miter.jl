@@ -29,7 +29,7 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
     peeled = Iterators.peel(coordinates)
     peeled ≡ nothing && return
-    set_line_style(sink; color, width = line_width, dash)
+    Draw.set_line_style(sink; color, width = line_width, dash)
     c1, cR = peeled
     Draw.pathmoveto(sink, coordinates_to_point(drawing_area, c1))
     for c in cR
@@ -68,9 +68,9 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, scatter::Scatte
     end
 end
 
-function print_tex(sink::Draw.Sink, plot::Plot; standalone::Bool = false)
-    print_tex(sink, Canvas(plot); standalone)
-end
+Draw.wrap_in_default_canvas(plot::Plot; standalone::Bool = false) = Draw.Canvas(plot)
+
+Draw.@declare_showable Plot
 
 ###
 ### Circles
@@ -114,10 +114,10 @@ Coordinates.bounds_xy(circles::Circles) = Coordinates.all_coordinate_bounds_xy(c
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
-    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (x, y, w) in x_y_w
         Draw.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
-        path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 
@@ -176,13 +176,13 @@ end
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, relative_bars::RelativeBars)
     (; orientation, edges_and_values, baseline, stroke_color, stroke_width,
      fill_color) = relative_bars
-    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (e1, e2, v) in edges_and_values
         c1 = coordinates_to_point(drawing_area, orientation ≡ :vertical ?
             (e1, baseline) : (baseline, e1))
         c2 = coordinates_to_point(drawing_area, orientation ≡ :vertical ? (e2, v) : (v, e2))
         Draw.path(sink, Rectangle(c1, c2))
-        path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 

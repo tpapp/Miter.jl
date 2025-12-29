@@ -78,7 +78,7 @@ end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, hgrid::Hgrid)
     (; color, width, dash) = hgrid
-    set_line_style(sink; color, width, dash)
+    Draw.set_line_style(sink; color, width, dash)
     # FIXME code below relies on nested properties of types, define an API
     for (pos, _) in drawing_area.finalized_y_axis.ticks
         _hline(sink, drawing_area, pos)
@@ -112,7 +112,7 @@ Coordinates.bounds_xy(hline::Hline) = (nothing, Interval(hline.y))
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, hline::Hline)
     (; y, color, width, dash) = hline
-    set_line_style(sink; color, width, dash)
+    Draw.set_line_style(sink; color, width, dash)
     _hline(sink, drawing_area, y)
 end
 
@@ -155,7 +155,7 @@ end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, vgrid::Vgrid)
     (; color, width, dash) = vgrid
-    set_line_style(sink; color, width, dash)
+    Draw.set_line_style(sink; color, width, dash)
     # FIXME code below relies on nested properties of types, define an API
     for (pos, _) in drawing_area.finalized_x_axis.ticks
         _vline(sink, drawing_area, pos)
@@ -188,7 +188,7 @@ Coordinates.bounds_xy(vline::Vline) = (Interval(vline.x), nothing)
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, vline::Vline)
     (; x, color, width, dash) = vline
-    set_line_style(sink; color, width, dash)
+    Draw.set_line_style(sink; color, width, dash)
     _vline(sink, drawing_area, x)
 end
 
@@ -296,7 +296,7 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, line_through::L
                                   finalized_y_axis.interval)
     if z1z2 ≢ nothing
         z1, z2 = z1z2
-        set_line_style(sink; color, width, dash)
+        Draw.set_line_style(sink; color, width, dash)
         Draw.pathmoveto(sink, coordinates_to_point(drawing_area, z1))
         Draw.pathlineto(sink, coordinates_to_point(drawing_area, z2))
         Draw.usepathqstroke(sink)

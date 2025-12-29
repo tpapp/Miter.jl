@@ -18,12 +18,9 @@ using ..Axis: Linear, DrawingArea, x_coordinate_to_canvas, y_coordinate_to_canva
 using ..Coordinates
 using ..DrawTypes
 using ..Marks: MarkSymbol
-using ..Output: @declare_showable
-import ..Output: print_tex, Canvas
 using ..Lengths: Length, mm
 import ..Draw
-using ..Styles: DEFAULTS, set_line_style, LINE_SOLID, LINE_DASHED, set_stroke_or_fill_style,
-    path_q_stroke_or_fill
+using ..Styles
 
 ####
 #### input conversions
@@ -79,8 +76,6 @@ end
 Plot(contents...; kwargs...) = Plot(collect(Any, contents); kwargs...)
 
 Coordinates.bounds_xy(plot::Plot) = Coordinates.bounds_xy(plot.contents)
-
-@declare_showable Plot
 
 ###
 ### rendering and bounds
@@ -161,8 +156,6 @@ function ConstructionBase.constructorof(::Type{Tableau})
         Tableau(contents; horizontal_divisions, vertical_divisions)
 end
 
-@declare_showable Tableau
-
 Tableau(contents::AbstractVector; kwargs...) = Tableau(reshape(contents, :, 1); kwargs...)
 
 function Draw.render(sink::Draw.Sink, rectangle::Rectangle, tableau::Tableau)
@@ -174,13 +167,12 @@ function Draw.render(sink::Draw.Sink, rectangle::Rectangle, tableau::Tableau)
     end
 end
 
-function print_tex(sink::Draw.Sink, tableau::Tableau; standalone::Bool = false)
+function Draw.wrap_in_default_canvas(tableau::Tableau)
     v_n, h_n = size(tableau.contents)
-    canvas = Canvas(tableau;
-                    width = h_n * DEFAULTS.canvas_width,
-                    height = v_n * DEFAULTS.canvas_height)
-    print_tex(sink, canvas; standalone)
+    Draw.Canvas(tableau; width = h_n * DEFAULTS.canvas_width, height = v_n * DEFAULTS.canvas_height)
 end
+
+Draw.@declare_showable Tableau
 
 function Base.hcat(tableaus::Tableau...)
     Tableau(mapreduce(x -> x.contents, hcat, tableaus),

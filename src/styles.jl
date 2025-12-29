@@ -11,7 +11,6 @@ using ColorTypes: RGB, Gray
 using DocStringExtensions: SIGNATURES
 using ..Lengths: mm, Length
 using ..DrawTypes
-import ..Draw
 
 const LINE_SOLID = Dash()
 
@@ -92,56 +91,5 @@ The supported API is `getproperty` and `setproperty`, the fact that it is curren
 `struct` should not matter outside this package.
 """
 const DEFAULTS = Options()
-
-"""
-$(SIGNATURES)
-
-Helper function to set line style parameters (when `≢ nothing`).
-"""
-function set_line_style(sink::Draw.Sink; color = nothing, width = nothing, dash = nothing)
-    color ≢ nothing && Draw.setstrokecolor(sink, color)
-    width ≢ nothing && Draw.setlinewidth(sink, width)
-    dash ≢ nothing && Draw.setdash(sink, dash)
-end
-
-"""
-$(SIGNATURES)
-
-A utility function to
-
-1. set the stroke color when not `nothing`, and then also the line width,
-2. set the fill color when not `nothing
-
-For use by callers where the user specifies at least one of these. See also
-[`path_q_stroke_or_fill`](@ref).
-"""
-function set_stroke_or_fill_style(sink::Draw.Sink; stroke_color, fill_color, stroke_width)
-    if stroke_color ≡ nothing && fill_color ≡ nothing
-        error(ArgumentError("you need to set at least one stroke or fill color"))
-    end
-    if stroke_color ≢ nothing
-        set_line_style(sink; color = stroke_color, width = stroke_width)
-    end
-    if fill_color ≢ nothing
-        Draw.setfillcolor(sink, fill_color)
-    end
-end
-
-"""
-$(SIGNATURES)
-
-Quick stroke or fill whenever the respective color is not `nothing`.
-"""
-function path_q_stroke_or_fill(sink, stroke_color, fill_color)
-    if stroke_color ≡ nothing && fill_color ≡ nothing
-        error(ArgumentError("you need to set at least one stroke or fill color"))
-    elseif stroke_color ≢ nothing && fill_color ≢ nothing
-        Draw.usepathqfillstroke(sink)
-    elseif stroke_color ≢ nothing
-        Draw.usepathqstroke(sink)
-    else fill_color ≢ nothing
-        Draw.usepathqfill(sink)
-    end
-end
 
 end
