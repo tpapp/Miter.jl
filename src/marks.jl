@@ -9,10 +9,10 @@ using DocStringExtensions: SIGNATURES
 using Statistics: quantile
 
 using ..Axis: DrawingArea, coordinates_to_point
-using ..PGF: COLOR, Point, Sink, PGF
+using ..DrawTypes
 using ..Lengths: Length, mm
-import ..PGF: render
-using ..Styles: set_line_style, LINE_SOLID, DEFAULTS
+import ..Draw
+using ..Styles
 
 struct MarkSymbol{S}
     line_width::Length
@@ -46,32 +46,33 @@ circle/square that contains the mark). Caller should set color, line width, etc.
 This is a helper function for `MarkSymbol` marks. It assumes that the line width, color,
 dash have been set by the caller.
 """
-function draw_mark_symbol(sink::Sink, ::Val{K}, xy::Point, size::Length) where K
+function draw_mark_symbol(sink::Draw.Sink, ::Val{K}, xy::Point, size::Length) where K
     @argcheck size > 0mm
     mark(sink, Val(K), xy, size)
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:+}, xy::Point, size::Length)
+function draw_mark_symbol(sink::Draw.Sink, ::Val{:+}, xy::Point, size::Length)
     (; x, y) = xy
     h = size / 2
-    PGF.segment(sink, Point(x - h, y), Point(x + h, y))
-    PGF.segment(sink, Point(x, y - h), Point(x, y + h))
+    Draw.segment(sink, Point(x - h, y), Point(x + h, y))
+    Draw.segment(sink, Point(x, y - h), Point(x, y + h))
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:o}, xy::Point, size::Length)
-    PGF.pathcircle(sink, xy, size / 2)
-    PGF.usepathqstroke(sink)
+function draw_mark_symbol(sink::Draw.Sink, ::Val{:o}, xy::Point, size::Length)
+    Draw.pathcircle(sink, xy, size / 2)
+    Draw.usepathqstroke(sink)
 end
 
-function draw_mark_symbol(sink::Sink, ::Val{:*}, xy::Point, size::Length)
-    PGF.pathcircle(sink, xy, size / 2)
-    PGF.usepathqfill(sink)
+function draw_mark_symbol(sink::Draw.Sink, ::Val{:*}, xy::Point, size::Length)
+    Draw.pathcircle(sink, xy, size / 2)
+    Draw.usepathqfill(sink)
 end
 
-function render(sink::Sink, drawing_area::DrawingArea, mark::MarkSymbol{S}, xy) where S
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea,
+                     mark::MarkSymbol{S}, xy) where S
     (; line_width, size, color) = mark
-    set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
-    PGF.setfillcolor(sink, color)   # NOTE currently same fill and stroke color
+    Draw.set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
+    Draw.setfillcolor(sink, color)   # NOTE currently same fill and stroke color
     draw_mark_symbol(sink, Val(S), coordinates_to_point(drawing_area, xy), size)
 end
 
@@ -125,8 +126,8 @@ struct MarkQ5
     end
 end
 
-function render(sink::Sink, drawing_area::DrawingArea, mark::MarkQ5,
-                xy::Union{Tuple{Real,Q5},Tuple{Q5,Real}})
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, mark::MarkQ5,
+                     xy::Union{Tuple{Real,Q5},Tuple{Q5,Real}})
     x, y = xy
     horizontal = false
     if x isa Q5
@@ -136,12 +137,12 @@ function render(sink::Sink, drawing_area::DrawingArea, mark::MarkQ5,
     _point(x, y) = coordinates_to_point(drawing_area, horizontal ? (y, x) : (x, y))
     (; p05, p25, p50, p75, p95) = y
     (; color, width05, width25, size50) = mark
-    PGF.setcolor(sink, color)
-    PGF.setdash(sink, LINE_SOLID)
-    PGF.setlinewidth(sink, width05)
-    PGF.segment(sink, _point(x, p05), _point(x, p95))
-    PGF.setlinewidth(sink, width25)
-    PGF.segment(sink, _point(x, p25), _point(x, p75))
+    Draw.setcolor(sink, color)
+    Draw.setdash(sink, LINE_SOLID)
+    Draw.setlinewidth(sink, width05)
+    Draw.segment(sink, _point(x, p05), _point(x, p95))
+    Draw.setlinewidth(sink, width25)
+    Draw.segment(sink, _point(x, p25), _point(x, p75))
     draw_mark_symbol(sink, Val(:*), _point(x, p50), size50)
 end
 

@@ -12,12 +12,12 @@ struct Lines
     coordinates
     line_width::Length
     color
-    dash::PGF.Dash
+    dash::Dash
     @doc """
     $(SIGNATURES)
     """
     function Lines(coordinates; line_width::Length = DEFAULTS.line_width,
-                   color = DEFAULTS.line_color, dash::PGF.Dash = LINE_SOLID)
+                   color = DEFAULTS.line_color, dash::Dash = LINE_SOLID)
         @argcheck line_width > 0mm
         new(ensure_vector(coordinates), line_width, color, dash)
     end
@@ -25,17 +25,17 @@ end
 
 Coordinates.bounds_xy(lines::Lines) = Coordinates.all_coordinate_bounds_xy(lines.coordinates)
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, lines::Lines)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, lines::Lines)
     (; coordinates, line_width, color, dash) = lines
     peeled = Iterators.peel(coordinates)
     peeled ≡ nothing && return
-    set_line_style(sink; color, width = line_width, dash)
+    Draw.set_line_style(sink; color, width = line_width, dash)
     c1, cR = peeled
-    PGF.pathmoveto(sink, coordinates_to_point(drawing_area, c1))
+    Draw.pathmoveto(sink, coordinates_to_point(drawing_area, c1))
     for c in cR
-        PGF.pathlineto(sink, coordinates_to_point(drawing_area, c))
+        Draw.pathlineto(sink, coordinates_to_point(drawing_area, c))
     end
-    PGF.usepathqstroke(sink)
+    Draw.usepathqstroke(sink)
 end
 
 ###
@@ -61,16 +61,16 @@ Scatter(coordinates) = Scatter(MarkSymbol(), coordinates)
 
 Coordinates.bounds_xy(scatter::Scatter) = Coordinates.all_coordinate_bounds_xy(scatter.coordinates)
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, scatter::Scatter)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, scatter::Scatter)
     (; mark, coordinates) = scatter
     for xy in coordinates
-        PGF.render(sink, drawing_area, mark, xy)
+        Draw.render(sink, drawing_area, mark, xy)
     end
 end
 
-function print_tex(sink::PGF.Sink, plot::Plot; standalone::Bool = false)
-    print_tex(sink, Canvas(plot); standalone)
-end
+Draw.wrap_in_default_canvas(plot::Plot; standalone::Bool = false) = Draw.Canvas(plot)
+
+Draw.@declare_showable Plot
 
 ###
 ### Circles
@@ -112,12 +112,12 @@ end
 
 Coordinates.bounds_xy(circles::Circles) = Coordinates.all_coordinate_bounds_xy(circles.x_y_w)
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, circles::Circles)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
-    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (x, y, w) in x_y_w
-        PGF.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
-        path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
+        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 
@@ -173,16 +173,16 @@ function Coordinates.bounds_xy(relative_bars::RelativeBars)
     orientation ≡ :vertical ? (e, v) : (v, e)
 end
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, relative_bars::RelativeBars)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, relative_bars::RelativeBars)
     (; orientation, edges_and_values, baseline, stroke_color, stroke_width,
      fill_color) = relative_bars
-    set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
     for (e1, e2, v) in edges_and_values
         c1 = coordinates_to_point(drawing_area, orientation ≡ :vertical ?
             (e1, baseline) : (baseline, e1))
         c2 = coordinates_to_point(drawing_area, orientation ≡ :vertical ? (e2, v) : (v, e2))
-        PGF.path(sink, PGF.Rectangle(c1, c2))
-        path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.path(sink, Rectangle(c1, c2))
+        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
     end
 end
 
@@ -219,7 +219,7 @@ function Coordinates.bounds_xy(color_matrix::ColorMatrix)
     (Interval(x_edges[begin], x_edges[end]), Interval(y_edges[begin], y_edges[end]))
 end
 
-function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, color_matrix::ColorMatrix)
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, color_matrix::ColorMatrix)
     (; x_edges, y_edges, colors) = color_matrix
     x_c = x_coordinate_to_canvas.(drawing_area, x_edges)
     y_c = y_coordinate_to_canvas.(drawing_area, y_edges)
@@ -227,10 +227,10 @@ function PGF.render(sink::PGF.Sink, drawing_area::DrawingArea, color_matrix::Col
         for j in axes(colors, 2)
             c = colors[i, j]
             if c ≢ nothing
-                PGF.setfillcolor(sink, c)
-                PGF.path(sink, PGF.Rectangle(; left = x_c[i], right = x_c[i + 1],
-                                             bottom = y_c[j], top = y_c[j + 1]))
-                PGF.usepathqfill(sink)
+                Draw.setfillcolor(sink, c)
+                Draw.path(sink, Rectangle(; left = x_c[i], right = x_c[i + 1],
+                                          bottom = y_c[j], top = y_c[j + 1]))
+                Draw.usepathqfill(sink)
             end
         end
     end

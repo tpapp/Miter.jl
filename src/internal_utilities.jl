@@ -5,7 +5,7 @@ module InternalUtilities
 
 using DocStringExtensions: SIGNATURES, FUNCTIONNAME
 
-export ensure_vector, unit_to_canvas
+export ensure_vector, unit_to_canvas, convert_maybe
 
 """
 $(FUNCTIONNAME)([T], v)
@@ -27,5 +27,12 @@ $(SIGNATURES)
 Transform a coordinate in `[0,1]` to `[a,b]`.
 """
 unit_to_canvas(a, b, z) = a + (b - a) * z
+
+"""
+$(SIGNATURES)
+
+Convert user-specified arguments to types we use internally, passing through `nothing`.
+"""
+convert_maybe(::Type{T}, value) where T = value ≡ nothing ? value : convert(T, value)
 
 end

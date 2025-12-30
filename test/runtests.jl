@@ -1,4 +1,4 @@
-using Miter, Miter.Coordinates, Miter.Ticks, Miter.PGF, Miter.Lengths
+using Miter, Miter.Coordinates, Miter.Ticks, Miter.Draw, Miter.DrawTypes, Miter.Lengths
 using Miter.Ticks: ShiftedDecimals, ShiftedDecimal, format_latex
 using Miter.Plots: line_through_endpoints
 using Test
@@ -29,14 +29,14 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 end
 
 ####
-#### pgf
+#### draw_types
 ####
 
 ###
 ### splitting
 ###
 
-using Miter.PGF: split_interval, Spacer, Relative, split_matrix
+using Miter.DrawTypes: split_interval
 
 @testset "split" begin
     @test split_interval(0.0mm, 10.0mm, (Spacer(), 1mm, Relative(0.5), Spacer())) ==

@@ -5,12 +5,12 @@ module Miter
 
 include("internal_utilities.jl")
 include("lengths.jl")
-include("pgf.jl")
 include("coordinates.jl")
+include("draw_types.jl")
 include("styles.jl")
+include("draw.jl")
 include("ticks.jl")
 include("axis.jl")
-include("output.jl")
 include("marks.jl")
 include("plots.jl")
 include("utilities.jl")
@@ -21,8 +21,8 @@ include("utilities.jl")
 
 using Reexport: @reexport
 
-@reexport using .PGF
-@reexport using .Output
+@reexport using .DrawTypes
+@reexport using .Draw
 @reexport using .Axis
 @reexport using .Marks
 @reexport using .Plots
@@ -39,7 +39,6 @@ export Axis
 
 # symbols meant to be used with a Miter. prefix
 
-using .Output: save
 using .Utilities: dummy
 
 end # module
