@@ -73,13 +73,52 @@ end
 """
 $(SIGNATURES)
 
-Show the sign, digits, and decimal dot of the mantissa (ie everything without the outer
-exponent).
+Reparse a floating point number *printed by Julia*. `sci` is the (optimal) separator for
+scientific notation, eg `'e'` for `Float64`.
 """
-function show_mantissa(io::IO, sd::ShiftedDecimal)
-    (; significand, inner_exponent) = sd
+function reparse_float(r::AbstractString, sci::Char)
+    d = findfirst(isequal('.'), r)::Int                  # dot
+    p = findfirst(x -> x ≠ '.' && x ≠ sci && x ≠ '0', r) # first positive digit
+    e = findfirst(isequal(sci), r)                       # scientific notation
+    if p ≡ nothing
+        ShiftedDecimal(0, 0, 0) # just zero
+    else
+        if e ≡ nothing          # no scientific notation
+            e = length(r) + 1   # stop parsing here
+            outer_exponent = 0
+        else                    # scientific notation, parse exponent
+            outer_exponent = parse(Int, @view r[(e + 1):end])
+        end
+        before_dot = parse(Int, @view r[begin:(d-1)])
+        after_dot = parse(Int, @view r[(d+1):(e-1)])
+        k = e - d - 1
+        inner_exponent = -k
+        significand =  before_dot == 0 ? after_dot : before_dot * 10^k + after_dot
+        ShiftedDecimal(significand, inner_exponent, outer_exponent)
+    end
+end
+
+ShiftedDecimal(x::Float64) = reparse_float(repr(x), 'e')
+
+ShiftedDecimal(x::Real) = ShiftedDecimal(float(x))
+
+"""
+$(SIGNATURES)
+
+Format the argument, either for plain text or LaTeX display.
+"""
+function _format_number(io::IO, sd::ShiftedDecimal; latex::Bool)
+    (; significand, inner_exponent, outer_exponent) = sd
+    # open math mode
+    latex && print(io, '$')
     # sign
-    significand < 0 && print(io, '-')
+    if significand < 0
+        if latex
+            print(io, raw"\makebox[0pt][r]{$-$}")
+        else
+            print(io, '-')
+        end
+    end
     # zeros and decimal dot before
     Δ = 0                        # print a dot after this character
     v = string(abs(significand)) # mantissa string representation
@@ -103,34 +142,38 @@ function show_mantissa(io::IO, sd::ShiftedDecimal)
             print(io, '0')
         end
     end
+    # outer exponent
+    if significand ≠ 0 && outer_exponent ≠ 0
+        if latex
+            print(io, raw"\cdot 10^{", outer_exponent, '}')
+        else
+            print(io, 'e', outer_exponent)
+        end
+    end
+    # close math mode
+    latex && print(io, '$')
     nothing
 end
 
 """
 $(SIGNATURES)
 
-Convert a representation to a coordinate. Does not need to be exact, `Float64` precision is
+Convert a representation to floating point. Does not need to be exact, `Float64` precision is
 sufficient.
 """
-function coordinate(sd::ShiftedDecimal)
+function Base.Float64(sd::ShiftedDecimal)
     exponent = sd.inner_exponent + sd.outer_exponent
     # NOTE branch for 6 / 10 == 0.6 etc
     exponent ≥ 0 ? sd.significand * exp10(exponent) : sd.significand / exp10(-exponent)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sd::ShiftedDecimal)
-    (; significand, outer_exponent) = sd
-    show_mantissa(io, sd)
-    significand ≠ 0 && outer_exponent ≠ 0 && print(io, "e", outer_exponent)
+    _format_number(io, sd; latex = false)
 end
 
 function format_latex(sd::ShiftedDecimal)
-    (; significand, outer_exponent) = sd
     io = IOBuffer()
-    print(io, '$')
-    show_mantissa(io, sd)
-    significand ≠ 0 && outer_exponent ≠ 0 && print(io, raw"\cdot 10^{", outer_exponent, "}")
-    print(io, '$')
+    _format_number(io, sd; latex = true)
     LaTeX(String(take!(io)))
 end
 
@@ -156,6 +199,10 @@ $(SIGNATURES)
 
 Change the inner exponent by `-Δ` and the outer by `Δ`.
 """
+function inner_to_outer(sd::ShiftedDecimal, Δ)
+    ShiftedDecimal(sd.significand, sd.inner_exponent - Δ, sd.outer_exponent + Δ)
+end
+
 function inner_to_outer(sd::ShiftedDecimals, Δ)
     ShiftedDecimals(sd.significands, sd.inner_exponent - Δ, sd.outer_exponent + Δ)
 end
@@ -212,7 +259,7 @@ $(SIGNATURES)
 Bring the inner exponent into the range permitted by `tick_format`, making sure that the
 values are unchanged.
 """
-function regularize_exponent(tick_format, sd::ShiftedDecimals)
+function regularize_exponent(tick_format, sd::Union{ShiftedDecimal,ShiftedDecimals})
     (; max_exponent, min_exponent, thousands) = tick_format
     (; inner_exponent) = sd
     if (min_exponent ≤ inner_exponent ≤ max_exponent)
@@ -262,11 +309,12 @@ function sensible_linear_ticks(interval::Interval{<:Real}, tick_format::TickForm
                                  nontrivial_linear_tick_alternatives(interval; tick_selection.log10_widening))
         _, ix = findmin(ticks -> ticks_penalty(tick_selection, ticks), ticks_alternatives)
         ticks = ticks_alternatives[ix]
-        map(s -> coordinate(s) => format_latex(s), ticks)
+        map(s -> Float64(s) => format_latex(s), ticks)
     else
         # note formatting here is really a heuristic, eg it cannot deal with Date, fix later
         t = round(interval.min, sigdigits = tick_format.single_tick_sigdigits)
-        [t => wrap_math(string(t))]
+        sd = ShiftedDecimal(t)
+        [t => format_latex(regularize_exponent(tick_format, sd))]
     end
 end
 
