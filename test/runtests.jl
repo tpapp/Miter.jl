@@ -135,20 +135,20 @@ end
 @testset "format ticks" begin
     # no outer exponent
     @test format_latex(ShiftedDecimal(5, 0, 0)) == lx"5"m
-    @test format_latex(ShiftedDecimal(-5, 0, 0)) == lx"\makebox[0pt][r]{$-$}5"m
+    @test format_latex(ShiftedDecimal(-5, 0, 0)) == lx"\llap{$-$}5"m
     @test format_latex(ShiftedDecimal(5, 3, 0)) == lx"5000"m
-    @test format_latex(ShiftedDecimal(-5, 3, 0)) == lx"\makebox[0pt][r]{$-$}5000"m
+    @test format_latex(ShiftedDecimal(-5, 3, 0)) == lx"\llap{$-$}5000"m
     @test format_latex(ShiftedDecimal(5, -1, 0)) == lx"0.5"m
-    @test format_latex(ShiftedDecimal(-5, -1, 0)) == lx"\makebox[0pt][r]{$-$}0.5"m
+    @test format_latex(ShiftedDecimal(-5, -1, 0)) == lx"\llap{$-$}0.5"m
     @test format_latex(ShiftedDecimal(5, -2, 0)) == lx"0.05"m
-    @test format_latex(ShiftedDecimal(-5, -2, 0)) == lx"\makebox[0pt][r]{$-$}0.05"m
+    @test format_latex(ShiftedDecimal(-5, -2, 0)) == lx"\llap{$-$}0.05"m
     @test format_latex(ShiftedDecimal(0, -2, 0)) == lx"0.00"m
 
     # outer exponent
     @test format_latex(ShiftedDecimal(5, 0, 2)) == lx"5\cdot 10^{2}"m
-    @test format_latex(ShiftedDecimal(-5, 0, -2)) == lx"\makebox[0pt][r]{$-$}5\cdot 10^{-2}"m
+    @test format_latex(ShiftedDecimal(-5, 0, -2)) == lx"\llap{$-$}5\cdot 10^{-2}"m
     @test format_latex(ShiftedDecimal(5, 3, 2)) == lx"5000\cdot 10^{2}"m
-    @test format_latex(ShiftedDecimal(-5, 3, -2)) == lx"\makebox[0pt][r]{$-$}5000\cdot 10^{-2}"m
+    @test format_latex(ShiftedDecimal(-5, 3, -2)) == lx"\llap{$-$}5000\cdot 10^{-2}"m
 
     # zeros - outer exponent is always ignored
     @test format_latex(ShiftedDecimal(0, 0, 0)) == lx"0"m

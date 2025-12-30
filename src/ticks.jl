@@ -114,7 +114,7 @@ function _format_number(io::IO, sd::ShiftedDecimal; latex::Bool)
     # sign
     if significand < 0
         if latex
-            print(io, raw"\makebox[0pt][r]{$-$}")
+            print(io, raw"\llap{$-$}")
         else
             print(io, '-')
         end
