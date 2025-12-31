@@ -13,6 +13,9 @@ sense, otherwise conversion is to `mm`.
 Comparisons with `>`, `≥`, `==` are supported.
 
 `/` should be used to obtain the dimensionless length, eg `1inch/mm == 25.4`.
+
+!!! NOTE
+    `pt` is what TeX calls `bp`, 1/72 inch.
 """
 module Lengths
 
@@ -41,9 +44,16 @@ end
 
 Length(scale::Real, unit::Symbol) = Length(Float64(scale), unit)
 
+"One millimeter."
 const mm = Length(1.0, :mm)
+
+"One centimeter."
 const cm = Length(10.0, :mm)
+
+"One inch."
 const inch = Length(1.0, :inch)
+
+"One point (Postscript, CSS). TeX calls this unit “bp”."
 const pt = Length(1.0, :pt)
 
 function Base.show(io::IO, l::Length)
@@ -58,7 +68,7 @@ Base.:(*)(v::Real, l::Length) = l * v
 Base.:(/)(l::Length, v::Real) = Length(l.scale / v, l.unit)
 
 const INCH2MM = 25.4
-const INCH2PT = 72.27
+const INCH2PT = 72.0            # note that this is the BP unit in LaTeX
 
 function Base.:(/)(A::Length, B::Length)
     r = A.scale / B.scale

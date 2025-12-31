@@ -72,21 +72,21 @@ end
 #### test Lengths
 ####
 
-using Miter.Lengths: Length
+using Miter.Lengths: Length, INCH2PT, INCH2MM
 
 @testset "Lengths" begin
     @test 2inch / 1mm ≈ 50.8
-    @test 3inch / 5pt ≈ (3*72.27/5)
+    @test 3inch / 5pt ≈ (3 * INCH2PT / 5)
     @test 5mm / mm ≈ 5
     @test 7mm * 2 == 2 * 7mm == 14mm
     @test 8mm / 2 == 4mm
     @test 1mm + 2mm == Length(3, :mm)
     @test 1inch + 3mm == Length(25.4 + 3, :mm)
     @test 1inch + 3mm == Length(25.4 + 3, :mm)
-    @test 1inch + 2pt == Length(25.4 + 25.4*2/72.27, :mm)
+    @test 1inch + 2pt == Length(25.4 + 2 * INCH2MM / INCH2PT, :mm)
     @test -(3inch) == Length(-3, :inch)
     @test 1mm - 4mm == -3mm
-    @test 1mm - 4pt == Length(1 - 4*25.4/72.27, :mm)
+    @test 1mm - 4pt == Length(1 - 4 * INCH2MM / INCH2PT, :mm)
     @test 1mm ≤ 1mm
     @test 1mm ≤ 2mm
     @test 1mm ≥ 0.5mm

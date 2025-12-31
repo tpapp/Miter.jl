@@ -230,7 +230,7 @@ _println(sink::Sink, xs...) = (foreach(x -> _print(sink, x), xs); _print(sink, '
 
 _print(sink::Sink, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(sink.io, x)
 
-_print(sink::Sink, x::Length) = @printf(sink.io, "%fpt", x / pt)
+_print(sink::Sink, x::Length) = @printf(sink.io, "%fbp", x / pt) # NOTE: pt is bp in TeX
 
 function _print(sink::Sink, color::COLOR)
     _print(sink, "rgb,1:red,", Float64(red(color)),
