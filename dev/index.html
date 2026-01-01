@@ -4,30 +4,30 @@ using LaTeXEscapes</code></pre><p>to load the relevant packages.</p><h3 id="Simp
       Scatter(MarkSymbol(; color = colorant&quot;darkgreen&quot;), (x, (x + 1) / 2) for x in -1:0.1:1)];
       x_axis = Axis.Linear(; label = lx&quot;x&quot;m),
       y_axis = Axis.Linear(; label = lx&quot;y&quot;m),
-      title = &quot;line and scatter&quot;)</code></pre><img src="index-da452744.svg" alt="Example block output"/><p>Horizontal and vertical lines, and phantom objects (rendered, but ignored for boundary calculations).</p><pre><code class="language-julia hljs">Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 100)),
+      title = &quot;line and scatter&quot;)</code></pre><img src="index-dcbc9f77.svg" alt="Example block output"/><p>Horizontal and vertical lines, and phantom objects (rendered, but ignored for boundary calculations).</p><pre><code class="language-julia hljs">Plot(Scatter((x, sin(x) + (rand() - 0.5) / 10) for x in range(-π, π; length = 100)),
      Phantom(Hline(12.0)),      # does not show, it is outside the boundaries
-     Hline(0.0), Vline(0.0))</code></pre><img src="index-192cde01.svg" alt="Example block output"/><p>Bar plots with bars directly specified.</p><pre><code class="language-julia hljs">let c = [(0, 1, 2), (1, 2, 1), (2, 4, -0.5)]
+     Hline(0.0), Vline(0.0))</code></pre><img src="index-f81e9979.svg" alt="Example block output"/><p>Bar plots with bars directly specified.</p><pre><code class="language-julia hljs">let c = [(0, 1, 2), (1, 2, 1), (2, 4, -0.5)]
     Tableau([Plot(RelativeBars(:vertical, c)),
              Plot(RelativeBars(:horizontal, c))])
-end</code></pre><img src="index-5950800b.svg" alt="Example block output"/><p>Bar plots from a histogram.</p><pre><code class="language-julia hljs">using StatsBase
-Plot(RelativeBars(:vertical, fit(Histogram, randn(100))))</code></pre><img src="index-57f8ee59.svg" alt="Example block output"/><p>Annotations.</p><pre><code class="language-julia hljs">let c = colorant&quot;teal&quot;,
+end</code></pre><img src="index-e1b9b9fe.svg" alt="Example block output"/><p>Bar plots from a histogram.</p><pre><code class="language-julia hljs">using StatsBase
+Plot(RelativeBars(:vertical, fit(Histogram, randn(100))))</code></pre><img src="index-78826c5a.svg" alt="Example block output"/><p>Annotations.</p><pre><code class="language-julia hljs">let c = colorant&quot;teal&quot;,
     xy = collect((x,  0.5 * x + 0.1 * randn()) for x in range(-1, 1; length = 30))
     Plot(Scatter(MarkSymbol(; color = c), xy),
          Annotation((0, 0.3), textcolor(c, lx&quot;random dots $y = 0.5\cdot x + N(0, 0.1)$&quot;);
                     rotate = 30))
-end</code></pre><img src="index-183d772b.svg" alt="Example block output"/><p>Various kinds of marks.</p><pre><code class="language-julia hljs">let x = range(0, 1; length = 21)
+end</code></pre><img src="index-13b66008.svg" alt="Example block output"/><p>Various kinds of marks.</p><pre><code class="language-julia hljs">let x = range(0, 1; length = 21)
     Plot(Scatter(MarkSymbol(:+; color = colorant&quot;firebrick&quot;), (x, 0.2 * x) for x in x),
          Scatter(MarkSymbol(:*, color = colorant&quot;olive&quot;), (x, 0.1 + abs2(x)) for x in x),
          Scatter(MarkSymbol(:o; color = colorant&quot;teal&quot;), (x, -x + abs2(x) - 0.1) for x in x))
-end</code></pre><img src="index-215ed066.svg" alt="Example block output"/><p>Guidelines, adding plot elements (with <code>push!</code> &amp; friends).</p><pre><code class="language-julia hljs">let plot = Plot(Scatter(MarkSymbol(:o; color = colorant&quot;chocolate4&quot;),
+end</code></pre><img src="index-20fb7da5.svg" alt="Example block output"/><p>Guidelines, adding plot elements (with <code>push!</code> &amp; friends).</p><pre><code class="language-julia hljs">let plot = Plot(Scatter(MarkSymbol(:o; color = colorant&quot;chocolate4&quot;),
                         (sin(α), cos(α)) for α in range(-π, π, length = 61)))
     for θ in 0:30:150
         pushfirst!(plot.contents, LineThrough((0, 0), tand(θ)))
     end
     plot
-end</code></pre><img src="index-fd7b7633.svg" alt="Example block output"/><p>Grids.</p><pre><code class="language-julia hljs">Plot(Hgrid(), Vgrid(), # specified first; renders first
+end</code></pre><img src="index-b0b551fe.svg" alt="Example block output"/><p>Grids.</p><pre><code class="language-julia hljs">Plot(Hgrid(), Vgrid(), # specified first; renders first
      Scatter((x, expm1(x) + randn() / 10)
-             for x in range(0, 1; length = 100)))</code></pre><img src="index-a88396c2.svg" alt="Example block output"/><p>Sync x and y bounds in a tableau.</p><pre><code class="language-julia hljs">using Accessors # for @modify
+             for x in range(0, 1; length = 100)))</code></pre><img src="index-c212d87a.svg" alt="Example block output"/><p>Sync x and y bounds in a tableau.</p><pre><code class="language-julia hljs">using Accessors # for @modify
 
 function wobbler(x, y, r, rotate)
     Plot(Lines([sincos(θ) .* (r * (sin(θ  * 3 + rotate)/4 + 1))
@@ -38,19 +38,19 @@ m = Tableau(balanced_matrix([wobbler(0, 0, 2, 0),
                                 wobbler(1, 0, 1, π/2),
                                 wobbler(-1, 0, 3, -π/2),
                                 wobbler(1, 3, 1, π)]));
-@modify(sync_bounds(:xy), m.contents) # sync columns and rows</code></pre><img src="index-d6278675.svg" alt="Example block output"/><p>Add bounds to extend the <code>y</code> axis.</p><pre><code class="language-julia hljs">Plot([Lines((x, x^2) for x in range(0, 1; length = 20)),
-      JustBounds(nothing, Interval(-1, 1))])</code></pre><img src="index-52255068.svg" alt="Example block output"/><p>Q5 (five quantiles) plots.</p><pre><code class="language-julia hljs">Plot(Scatter(MarkQ5(),
+@modify(sync_bounds(:xy), m.contents) # sync columns and rows</code></pre><img src="index-55a06087.svg" alt="Example block output"/><p>Add bounds to extend the <code>y</code> axis.</p><pre><code class="language-julia hljs">Plot([Lines((x, x^2) for x in range(0, 1; length = 20)),
+      JustBounds(nothing, Interval(-1, 1))])</code></pre><img src="index-e0e9b914.svg" alt="Example block output"/><p>Q5 (five quantiles) plots.</p><pre><code class="language-julia hljs">Plot(Scatter(MarkQ5(),
              (x, Q5(randn(10) ./ 4 .+ (x / 3)))
              for x in range(0, 5; length = 8)),
      Scatter(MarkQ5(; color = colorant&quot;deepskyblue1&quot;),
              (Q5(randn(10) ./ 4 .+ (abs2(y) / 5)), y)
-             for y in range(0, 5; length = 8)))</code></pre><img src="index-7158e68e.svg" alt="Example block output"/><p>Circles.</p><pre><code class="language-julia hljs">x_y_w = [(x, y, 6 - hypot(x, y)) for x in -5:5 for y in -5:5 if hypot(x, y) ≤ 5]
+             for y in range(0, 5; length = 8)))</code></pre><img src="index-8422a1fa.svg" alt="Example block output"/><p>Circles.</p><pre><code class="language-julia hljs">x_y_w = [(x, y, 6 - hypot(x, y)) for x in -5:5 for y in -5:5 if hypot(x, y) ≤ 5]
 # make the largest point have 3mm radius
-Plot(Circles(x_y_w, 3mm / √maximum(last, x_y_w)))</code></pre><img src="index-fe7ee8b6.svg" alt="Example block output"/><p>Color matrix (a building block for heatmaps etc).</p><pre><code class="language-julia hljs">Plot(ColorMatrix([0, 1, 3], [2, 4, 5],
+Plot(Circles(x_y_w, 3mm / √maximum(last, x_y_w)))</code></pre><img src="index-08e83595.svg" alt="Example block output"/><p>Color matrix (a building block for heatmaps etc).</p><pre><code class="language-julia hljs">Plot(ColorMatrix([0, 1, 3], [2, 4, 5],
                  [nothing colorant&quot;green&quot;;
-                  colorant&quot;blue&quot; colorant&quot;red&quot;]))</code></pre><img src="index-2461e994.svg" alt="Example block output"/><p>Color matrix built from a histogram.</p><pre><code class="language-julia hljs">using StatsBase, ColorSchemes
+                  colorant&quot;blue&quot; colorant&quot;red&quot;]))</code></pre><img src="index-24858096.svg" alt="Example block output"/><p>Color matrix built from a histogram.</p><pre><code class="language-julia hljs">using StatsBase, ColorSchemes
 h = fit(Histogram, (randn(1000), randn(1000)); nbins = (15, 17))
-Plot(hpd_heatmap(h, range(0.2, 0.8; step = 0.2), ColorSchemes.OrRd_5))</code></pre><img src="index-3b90dc20.svg" alt="Example block output"/><h3 id="Tableaus"><a class="docs-heading-anchor" href="#Tableaus">Tableaus</a><a id="Tableaus-1"></a><a class="docs-heading-anchor-permalink" href="#Tableaus" title="Permalink"></a></h3><pre><code class="language-julia hljs">Tableau(balanced_matrix(
+Plot(hpd_heatmap(h, range(0.2, 0.8; step = 0.2), ColorSchemes.OrRd_5))</code></pre><img src="index-639ad36c.svg" alt="Example block output"/><h3 id="Tableaus"><a class="docs-heading-anchor" href="#Tableaus">Tableaus</a><a id="Tableaus-1"></a><a class="docs-heading-anchor-permalink" href="#Tableaus" title="Permalink"></a></h3><pre><code class="language-julia hljs">Tableau(balanced_matrix(
         [Plot(Lines([(x, exp(-0.5 * abs2(x)) / √(2π))
                      for x in range(-2, 2; length = 101)]);
               y_axis = Axis.Linear(; label = &quot;pdf of normal distribution&quot;)),
@@ -59,12 +59,12 @@ Plot(hpd_heatmap(h, range(0.2, 0.8; step = 0.2), ColorSchemes.OrRd_5))</code></p
               y_axis = Axis.Linear(; label = &quot;pdf of Laplace distribution&quot;)),
          Plot(Lines([(x, exp(-x))
                      for x in range(0.1, 2; length = 50)]);
-              y_axis = Axis.Linear(; label = &quot;pdf of exponential distribution&quot;))]))</code></pre><img src="index-0b5c88a8.svg" alt="Example block output"/><h3 id="Visual-debugging"><a class="docs-heading-anchor" href="#Visual-debugging">Visual debugging</a><a id="Visual-debugging-1"></a><a class="docs-heading-anchor-permalink" href="#Visual-debugging" title="Permalink"></a></h3><pre><code class="language-julia hljs">Canvas(Tableau([Miter.dummy(&quot;$(x), $(y)&quot;) for x in 1:3, y in 1:4]),
-       width = 100mm, height = 100mm)</code></pre><img src="index-9f1dd6ec.svg" alt="Example block output"/><h3 id="Contour-plots"><a class="docs-heading-anchor" href="#Contour-plots">Contour plots</a><a id="Contour-plots-1"></a><a class="docs-heading-anchor-permalink" href="#Contour-plots" title="Permalink"></a></h3><p>The package <a href="https://github.com/JuliaGeometry/Contour.jl">Contour.jl</a> is easy to interface with directly.</p><pre><code class="language-julia hljs">using Contour, Miter
+              y_axis = Axis.Linear(; label = &quot;pdf of exponential distribution&quot;))]))</code></pre><img src="index-60479aef.svg" alt="Example block output"/><h3 id="Visual-debugging"><a class="docs-heading-anchor" href="#Visual-debugging">Visual debugging</a><a id="Visual-debugging-1"></a><a class="docs-heading-anchor-permalink" href="#Visual-debugging" title="Permalink"></a></h3><pre><code class="language-julia hljs">Canvas(Tableau([Miter.dummy(&quot;$(x), $(y)&quot;) for x in 1:3, y in 1:4]),
+       width = 100mm, height = 100mm)</code></pre><img src="index-df5453c1.svg" alt="Example block output"/><h3 id="Contour-plots"><a class="docs-heading-anchor" href="#Contour-plots">Contour plots</a><a id="Contour-plots-1"></a><a class="docs-heading-anchor-permalink" href="#Contour-plots" title="Permalink"></a></h3><p>The package <a href="https://github.com/JuliaGeometry/Contour.jl">Contour.jl</a> is easy to interface with directly.</p><pre><code class="language-julia hljs">using Contour, Miter
 x = range(-1, 1; length = 100)
 z = [(θ = atan(y, x); (0.6 * abs(θ)^0.5) / (0.2 * x^2 + y^2)^(1/3)) for x in x, y in x]
 c = contours(x, x, z)
-Plot(mapreduce(l -&gt; [Lines(vertices(l)) for l in lines(l)], vcat, levels(c)))</code></pre><img src="index-727beedd.svg" alt="Example block output"/><h3 id="Corner-cases"><a class="docs-heading-anchor" href="#Corner-cases">Corner cases</a><a id="Corner-cases-1"></a><a class="docs-heading-anchor-permalink" href="#Corner-cases" title="Permalink"></a></h3><h4 id="Handle-collapsing-axes-gracefully"><a class="docs-heading-anchor" href="#Handle-collapsing-axes-gracefully">Handle collapsing axes gracefully</a><a id="Handle-collapsing-axes-gracefully-1"></a><a class="docs-heading-anchor-permalink" href="#Handle-collapsing-axes-gracefully" title="Permalink"></a></h4><pre><code class="language-julia hljs">Plot(Scatter([(0.49999,0.49999)]))</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
+Plot(mapreduce(l -&gt; [Lines(vertices(l)) for l in lines(l)], vcat, levels(c)))</code></pre><img src="index-661a2a76.svg" alt="Example block output"/><h3 id="Corner-cases"><a class="docs-heading-anchor" href="#Corner-cases">Corner cases</a><a id="Corner-cases-1"></a><a class="docs-heading-anchor-permalink" href="#Corner-cases" title="Permalink"></a></h3><h4 id="Handle-collapsing-axes-gracefully"><a class="docs-heading-anchor" href="#Handle-collapsing-axes-gracefully">Handle collapsing axes gracefully</a><a id="Handle-collapsing-axes-gracefully-1"></a><a class="docs-heading-anchor-permalink" href="#Handle-collapsing-axes-gracefully" title="Permalink"></a></h4><pre><code class="language-julia hljs">Plot(Scatter([(0.49999,0.49999)]))</code></pre><img src='data:image/svg+xml;utf-8,<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="283.46" height="226.77" viewBox="0 0 283.46 226.77">
 <defs>
 <g>
@@ -79,29 +79,29 @@ Plot(mapreduce(l -&gt; [Lines(vertices(l)) for l in lines(l)], vcat, levels(c)))
 </g>
 </g>
 </defs>
-<path fill="none" stroke-width="0.28346" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.693735 36.849527 L 269.293287 36.849527 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
-<path fill="none" stroke-width="0.28346" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 162.993511 36.849527 L 162.993511 31.182502 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
+<path fill="none" stroke-width="0.283465" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 56.689822 189.922127 L 269.293287 189.922127 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
+<path fill="none" stroke-width="0.283465" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 162.993511 189.922127 L 162.993511 195.589152 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
+<path fill="none" stroke-width="0.283465" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 51.022796 184.255101 L 51.022796 19.844834 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
+<path fill="none" stroke-width="0.283465" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 51.022796 102.048011 L 45.355771 102.048011 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
+<path fill="none" stroke-width="0.850394" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 160.156085 102.051925 L 165.82311 102.051925 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
+<path fill="none" stroke-width="0.850394" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 162.989597 104.881524 L 162.989597 99.214498 " transform="matrix(0.998099, 0, 0, 0.998099, 0, 0.099149)"/>
 <g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-0-0" x="156.331284" y="205.969584"/>
+<use xlink:href="%23glyph-0-0" x="156.331274" y="205.969594"/>
 </g>
 <g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-1-0" x="161.303153" y="205.969584"/>
+<use xlink:href="%23glyph-1-0" x="161.303143" y="205.969594"/>
 </g>
 <g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-0-1" x="164.065301" y="205.969584"/>
-</g>
-<path fill="none" stroke-width="0.28346" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 51.022796 42.520466 L 51.022796 206.930734 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
-<path fill="none" stroke-width="0.28346" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 51.022796 124.727557 L 45.355771 124.727557 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
-<g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-0-0" x="28.318702" y="105.154869"/>
+<use xlink:href="%23glyph-0-1" x="164.065291" y="205.969594"/>
 </g>
 <g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-1-0" x="33.29057" y="105.154869"/>
+<use xlink:href="%23glyph-0-0" x="28.318682" y="105.154869"/>
 </g>
 <g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
-<use xlink:href="%23glyph-0-1" x="36.052718" y="105.154869"/>
+<use xlink:href="%23glyph-1-0" x="33.29055" y="105.154869"/>
 </g>
-<path fill="none" stroke-width="0.85039" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 160.156085 124.723643 L 165.827024 124.723643 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
-<path fill="none" stroke-width="0.85039" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%25, 0%25, 0%25)" stroke-opacity="1" stroke-miterlimit="10" d="M 162.993511 121.89013 L 162.993511 127.557156 " transform="matrix(0.998099, 0, 0, -0.998099, 0, 226.439617)"/>
+<g fill="rgb(0%25, 0%25, 0%25)" fill-opacity="1">
+<use xlink:href="%23glyph-0-1" x="36.052699" y="105.154869"/>
+</g>
 </svg>
-'/></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 30 December 2025 18:34">Tuesday 30 December 2025</span>. Using Julia version 1.11.8.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+'/></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Thursday 1 January 2026 10:53">Thursday 1 January 2026</span>. Using Julia version 1.11.8.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
