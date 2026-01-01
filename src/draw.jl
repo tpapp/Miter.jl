@@ -10,53 +10,159 @@ module Draw
 export textcolor, save, Canvas
 
 using ArgCheck: @argcheck
+using Cairo
 using ColorTypes: Colorant, red, green, blue
 using DocStringExtensions: FUNCTIONNAME, SIGNATURES
-using LaTeXCompilers: pdf, png, svg
 using Printf: @printf
 
+import ..Compilation
 using ..Lengths: mm, pt, Length
 using ..InternalUtilities
 using ..DrawTypes
-using LaTeXEscapes: print_escaped, @lx_str
+using LaTeXEscapes: print_escaped, @lx_str, LaTeX
 using ..Styles: DEFAULTS
+
+####
+#### utilities for writing LaTeX
+####
+
+"""
+$(SIGNATURES)
+
+Write the PGF/LaTeX representation to `io`. Not exposed outside this module.
+"""
+latex_print(io::IO, xs...) = foreach(x -> latex_print(io, x), xs)
+
+function latex_print(io::IO, x::Union{AbstractString,AbstractChar,Int,Float64})
+    x isa Float64 && @argcheck isfinite(x)
+    print(io, x)
+end
+
+latex_print(io::IO, x::Real) = latex_print(io, Float64(x))
+
+latex_print(io::IO, x::Length) = @printf(io, "%fmm", x / mm)
+
+function latex_print(io::IO, point::Point)
+    (; x, y) = point
+    latex_print(io, raw"\pgfqpoint{", x, "}{", y, "}")
+end
+
+function latex_print(io::IO, color::COLOR)
+    latex_print(io,
+                "rgb,1:red,", Float64(red(color)),
+                ";green,", Float64(green(color)),
+                ";blue,", Float64(blue(color)))
+end
+
+"""
+$(SIGNATURES)
+
+Low-level text output using the PGF/LaTeX backend.
+
+`str` can be anything that `LaTeXEscapes.print_escaped` handles, including
+`AbstractString`, `LaTeXEscapes.LaTeX`, and `LaTeXStrings.LaTeXString`.
+
+# Notes
+
+- This function is also abused to insert an the image for the vector graphics.
+- Cairo uses up+right coordinates, while PGF uses down+right, caller needs to convert.
+"""
+function pgf_text(io::IO, position::Point, str;
+                 left::Bool = false, right::Bool = false,
+                 top::Bool = false, bottom::Bool = false,
+                 base::Bool = false, rotate::Real = 0)
+    @argcheck top + bottom + base ≤ 1
+    @argcheck left + right ≤ 1
+    (; x, y) = position
+    latex_print(io, raw"\pgftext[x=", x, ",y=", y)
+    left && latex_print(io, ",left")
+    right && latex_print(io, ",right")
+    top && latex_print(io, ",top")
+    bottom && latex_print(io, ",bottom")
+    base && latex_print(io, ",base")
+    iszero(rotate) || latex_print(io, ",rotate=", rotate)
+    latex_print(io, "]{")
+    print_escaped(io, str; check = true)
+    latex_print(io, "}\n")
+end
 
 ####
 #### sink interface
 ####
 
-Base.@kwdef mutable struct Sink{T}
-    io::T
-    "last line width set"
-    line_width::Union{Nothing,Length} = nothing
-    "last stroke color set"
-    stroke_color::Union{Nothing,COLOR} = nothing
-    "last fill color set"
-    fill_color::Union{Nothing,COLOR} = nothing
-    "last dash set"
-    dash::Union{Nothing,Dash} = nothing
+Base.@kwdef struct Sink{D,L,S,C}
+    directory::D
+    basename::String
+    graphics_filename::String
+    standalone::Bool
+    width::Length
+    height::Length
+    latex_io::L
+    cairo_surface::S
+    cairo_context::C
 end
 
-"""
-$(SIGNATURES)
-
-Reset the state that the sink remembers.
-"""
-function reset!(sink::Sink)
-    sink.line_width = nothing
-    sink.stroke_color = nothing
-    sink.fill_color = nothing
-    sink.dash = nothing
+function default_graphics_filename(path::String)
+    splitext(splitdir(path)[2])[1] * "-graphics.pdf"
 end
 
-"""
-$(SIGNATURES)
+function open_sink(directory::String, basename::String, width::Length, height::Length;
+                   graphics_filename::String = default_graphics_filename(basename),
+                   standalone::Bool = false, baseline = 0mm)
+    directory = abspath(directory)
+    @argcheck isdir(directory)
+    @argcheck isempty(splitdir(graphics_filename)[1]) "graphics_filename should not specify a directory"
+    g_f, g_e = splitext(graphics_filename)
+    @argcheck !isempty(g_f) "graphics_filename cannot be empty"
+    @argcheck g_e == ".pdf" "graphics_filename has to end with “.pdf”"
+    # LaTeX setup
+    latex_io = open(joinpath(directory, basename * (standalone ? ".tikz" : ".tex")), "w")
+    if !standalone
+        latex_print(latex_io, raw"""
+\documentclass{standalone}
+\usepackage{pgfcore}
+\begin{document}
+""")
+    end
+    print(latex_io, raw"""
+\begin{pgfpicture}
+""")
+    latex_print(latex_io, raw"\pgfpathrectanglecorners{",
+                Point(0mm, 0mm), "}{", Point(width, height), "}\n",
+                raw"\pgfusepath{use as bounding box}",
+                raw"\pgfsetbaseline{", baseline, "}\n",
+                raw"\begin{pgfinterruptboundingbox}")
+    pgf_text(latex_io, Point(0mm, 0mm),
+             LaTeX(raw"\includegraphics{" * graphics_filename * "}"),
+             bottom = true, left = true)
+    # Cairo setup
+    cairo_surface = CairoPDFSurface(joinpath(directory, graphics_filename), width / pt, height / pt)
+    cairo_context = CairoContext(cairo_surface)
+    Sink(; directory, basename, graphics_filename, standalone, width, height, latex_io,
+         cairo_surface, cairo_context)
+end
 
-Wrap an `io` in a `Sink` for outputting PGF primitives.
+function tex_path(sink::Sink)
+    joinpath(sink.directory, sink.basename * (sink.standalone ? ".tikz" : ".tex"))
+end
 
-A `Sink` records various drawing properties, so it can omit superfluous set commands.
-"""
-sink(io::IO) = Sink(; io = io)
+graphics_path(sink::Sink) = joinpath(sink.directory, sink.graphics_filename)
+
+function close_sink(sink::Sink)
+    (; latex_io, cairo_surface, cairo_context, standalone) = sink
+    latex_print(latex_io, raw"""
+\end{pgfinterruptboundingbox}
+\end{pgfpicture}
+""")
+    if !standalone
+        latex_print(latex_io, raw"""
+\end{document}
+""")
+    end
+    close(latex_io)
+    Cairo.destroy(cairo_context)
+    Cairo.finish(cairo_surface)
+end
 
 ####
 #### rendering
@@ -70,45 +176,6 @@ Render `object` within `context` (a [`Rectangle`](@ref), or similar) using `sink
 Rendering `nothing` is a no-op.
 """
 render(sink::Sink, rectangle::Rectangle, object::Nothing) = nothing
-
-"""
-$(SIGNATURES)
-
-The preamble that should precede output generated by this module to compile in LaTeX. Cf
-[`postamble`](@ref). When `standalone = true`, the document setup is skipped.
-
-`bounding_box` is a rectangle that determines the bounding box, with the given `baseline` (converted to `mm` if necesary).
-
-After the preamble, bounding box calculations are suspended.
-"""
-function preamble(sink::Sink, bounding_box::Rectangle;
-                  standalone::Bool, baseline::Length = 0mm)
-    standalone || _print(sink, raw"""
-\documentclass{standalone}
-\usepackage{pgfcore}
-\begin{document}
-""")
-    _print(sink, raw"""
-\begin{pgfpicture}
-""")
-    Draw.path(sink, bounding_box)
-    _println(sink, raw"\pgfusepath{use as bounding box}",
-           raw"\pgfsetbaseline{", baseline, "}\n",
-           raw"\begin{pgfinterruptboundingbox}")
-end
-
-"""
-$(SIGNATURES)
-"""
-function postamble(sink::Sink; standalone::Bool)
-    _print(sink, raw"""
-\end{pgfinterruptboundingbox}
-\end{pgfpicture}
-""")
-    standalone || _print(sink, raw"""
-\end{document}
-""")
-end
 
 struct Canvas
     content::Any
@@ -124,24 +191,6 @@ struct Canvas
     end
 end
 
-function print_tex(sink::Draw.Sink, canvas::Canvas; standalone::Bool = false)
-    (; content, width, height) = canvas
-    _canvas = Rectangle(; left = 0mm, right = width, bottom = 0mm, top = height)
-    Draw.preamble(sink, _canvas; standalone)
-    Draw.render(sink, _canvas, content)
-    Draw.postamble(sink; standalone)
-end
-
-function print_tex(io::IO, object::Canvas; standalone = false)
-    print_tex(Draw.sink(io), object; standalone)
-end
-
-function print_tex(filename::AbstractString, object::Canvas; standalone::Bool = false)
-    open(filename, "w") do io
-        print_tex(io, object; standalone)
-    end
-end
-
 """
 $(SIGNATURES)
 
@@ -149,13 +198,35 @@ Wrap the input in a `Canvas`. Should be available for types that [`declare_showa
 """
 wrap_in_default_canvas(canvas::Canvas) = canvas
 
+function render_to_tex(canvas::Canvas, dir, basename;
+                       graphics_filename = default_graphics_filename(basename),
+                       standalone = false)
+    (; content, width, height) = canvas
+    sink = open_sink(dir, basename, width, height; standalone, graphics_filename)
+    try
+        render(sink, Rectangle(; left = 0mm, right = width, top = 0mm, bottom = height), content)
+    finally
+        close_sink(sink)
+    end
+    (; tex_path = tex_path(sink), graphics_path = graphics_path(sink))
+end
+
+function render_to_pdf(canvas::Canvas, dir, basename;
+                       graphics_filename = default_graphics_filename(basename))
+    tex_path = render_to_tex(canvas, dir, basename; graphics_filename).tex_path
+    Compilation.compile_pdf_in_dir(tex_path)
+end
+
 """
 $(SIGNATURES)
 
 Helper function to render `object` to `svg_io`.
 """
 function _show_as_svg(svg_io::IO, object)
-    svg(io -> print_tex(io, wrap_in_default_canvas(object)), svg_io)
+    mktempdir() do dir
+        pdf_path = render_to_pdf(wrap_in_default_canvas(object), dir, "miter")
+        Compilation.convert_pdf_to_io(pdf_path, :svg, svg_io)
+    end
 end
 
 """
@@ -169,208 +240,97 @@ end
 
 @declare_showable Canvas
 
-####
-#### generating TeX output
-####
-
 """
 $(SIGNATURES)
 
 Save `object` into `filename`.
 
-File type is determined by its extension, which can be overidden by `ext` (a string, case
-does not matter as it is normalized). Valid options are:
+File type is determined by its extension. Valid options are:
 
-- `pdf`: Portable Document Format (PDF)
-- `svg`: Scalable Vector Graphics (SVG)
-- `png`: Portable Network Graphics (PNG)
-- `tex`: standalone LaTeX code that can be compiled *as is*
-- `tikz`: LaTeX code that can be included in a document
+- `.pdf`: Portable Document Format (PDF)
+- `.svg`: Scalable Vector Graphics (SVG)
+- `.png`: Portable Network Graphics (PNG)
+- `.tex`: standalone LaTeX code that can be compiled *as is*
+- `.tikz`: LaTeX code that can be included in a document
 
 For tex/tikz, the LaTeX package `pgf` needs to be available/included in the document.
 """
-function save(filename::AbstractString, object; ext = lstrip(splitext(filename)[2], '.'))
-    ext = splitext(filename)[2]
-    _print_tex = Base.Fix2(print_tex, wrap_in_default_canvas(object))
-    ext = lowercase(ext)
-    if ext == ".pdf"
-        pdf(_print_tex, filename)
-    elseif ext == ".svg"
-        svg(_print_tex, filename)
-    elseif ext == ".png"
-        png(_print_tex, filename)
-    elseif ext == ".tex"
-        open(_print_tex, filename, "w")
-    elseif ext == ".tikz"
-        open(io -> print_tex(io, object; standalone = true), filename, "w")
-    elseif ext == ""
-        error("could not determine file type without extension, specify it explicitly")
+function save(filename::AbstractString, object;
+              graphics_filename = default_graphics_filename(filename))
+    ext = lowercase(splitext(filename)[2])
+    @argcheck !isempty(ext) "A filename extension is needed to determine output type."
+    canvas = wrap_in_default_canvas(object)
+    if ext == ".tex" || ext == ".tikz"
+        standalone = ext == ".tikz"
+        dir, file_ext = splitdir(filename)
+        basename = splitext(file_ext)[1]
+        render_to_tex(canvas, dir, basename; graphics_filename, standalone)
     else
-        error("don't know to handle extension $(ext)")
+        mktempdir() do dir
+            pdf_path = render_to_pdf(canvas, dir, "miter")
+            if ext == ".pdf"
+                cp(pdf_path, filename)
+            elseif ext == ".svg" || ext == ".png"
+                Compilation.convert_pdf_to_file(pdf_path, filename)
+            else
+                error("don't know to handle extension $(ext)")
+            end
+        end
     end
-end
-
-####
-#### utilities for writing LaTeX
-####
-
-"""
-$(SIGNATURES)
-
-Write the PGF/LaTeX representation to `sink`. Not exposed outside this module.
-
-Methods are encouraged to define `_print(sink::Sink, x::T)` for types `T` which can be
-directly printed for processing by LaTeX (eg numbers, lengths, colors, etc).
-
-Printing raw strings and objects to a `sink` should only be done by this method.
-"""
-_print(sink::Sink, xs...) = foreach(x -> _print(sink, x), xs)
-
-_println(sink::Sink, xs...) = (foreach(x -> _print(sink, x), xs); _print(sink, '\n'))
-
-_print(sink::Sink, x::Union{AbstractString,AbstractChar,Int,Float64}) = print(sink.io, x)
-
-_print(sink::Sink, x::Length) = @printf(sink.io, "%fbp", x / pt) # NOTE: pt is bp in TeX
-
-function _print(sink::Sink, color::COLOR)
-    _print(sink, "rgb,1:red,", Float64(red(color)),
-           ";green,", Float64(green(color)),
-           ";blue,", Float64(blue(color)))
 end
 
 ####
 #### simple commands
 ####
 
-"""
-$(SIGNATURES)
-
-Translate a symbol to a pgf command name string.
-"""
-_pgfcommand(s::Symbol) = "\\pgf" * string(s)
-
-function setfillcolor(sink::Sink, color::COLOR)
-    if sink.fill_color ≠ color
-        sink.fill_color = color
-        _println(sink, raw"\pgfsetfillcolor{", color, "}")
-    end
+function set_color(sink::Sink, color::COLOR)
+    Cairo.set_source(sink.cairo_context, color)
 end
 
-setfillcolor(sink::Sink, color::Colorant) = setfillcolor(sink, COLOR(color))
-
-function setstrokecolor(sink::Sink, color::COLOR)
-    if sink.stroke_color ≠ color
-        sink.stroke_color = color
-        _println(sink, raw"\pgfsetstrokecolor{", color, "}")
-    end
-end
-
-setstrokecolor(sink::Sink, color::Colorant) = setstrokecolor(sink, COLOR(color))
-
-function setcolor(sink::Sink, color::COLOR)
-    if !(sink.stroke_color == color == sink.fill_color)
-        sink.fill_color = color
-        sink.stroke_color = color
-        _println(sink, raw"\pgfsetcolor{", color, "}")
-    end
-end
-
-setcolor(sink::Sink, color::Colorant) = setcolor(sink, COLOR(color))
+set_color(sink::Sink, color::Colorant) = set_color(sink, COLOR(color))
 
 """
 $(SIGNATURES)
 
 Set line width, converting to `mm` if necessary.
 """
-function setlinewidth(sink::Sink, line_width::Length)
-    if sink.line_width ≠ line_width
-        sink.line_width = line_width
-        _print(sink, raw"\pgfsetlinewidth{", line_width, "}")
-    end
-end
-
-####
-#### points
-####
-
-function _print(sink::Sink, point::Point)
-    (; x, y) = point
-    _print(sink, raw"\pgfqpoint{", x, "}{", y, "}")
+function set_line_width(sink::Sink, line_width::Length)
+    Cairo.set_line_width(sink.cairo_context, line_width / pt)
 end
 
 ###
 ### path manipulation
 ###
 
-function pathmoveto(sink::Sink, point::Point)
-    _println(sink, raw"\pgfpathmoveto{", point, "}")
+function cairo_coordinates(sink::Sink, point::Point)
+    point.x / pt, (sink.height - point.y) / pt
 end
 
-function pathlineto(sink::Sink, point::Point)
-    _println(sink, raw"\pgfpathlineto{", point, "}")
+function move_to(sink::Sink, point::Point)
+    Cairo.move_to(sink.cairo_context, cairo_coordinates(sink, point)...)
 end
 
-function pathcircle(sink::Sink, point::Point, radius::Length)
-    _println(sink, raw"\pgfpathcircle{", point, "}{", radius, "}")
+function line_to(sink::Sink, point::Point)
+    Cairo.line_to(sink.cairo_context, cairo_coordinates(sink, point)...)
 end
 
-# commands without arguments
-for command in (:pathclose, :usepathqfill, :usepathqstroke, :usepathqfillstroke,
-                :usepathqclip)
+function circle(sink::Sink, point::Point, radius::Length)
+    Cairo.circle(sink.cairo_context, cairo_coordinates(sink, point)..., radius / pt)
+end
+
+for command in (:stroke, :stroke_preserve, :fill, :fill_preserve, :clip, :new_path)
     @eval function $command(sink::Sink)
-        _println(sink, $(_pgfcommand(command)))
+        Cairo.$command(sink.cairo_context)
     end
-end
-
-function path(sink::Sink, rectangle::Rectangle)
-    (; left, right, bottom, top) = rectangle
-    _println(sink, raw"\pgfpathrectanglecorners{",
-                Point(left, bottom), "}{", Point(right, top), "}")
-end
-
-function usepath(sink::Sink, actions...)
-    had_fill = false
-    had_stroke = false
-    had_clip = false
-    is_first = true
-    _print(sink, raw"\pgfusepath{")
-    for action in actions
-        if is_first
-            is_first = false
-        else
-            _print(sink, ',')
-        end
-        if action ≡ :fill
-            @argcheck !had_fill "Duplicate `:fill`."
-            _print(sink, "fill")
-            had_fill = true
-        elseif action ≡ :stroke
-            @argcheck !had_stroke "Duplicate `:stroke`."
-            _print(sink, "stroke")
-            had_stroke = true
-        elseif action ≡ :clip
-            @argcheck !had_clip "Duplicate `:clip`."
-            _print(sink, "clip")
-            had_clip = true
-        elseif action ≡ :discard
-            @argcheck(had_fill == had_stroke == had_clip == false,
-                      "Can't use `:discard` with other actions.")
-            # NOTE: we don't print "discard", empty list has same effect
-            break
-        else
-            throw(ArgumentError("Unknown action $(action)."))
-        end
-    end
-    _print(sink, "}\n")
 end
 
 ###
 ### scope
 ###
 
-begin_scope(sink::Sink) = _print(sink, "\\begin{pgfscope}")
+begin_scope(sink::Sink) = Cairo.save(sink.cairo_context)
 
-end_scope(sink::Sink) = (_print(sink, "\\end{pgfscope}"); reset!(sink))
+end_scope(sink::Sink) = Cairo.restore(sink.cairo_context)
 
 function with_scope(f, sink::Sink)
     begin_scope(sink)
@@ -378,46 +338,9 @@ function with_scope(f, sink::Sink)
     end_scope(sink)
 end
 
-
 ###
 ### text
 ###
-
-"""
-$(SIGNATURES)
-
-Check alignment args of `Draw.text`, provide a sensible error message.
-"""
-function _check_text_alignment(; top, bottom, base, left, right)
-    @argcheck top + bottom + base ≤ 1
-    @argcheck left + right ≤ 1
-end
-
-"""
-$(SIGNATURES)
-
-Text output.
-
-`str` can be anything that `LaTeXEscapes.print_escaped` handles, including
-`AbstractString`, `LaTeXEscapes.LaTeX`, and `LaTeXStrings.LaTeXString`.
-"""
-function text(sink::Sink, at::Point, str;
-              left::Bool = false, right::Bool = false,
-              top::Bool = false, bottom::Bool = false, base::Bool = false,
-              rotate = 0)
-    _check_text_alignment(; top, bottom, base, left, right)
-    (; x, y) = at
-    _print(sink, raw"\pgftext[x=", x, ",y=", y)
-    left && _print(sink, ",left")
-    right && _print(sink, ",right")
-    top && _print(sink, ",top")
-    bottom && _print(sink, ",bottom")
-    base && _print(sink, ",base")
-    iszero(rotate) || _print(sink, ",rotate=", rotate)
-    _print(sink, "]{")
-    print_escaped(sink.io, str; check = true)
-    _println(sink, "}")
-end
 
 """
 $(SIGNATURES)
@@ -432,7 +355,6 @@ end
 
 textcolor(color::Colorant, text) = textcolor(COLOR(color), text)
 
-
 ####
 #### utilities
 ####
@@ -443,9 +365,9 @@ $(SIGNATURES)
 Path and stroke a line segment between two points. Caller sets everything else before.
 """
 function segment(sink::Sink, a::Point, b::Point)
-    pathmoveto(sink, a)
-    pathlineto(sink, b)
-    usepathqstroke(sink)
+    move_to(sink, a)
+    line_to(sink, b)
+    stroke(sink)
 end
 
 """
@@ -454,65 +376,37 @@ $(SIGNATURES)
 Helper function to set line style parameters (when `≢ nothing`).
 """
 function set_line_style(sink::Draw.Sink; color = nothing, width = nothing, dash = nothing)
-    color ≢ nothing && Draw.setstrokecolor(sink, color)
-    width ≢ nothing && Draw.setlinewidth(sink, width)
-    dash ≢ nothing && Draw.setdash(sink, dash)
-end
-
-"""
-$(SIGNATURES)
-
-A utility function to
-
-1. set the stroke color when not `nothing`, and then also the line width,
-2. set the fill color when not `nothing
-
-For use by callers where the user specifies at least one of these. See also
-[`path_q_stroke_or_fill`](@ref).
-"""
-function set_stroke_or_fill_style(sink::Draw.Sink; stroke_color, fill_color, stroke_width)
-    if stroke_color ≡ nothing && fill_color ≡ nothing
-        error(ArgumentError("you need to set at least one stroke or fill color"))
-    end
-    if stroke_color ≢ nothing
-        set_line_style(sink; color = stroke_color, width = stroke_width)
-    end
-    if fill_color ≢ nothing
-        Draw.setfillcolor(sink, fill_color)
-    end
-end
-
-"""
-$(SIGNATURES)
-
-Quick stroke or fill whenever the respective color is not `nothing`.
-"""
-function path_q_stroke_or_fill(sink, stroke_color, fill_color)
-    if stroke_color ≡ nothing && fill_color ≡ nothing
-        error(ArgumentError("you need to set at least one stroke or fill color"))
-    elseif stroke_color ≢ nothing && fill_color ≢ nothing
-        Draw.usepathqfillstroke(sink)
-    elseif stroke_color ≢ nothing
-        Draw.usepathqstroke(sink)
-    else fill_color ≢ nothing
-        Draw.usepathqfill(sink)
-    end
+    color ≢ nothing && Draw.set_color(sink, color)
+    width ≢ nothing && Draw.set_line_width(sink, width)
+    dash ≢ nothing && Draw.set_dash(sink, dash)
 end
 
 ####
 #### marks
 ####
 
-function setdash(sink::Sink, dash::Dash)
-    if sink.dash ≠ dash
-        sink.dash = dash
-        (; dimensions, offset) = dash
-        _print(sink, raw"\pgfsetdash{")
-        for d in dimensions
-            _print(sink, '{', d, '}')
-        end
-        _print(sink, "}{", offset, "}")
-    end
+function set_dash(sink::Sink, dash::Dash)
+    (; dimensions, offset) = dash
+    Cairo.set_dash(sink.cairo_context, [d / pt for d in dimensions], offset / pt)
+end
+
+function path(sink::Sink, rectangle::Rectangle)
+    (; top, left, bottom, right) = rectangle
+    Cairo.rectangle(sink.cairo_context,
+                    left / pt, (sink.height - top) / pt,
+                    (right - left) / pt, (top - bottom) / pt)
+end
+
+####
+#### text
+####
+
+function text(sink::Sink, position::Point, str;
+              left::Bool = false, right::Bool = false,
+              top::Bool = false, bottom::Bool = false,
+              base::Bool = false, rotate::Real = 0)
+    pgf_text(sink.latex_io, position, str;
+             left, right, top, bottom, base, rotate)
 end
 
 end

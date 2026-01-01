@@ -59,20 +59,21 @@ function draw_mark_symbol(sink::Draw.Sink, ::Val{:+}, xy::Point, size::Length)
 end
 
 function draw_mark_symbol(sink::Draw.Sink, ::Val{:o}, xy::Point, size::Length)
-    Draw.pathcircle(sink, xy, size / 2)
-    Draw.usepathqstroke(sink)
+    Draw.circle(sink, xy, size / 2)
+    Draw.stroke(sink)
 end
 
 function draw_mark_symbol(sink::Draw.Sink, ::Val{:*}, xy::Point, size::Length)
-    Draw.pathcircle(sink, xy, size / 2)
-    Draw.usepathqfill(sink)
+    Draw.circle(sink, xy, size / 2)
+    Draw.fill(sink)
 end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea,
                      mark::MarkSymbol{S}, xy) where S
     (; line_width, size, color) = mark
-    Draw.set_line_style(sink; width = line_width, color, dash = LINE_SOLID)
-    Draw.setfillcolor(sink, color)   # NOTE currently same fill and stroke color
+    Draw.set_color(sink, color) # NOTE currently same fill and stroke color
+    Draw.set_line_width(sink, line_width)
+    Draw.set_dash(sink, LINE_SOLID)
     draw_mark_symbol(sink, Val(S), coordinates_to_point(drawing_area, xy), size)
 end
 
@@ -137,11 +138,11 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, mark::MarkQ5,
     _point(x, y) = coordinates_to_point(drawing_area, horizontal ? (y, x) : (x, y))
     (; p05, p25, p50, p75, p95) = y
     (; color, width05, width25, size50) = mark
-    Draw.setcolor(sink, color)
-    Draw.setdash(sink, LINE_SOLID)
-    Draw.setlinewidth(sink, width05)
+    Draw.set_color(sink, color)
+    Draw.set_dash(sink, LINE_SOLID)
+    Draw.set_line_width(sink, width05)
     Draw.segment(sink, _point(x, p05), _point(x, p95))
-    Draw.setlinewidth(sink, width25)
+    Draw.set_line_width(sink, width25)
     Draw.segment(sink, _point(x, p25), _point(x, p75))
     draw_mark_symbol(sink, Val(:*), _point(x, p50), size50)
 end
