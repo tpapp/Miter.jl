@@ -3,16 +3,33 @@ The drawing backend.
 
 Plots and their elements are drawn using `render`, which they should implement. Inside
 those methods, they emit commands to a `sink`.
+
+# Exported API
+
+The user-facing API is [`save`](@ref), [`textcolor`](@ref), and [`Canvas`](@ref).
+
+Rendering functions should use the public interface, qualified with the module name, eg
+`Draw.move_to`.
+
+$(DocStringExtensions.EXPORTS)
 """
 module Draw
 
 # reexported as API
 export textcolor, save, Canvas
 
+# for rendering functions
+public render, wrap_in_default_canvas, @declare_showable
+
+# drawing primitives
+public set_color, set_line_width, move_to, line_to, circle, stroke, stroke_preserve, fill,
+    fill_preserve, clip, new_path, save_context, restore_context, segment, set_line_style,
+    path, text
+
 using ArgCheck: @argcheck
 using Cairo
 using ColorTypes: Colorant, red, green, blue
-using DocStringExtensions: FUNCTIONNAME, SIGNATURES
+using DocStringExtensions: FUNCTIONNAME, SIGNATURES, FIELDS, DocStringExtensions
 using Printf: @printf
 
 import ..Compilation
@@ -90,22 +107,64 @@ end
 #### sink interface
 ####
 
+"""
+The sink is used to record drawing operations.
+
+Rendering functions should not call `Cairo` functions directly, but only via the sink,
+using functions in this module.
+
+Callers are expected to *restore* the context after they run (see
+[`save_context`](@ref), [`restore_context`](@ref)) for: *clipping* ([`clip`](@ref)), and
+should leave no unused paths (see [`new_path`](@ref)).
+
+Otherwise, they should always set the desired color, line width, etc for each drawing
+operation.
+
+$(FIELDS)
+"""
 Base.@kwdef struct Sink{D,L,S,C}
+    "The directory the files are located in."
     directory::D
+    "The basename (ie filename within the directory without extension."
     basename::String
+    "The file name of the included PDF image."
     graphics_filename::String
+    "When `true`, just emit a LaTeX source code, without a premable/postamble."
     standalone::Bool
+    "Width of the image."
     width::Length
+    "Height of the image."
     height::Length
+    "Output for LaTeX (use only for text)."
     latex_io::L
+    "Cairo surface."
     cairo_surface::S
+    "Cairo context."
     cairo_context::C
 end
 
+"""
+$(SIGNATURES)
+
+The default graphics filename.
+"""
 function default_graphics_filename(path::String)
     splitext(splitdir(path)[2])[1] * "-graphics.pdf"
 end
 
+"""
+$(SIGNATURES)
+
+Open a sink in `directory`, using `basename`, with the given `width` and `height`.
+
+# Keyword arguments
+
+- `graphics_filename`: the filename of the PDF file within `directory`. Usually this is
+  not needed, only when the user wants to specify the filename in `standalone` files.
+- `standalone`: `false` by default. If `true`, the pre/postamble are omitted, for just
+  generating the LaTeX code.
+- `baseline`: specifies the baseline, relevant in `standalone` images.
+"""
 function open_sink(directory::String, basename::String, width::Length, height::Length;
                    graphics_filename::String = default_graphics_filename(basename),
                    standalone::Bool = false, baseline = 0mm)
@@ -142,12 +201,27 @@ function open_sink(directory::String, basename::String, width::Length, height::L
          cairo_surface, cairo_context)
 end
 
+"""
+$(SIGNATURES)
+
+The full path of the LaTeX file.
+"""
 function tex_path(sink::Sink)
     joinpath(sink.directory, sink.basename * (sink.standalone ? ".tikz" : ".tex"))
 end
 
+"""
+$(SIGNATURES)
+
+The full path of the PDF graphics file embedded in the LaTeX file.
+"""
 graphics_path(sink::Sink) = joinpath(sink.directory, sink.graphics_filename)
 
+"""
+$(SIGNATURES)
+
+Close the sink.
+"""
 function close_sink(sink::Sink)
     (; latex_io, cairo_surface, cairo_context, standalone) = sink
     latex_print(latex_io, raw"""
@@ -198,19 +272,36 @@ Wrap the input in a `Canvas`. Should be available for types that [`declare_showa
 """
 wrap_in_default_canvas(canvas::Canvas) = canvas
 
-function render_to_tex(canvas::Canvas, dir, basename;
+"""
+$(SIGNATURES)
+
+Render the contents of `canvas` into a LaTeX file, using the a sink. For the other
+arguments, see [`open_sink`](@ref).
+
+Return the `tex_path` and the `graphics_path` in a NamedTuple.
+"""
+function render_to_tex(canvas::Canvas, directory, basename;
                        graphics_filename = default_graphics_filename(basename),
                        standalone = false)
     (; content, width, height) = canvas
-    sink = open_sink(dir, basename, width, height; standalone, graphics_filename)
+    sink = open_sink(directory, basename, width, height; standalone, graphics_filename)
     try
         render(sink, Rectangle(; left = 0mm, right = width, top = 0mm, bottom = height), content)
     finally
         close_sink(sink)
     end
-    (; tex_path = tex_path(sink), graphics_path = graphics_path(sink))
+    (; tex_path = joinpath(directory, basename * (standalone ? ".tikz" : ".tex")),
+     pdf_path = joinpath(directory, graphics_filename))
 end
 
+"""
+$(SIGNATURES)
+
+Render and compile the contents of `canvas` into a PDF file, using the a sink. For the
+other arguments, see [`open_sink`](@ref).
+
+Return the full path of the compiled PDF file.
+"""
 function render_to_pdf(canvas::Canvas, dir, basename;
                        graphics_filename = default_graphics_filename(basename))
     tex_path = render_to_tex(canvas, dir, basename; graphics_filename).tex_path
@@ -220,7 +311,8 @@ end
 """
 $(SIGNATURES)
 
-Helper function to render `object` to `svg_io`.
+Helper function to render `object` to `svg_io`. `object` is wrapped in a `Canvas` using
+[`wrap_in_default_canvas`](@ref).
 """
 function _show_as_svg(svg_io::IO, object)
     mktempdir() do dir
@@ -254,6 +346,9 @@ File type is determined by its extension. Valid options are:
 - `.tikz`: LaTeX code that can be included in a document
 
 For tex/tikz, the LaTeX package `pgf` needs to be available/included in the document.
+
+`graphics_filename` is relevant for standalone `tex` and `tikz` files, and determines
+the PDF file created by Cairo, used for everything but the text.
 """
 function save(filename::AbstractString, object;
               graphics_filename = default_graphics_filename(filename))
@@ -283,6 +378,11 @@ end
 #### simple commands
 ####
 
+"""
+$(SIGNATURES)
+
+Set the color.
+"""
 function set_color(sink::Sink, color::COLOR)
     Cairo.set_source(sink.cairo_context, color)
 end
@@ -292,7 +392,7 @@ set_color(sink::Sink, color::Colorant) = set_color(sink, COLOR(color))
 """
 $(SIGNATURES)
 
-Set line width, converting to `mm` if necessary.
+Set line width.
 """
 function set_line_width(sink::Sink, line_width::Length)
     Cairo.set_line_width(sink.cairo_context, line_width / pt)
@@ -302,18 +402,38 @@ end
 ### path manipulation
 ###
 
+"""
+$(SIGNATURES)
+
+A helper function to convert coordinates to Cairo. For internal use in `Draw`.
+"""
 function cairo_coordinates(sink::Sink, point::Point)
     point.x / pt, (sink.height - point.y) / pt
 end
 
+"""
+$(SIGNATURES)
+
+Move to a new point. If there is an existing path, it will not be connected.
+"""
 function move_to(sink::Sink, point::Point)
     Cairo.move_to(sink.cairo_context, cairo_coordinates(sink, point)...)
 end
 
+"""
+$(SIGNATURES)
+
+Connect to a new point with a line.
+"""
 function line_to(sink::Sink, point::Point)
     Cairo.line_to(sink.cairo_context, cairo_coordinates(sink, point)...)
 end
 
+"""
+$(SIGNATURES)
+
+Make a path for a circle.
+"""
 function circle(sink::Sink, point::Point, radius::Length)
     Cairo.circle(sink.cairo_context, cairo_coordinates(sink, point)..., radius / pt)
 end
@@ -328,32 +448,19 @@ end
 ### scope
 ###
 
-begin_scope(sink::Sink) = Cairo.save(sink.cairo_context)
+"""
+$(SIGNATURES)
 
-end_scope(sink::Sink) = Cairo.restore(sink.cairo_context)
-
-function with_scope(f, sink::Sink)
-    begin_scope(sink)
-    f()
-    end_scope(sink)
-end
-
-###
-### text
-###
+Save the Cairo context on a FIFO stack managed by Cairo. See [`restore_context`](@ref)
+"""
+save_context(sink::Sink) = Cairo.save(sink.cairo_context)
 
 """
 $(SIGNATURES)
 
-Wrap text (`LaTeX`, or plain text) in the LaTeX command that makes it have the given `color`.
+Restore the context saved by [`save_context`](@ref).
 """
-function textcolor(color::COLOR, text)
-    (lx"\textcolor[rgb]{" *
-        Float64(red(color)) * "," * Float64(green(color)) * "," * Float64(blue(color)) *
-        lx"}{" * text * lx"}")
-end
-
-textcolor(color::Colorant, text) = textcolor(COLOR(color), text)
+restore_context(sink::Sink) = Cairo.restore(sink.cairo_context)
 
 ####
 #### utilities
@@ -385,11 +492,21 @@ end
 #### marks
 ####
 
+"""
+$(SIGNATURES)
+
+Set the dash.
+"""
 function set_dash(sink::Sink, dash::Dash)
     (; dimensions, offset) = dash
     Cairo.set_dash(sink.cairo_context, [d / pt for d in dimensions], offset / pt)
 end
 
+"""
+$(SIGNATURES)
+
+Draw a path corresponding to the argument.
+"""
 function path(sink::Sink, rectangle::Rectangle)
     (; top, left, bottom, right) = rectangle
     Cairo.rectangle(sink.cairo_context,
@@ -401,6 +518,16 @@ end
 #### text
 ####
 
+"""
+$(SIGNATURES)
+
+Place `str`, which can be a `LaTeXEscapes.LaTeX` wrapper or a plain vanilla
+`AbstractString` (which will be escaped) at given `position`.
+
+Alignment is controlled by `left`, `right` (horizontal), `top`, `bottom` and `base`
+(vertical), only one of them can be `true` in each direction. By default, they are all
+set to `false`, implying centering.
+"""
 function text(sink::Sink, position::Point, str;
               left::Bool = false, right::Bool = false,
               top::Bool = false, bottom::Bool = false,
@@ -408,5 +535,18 @@ function text(sink::Sink, position::Point, str;
     pgf_text(sink.latex_io, position, str;
              left, right, top, bottom, base, rotate)
 end
+
+"""
+$(SIGNATURES)
+
+Wrap text (`LaTeX`, or plain text) in the LaTeX command that makes it have the given `color`.
+"""
+function textcolor(color::COLOR, text)
+    (lx"\textcolor[rgb]{" *
+        Float64(red(color)) * "," * Float64(green(color)) * "," * Float64(blue(color)) *
+        lx"}{" * text * lx"}")
+end
+
+textcolor(color::Colorant, text) = textcolor(COLOR(color), text)
 
 end
