@@ -26,7 +26,6 @@ struct Annotation
     """
     function Annotation(at, text; left::Bool = false, right::Bool = false, top::Bool = false,
                         bottom::Bool = false, base::Bool = false, rotate::Real = 0)
-        Draw._check_text_alignment(; left, right, top, bottom, base)
         x, y = float64_xy(at)
         new(x, y, text, top, bottom, base, left, right, Float64(rotate))
     end
@@ -71,9 +70,9 @@ Internal utility function to draw a horizontal line at `y`. Caller should set th
 function _hline(sink::Draw.Sink, drawing_area::DrawingArea, y::Real)
     (; left, right) = drawing_area.rectangle
     y_c = y_coordinate_to_canvas(drawing_area, y)
-    Draw.pathmoveto(sink, Draw.Point(left, y_c))
-    Draw.pathlineto(sink, Draw.Point(right, y_c))
-    Draw.usepathqstroke(sink)
+    Draw.move_to(sink, Draw.Point(left, y_c))
+    Draw.line_to(sink, Draw.Point(right, y_c))
+    Draw.stroke(sink)
 end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, hgrid::Hgrid)
@@ -148,9 +147,9 @@ Internal utility function to draw a vertical line at `x`. Caller should set the 
 function _vline(sink::Draw.Sink, drawing_area::DrawingArea, x::Real)
     (; bottom, top) = drawing_area.rectangle
     x_c = x_coordinate_to_canvas(drawing_area, x)
-    Draw.pathmoveto(sink, Draw.Point(x_c, bottom))
-    Draw.pathlineto(sink, Draw.Point(x_c, top))
-    Draw.usepathqstroke(sink)
+    Draw.move_to(sink, Draw.Point(x_c, bottom))
+    Draw.line_to(sink, Draw.Point(x_c, top))
+    Draw.stroke(sink)
 end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, vgrid::Vgrid)
@@ -297,8 +296,8 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, line_through::L
     if z1z2 ≢ nothing
         z1, z2 = z1z2
         Draw.set_line_style(sink; color, width, dash)
-        Draw.pathmoveto(sink, coordinates_to_point(drawing_area, z1))
-        Draw.pathlineto(sink, coordinates_to_point(drawing_area, z2))
-        Draw.usepathqstroke(sink)
+        Draw.move_to(sink, coordinates_to_point(drawing_area, z1))
+        Draw.line_to(sink, coordinates_to_point(drawing_area, z2))
+        Draw.stroke(sink)
     end
 end

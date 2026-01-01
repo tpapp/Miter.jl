@@ -93,14 +93,14 @@ function Draw.render(sink::Draw.Sink, rectangle::Rectangle, d::Dummy)
     (; color, label, margin) = d
     (; top, bottom, left, right) = rectangle
     # outer rectangle
-    Draw.setfillcolor(sink, color)
+    Draw.set_color(sink, color)
     Draw.path(sink, rectangle)
-    Draw.usepathqfill(sink)
+    Draw.fill(sink)
     # inner
-    Draw.setfillcolor(sink, Gray(1))
+    Draw.set_color(sink, Gray(1))
     Draw.path(sink, Rectangle(; top = top - margin, bottom = bottom + margin,
                                left = left + margin, right = right - margin))
-    Draw.usepathqfill(sink)
+    Draw.fill(sink)
     # text
     Draw.text(sink, Point((left + right) / 2, (bottom + top) / 2), label)
 end

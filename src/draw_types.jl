@@ -3,7 +3,7 @@ Types used by drawing commands.
 """
 module DrawTypes
 
-export COLOR, Point, flip, Rectangle, relative_point, Spacer, Relative, split_matrix, Dash
+export COLOR, Point, flip, Rectangle, enlarge, relative_point, Spacer, Relative, split_matrix, Dash
 
 using ArgCheck: @argcheck
 using ColorTypes: RGB
@@ -79,6 +79,21 @@ end
 Rectangle(c1::Point, c2::Point) = Rectangle(c1.x, c2.x, c1.y, c2.y)
 
 Rectangle(; left, right, bottom, top) = Rectangle(left, right, bottom, top)
+
+"""
+$(SIGNATURES)
+
+Enlarge `rectangle` by the given dimensions. Keyword arguments are copied as defaults:
+
+- `left = 0mm`, `right = left`
+- `bottom = left`, `top = bottom`
+
+so in symmetric settings it is enough to specify `left` or `left` and `bottom`.
+"""
+function enlarge(rectangle::Rectangle; left = 0mm, bottom = left, top = bottom, right = left)
+    Rectangle(; left = rectangle.left - left, right = rectangle.right + right,
+              top = rectangle.top + top, bottom = rectangle.bottom - bottom)
+end
 
 """
 $(SIGNATURES)
@@ -192,7 +207,7 @@ struct Dash
     @doc """
     $(SIGNATURES)
 
-    A dash pattern. `Dash()` gives a solid line. See [`setdash`](@ref).
+    A dash pattern. `Dash()` gives a solid line. See [`Draw.set_dash`](@ref).
     """
     function Dash(dimensions::Length...; offset::Length = 0mm)
         @argcheck iseven(length(dimensions)) "Dashes need an even number of dimensions."

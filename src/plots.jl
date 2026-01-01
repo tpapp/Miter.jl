@@ -103,13 +103,14 @@ function Draw.render(sink::Draw.Sink, rectangle::Rectangle, plot::Plot)
     Draw.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = DrawingArea(; rectangle = plot_rectangle,
                                finalized_x_axis, finalized_y_axis)
-    Draw.with_scope(sink) do
-        Draw.path(sink, plot_rectangle)
-        Draw.usepathqclip(sink)
-        for c in contents
-            Draw.render(sink, drawing_area, c)
-        end
-   end
+    Draw.save_context(sink)
+    Draw.path(sink, enlarge(plot_rectangle;
+                            bottom = x_axis.style.line_gap, left = y_axis.style.line_gap))
+    Draw.clip(sink)
+    for c in contents
+        Draw.render(sink, drawing_area, c)
+    end
+    Draw.restore_context(sink)
 end
 
 ####

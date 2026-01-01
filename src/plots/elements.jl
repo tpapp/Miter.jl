@@ -31,11 +31,11 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, lines::Lines)
     peeled ≡ nothing && return
     Draw.set_line_style(sink; color, width = line_width, dash)
     c1, cR = peeled
-    Draw.pathmoveto(sink, coordinates_to_point(drawing_area, c1))
+    Draw.move_to(sink, coordinates_to_point(drawing_area, c1))
     for c in cR
-        Draw.pathlineto(sink, coordinates_to_point(drawing_area, c))
+        Draw.line_to(sink, coordinates_to_point(drawing_area, c))
     end
-    Draw.usepathqstroke(sink)
+    Draw.stroke(sink)
 end
 
 ###
@@ -114,10 +114,18 @@ Coordinates.bounds_xy(circles::Circles) = Coordinates.all_coordinate_bounds_xy(c
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, circles::Circles)
     (; x_y_w, scale, stroke_color, stroke_width, fill_color) = circles
-    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_line_width(sink, stroke_width)
     for (x, y, w) in x_y_w
-        Draw.pathcircle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
-        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.circle(sink, coordinates_to_point(drawing_area, (x, y)), scale * √w)
+        if stroke_color ≢ nothing
+            Draw.set_color(sink, stroke_color)
+            Draw.stroke_preserve(sink)
+        end
+        if fill_color ≢ nothing
+            Draw.set_color(sink, fill_color)
+            Draw.fill_preserve(sink)
+        end
+        Draw.new_path(sink)
     end
 end
 
@@ -176,13 +184,21 @@ end
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, relative_bars::RelativeBars)
     (; orientation, edges_and_values, baseline, stroke_color, stroke_width,
      fill_color) = relative_bars
-    Draw.set_stroke_or_fill_style(sink; stroke_color, fill_color, stroke_width)
+    Draw.set_line_width(sink, stroke_width)
     for (e1, e2, v) in edges_and_values
         c1 = coordinates_to_point(drawing_area, orientation ≡ :vertical ?
             (e1, baseline) : (baseline, e1))
         c2 = coordinates_to_point(drawing_area, orientation ≡ :vertical ? (e2, v) : (v, e2))
-        Draw.path(sink, Rectangle(c1, c2))
-        Draw.path_q_stroke_or_fill(sink, stroke_color, fill_color)
+        Draw.path(sink, enlarge(Rectangle(c1, c2); left = -stroke_width / 2))
+        if stroke_color ≢ nothing
+            Draw.set_color(sink, stroke_color)
+            Draw.stroke_preserve(sink)
+        end
+        if fill_color ≢ nothing
+            Draw.set_color(sink, fill_color)
+            Draw.fill_preserve(sink)
+        end
+        Draw.new_path(sink)
     end
 end
 
@@ -227,10 +243,10 @@ function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, color_matrix::C
         for j in axes(colors, 2)
             c = colors[i, j]
             if c ≢ nothing
-                Draw.setfillcolor(sink, c)
+                Draw.set_color(sink, c)
                 Draw.path(sink, Rectangle(; left = x_c[i], right = x_c[i + 1],
                                           bottom = y_c[j], top = y_c[j + 1]))
-                Draw.usepathqfill(sink)
+                Draw.fill(sink)
             end
         end
     end
