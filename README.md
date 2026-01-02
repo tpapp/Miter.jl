@@ -29,9 +29,9 @@ A closely related package is [PGFPlotsX.jl](https://github.com/KristofferC/PGFPl
 | needs a local LaTeX installation, `pdf2svg`, etc         | uses [Tectonic][tectonic] and [Cairo][cairo] binaries from `jll`s                                  |
 | strings passed through as is                             | special chars in strings (`#`, `$`, ...) escaped automatically, use [`lx"..."`][strings] for LaTeX |
 
-[gallery]: https://tpapp.github.io/Miter.jl/stable/gallery.html
-[strings]: https://tpapp.github.io/Miter.jl/stable/building_blocks.html#Strings-and-LaTeX
+[gallery]: https://tpapp.github.io/Miter.jl/stable/gallery
+[strings]: https://tpapp.github.io/Miter.jl/stable/building_blocks#Strings-and-LaTeX
 [tectonic]: https://tectonic-typesetting.github.io/en-US/
 [cairo]: https://www.cairographics.org
-[lengths]: https://tpapp.github.io/Miter.jl/stable/building_blocks.html#Length-units
+[lengths]: https://tpapp.github.io/Miter.jl/stable/building_blocks#Length-units
 [pgf]: https://tikz.dev/
