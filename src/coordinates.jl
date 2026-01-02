@@ -111,7 +111,7 @@ Coordinate bounds for a coordinate `xy`. Used only in [`all_coordinate_bounds`](
 Scalar-like quantities should define a method for `Base.extrema`, which has the right
 fallback for reals by default.
 
-!!! NOTE
+!!! note
     Future extensions with coordinate types `(:x 1 :y 2 :size 3)` etc can go through
     this function.
 """

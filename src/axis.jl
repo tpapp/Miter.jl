@@ -1,12 +1,13 @@
 """
-FIXME document
-
+Axis computations.
 """
 module Axis
 
+public Linear, Style
+
 using ArgCheck: @argcheck
 using ColorTypes: RGB
-using DocStringExtensions: FUNCTIONNAME, SIGNATURES
+using DocStringExtensions: FUNCTIONNAME, SIGNATURES, FIELDS
 using LaTeXEscapes: LaTeX
 
 import ..Draw
@@ -77,10 +78,19 @@ Base.@kwdef struct Style
     axis_label_gap::Length = DEFAULTS.axis_style_axis_label_gap
 end
 
+"""
+A linear axis.
+
+$(FIELDS)
+"""
 Base.@kwdef struct Linear
+    "Tick selection algorithm."
     tick_selection::TickSelection = TickSelection()
+    "Tick format."
     tick_format::TickFormat = TickFormat()
+    "Axis style."
     style::Style = Style()
+    "Label for the axis."
     label = ""
 end
 
