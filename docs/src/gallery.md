@@ -1,6 +1,6 @@
 # Gallery
 
-What you see below is a gallery of plots. These serve as examples, and are also useful for visual inspection of plots.
+A gallery of plots. These serve as examples, but are testing code changes by visual inspection of plots.
 
 All should be preceded by
 
