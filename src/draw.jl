@@ -38,6 +38,7 @@ using ..InternalUtilities
 using ..DrawTypes
 using LaTeXEscapes: print_escaped, @lx_str, LaTeX
 using ..Styles: DEFAULTS
+import ..Options
 
 ####
 #### utilities for writing LaTeX
@@ -311,13 +312,13 @@ end
 """
 $(SIGNATURES)
 
-Helper function to render `object` to `svg_io`. `object` is wrapped in a `Canvas` using
-[`wrap_in_default_canvas`](@ref).
+Helper function to render `object` to `io` using `format` (either `:svg` or `:png`).
+`object` is wrapped in a `Canvas` using [`wrap_in_default_canvas`](@ref).
 """
-function _show_as_svg(svg_io::IO, object)
+function _show_as(svg_io::IO, object, format::Symbol)
     mktempdir() do dir
         pdf_path = render_to_pdf(wrap_in_default_canvas(object), dir, "miter")
-        Compilation.convert_pdf_to_io(pdf_path, :svg, svg_io)
+        Compilation.convert_pdf_to_io(pdf_path, format, svg_io)
     end
 end
 
@@ -327,7 +328,16 @@ $(SIGNATURES)
 Define a graphical `Base.show` method for type `T`.
 """
 macro declare_showable(T)
-    :(Base.show(io::IO, ::MIME"image/svg+xml", object::$(esc(T))) = _show_as_svg(io, object))
+    quote
+        # png
+        Base.showable(::MIME"image/png", ::$(esc(T))) = Options.get_show_format() == :png
+        Base.show(io::IO, ::MIME"image/png", object::$(esc(T))) = _show_as(io, object, :png)
+        # svg
+        Base.showable(::MIME"image/svg+xml", ::$(esc(T))) = Options.get_show_format() == :svg
+        Base.show(io::IO, ::MIME"image/svg+xml", object::$(esc(T))) = _show_as(io, object, :svg)
+        # text, fallback
+        Base.show(io::IO, ::MIME"text/plain", ::$(esc(T))) = print(io, "« ", $(esc(T)), " »")
+    end
 end
 
 @declare_showable Canvas
@@ -347,11 +357,17 @@ File type is determined by its extension. Valid options are:
 
 For tex/tikz, the LaTeX package `pgf` needs to be available/included in the document.
 
+# Keyword arguments
+
 `graphics_filename` is relevant for standalone `tex` and `tikz` files, and determines
 the PDF file created by Cairo, used for everything but the text.
+
+`resolution` is only relevantt for PNG output at the moment, and defaults to
+`Miter.Options_get_default_resolution()`.
 """
 function save(filename::AbstractString, object;
-              graphics_filename = default_graphics_filename(filename))
+              graphics_filename = default_graphics_filename(filename),
+              resolution = Options.get_default_resolution())
     ext = lowercase(splitext(filename)[2])
     @argcheck !isempty(ext) "A filename extension is needed to determine output type."
     canvas = wrap_in_default_canvas(object)
@@ -364,14 +380,15 @@ function save(filename::AbstractString, object;
         mktempdir() do dir
             pdf_path = render_to_pdf(canvas, dir, "miter")
             if ext == ".pdf"
-                cp(pdf_path, filename)
+                cp(pdf_path, filename; force = true)
             elseif ext == ".svg" || ext == ".png"
-                Compilation.convert_pdf_to_file(pdf_path, filename)
+                Compilation.convert_pdf_to_file(pdf_path, filename; resolution)
             else
                 error("don't know to handle extension $(ext)")
             end
         end
     end
+    nothing
 end
 
 ####
