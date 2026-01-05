@@ -20,6 +20,27 @@ is_svg(path) = open(io -> read(io, 5), path, "r") == b"<?xml"
 is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
 
 ####
+#### options
+####
+
+@testset "options" begin
+    @test_throws ArgumentError Miter.Options.set_show_format(:crazy)
+    Miter.Options.set_show_format(:png)
+    @test Miter.Options.get_show_format() == :png
+    Miter.Options.set_show_format(:svg)
+    @test Miter.Options.get_show_format() == :svg
+
+    @test_throws ArgumentError Miter.Options.set_default_resolution(0)
+    @test_throws ArgumentError Miter.Options.set_default_resolution(-3)
+    Miter.Options.set_default_resolution(119)
+    @test Miter.Options.get_default_resolution() == 119
+
+    # reset
+    Miter.Options.set_default_resolution()
+    Miter.Options.set_show_format()
+end
+
+####
 #### compilation
 ####
 

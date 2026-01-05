@@ -9,6 +9,8 @@ using DocStringExtensions: SIGNATURES
 using Poppler_jll: pdftocairo
 using tectonic_jll: tectonic
 
+import ..Options
+
 """
 $(SIGNATURES)
 
@@ -56,9 +58,11 @@ function read_to_io(filename::AbstractString, io::IO; bufsize = 2^12)
     end
 end
 
-function convert_pdf_to_io(pdf_path::AbstractString, format::Symbol, io::IO)
+function convert_pdf_to_io(pdf_path::AbstractString, format::Symbol, io::IO;
+                           resolution::Int = Options.get_default_resolution())
     if format ≡ :png
-        run(pipeline(`$(pdftocairo()) -png $(pdf_path) -singlefile -`; stdout = io))
+        run(pipeline(`$(pdftocairo()) -png $(pdf_path) -r $(resolution) -singlefile -`;
+                     stdout = io))
     elseif format ≡ :svg
         run(pipeline(`$(pdftocairo()) -svg $(pdf_path) -`; stdout = io))
     else
@@ -66,7 +70,8 @@ function convert_pdf_to_io(pdf_path::AbstractString, format::Symbol, io::IO)
     end
 end
 
-function convert_pdf_to_file(pdf_path::AbstractString, target::AbstractString)
+function convert_pdf_to_file(pdf_path::AbstractString, target::AbstractString;
+                             resolution::Int = Options.get_default_resolution())
     ext = splitext(target)[2]
     if ext == ".svg"
         format = :svg
@@ -75,7 +80,7 @@ function convert_pdf_to_file(pdf_path::AbstractString, target::AbstractString)
     else
         error("Unrecognized extension $(ext).")
     end
-    open(io -> convert_pdf_to_io(pdf_path, format, io), target, "w")
+    open(io -> convert_pdf_to_io(pdf_path, format, io; resolution), target, "w")
 end
 
 end
