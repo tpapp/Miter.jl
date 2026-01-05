@@ -38,6 +38,9 @@ is_png(path) = open(io -> read(io, 4), path, "r") == b"\x89PNG"
     # reset
     Miter.Options.set_default_resolution()
     Miter.Options.set_show_format()
+
+    # showable text fallback
+    @test repr(MIME("text/plain"), Plot(Scatter([(1,1)]))) == "« Plot »"
 end
 
 ####

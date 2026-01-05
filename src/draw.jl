@@ -336,7 +336,7 @@ macro declare_showable(T)
         Base.showable(::MIME"image/svg+xml", ::$(esc(T))) = Options.get_show_format() == :svg
         Base.show(io::IO, ::MIME"image/svg+xml", object::$(esc(T))) = _show_as(io, object, :svg)
         # text, fallback
-        Base.show(io::IO, ::MIME"text/plain", ::$(esc(T))) = print(io, "« ", T, " »")
+        Base.show(io::IO, ::MIME"text/plain", ::$(esc(T))) = print(io, "« ", $(esc(T)), " »")
     end
 end
 
