@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/github/tpapp/Miter.jl/branch/master/graph/badge.svg?token=7HeB2iNJz4)](https://codecov.io/github/tpapp/Miter.jl)
 [![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://tpapp.github.io/Miter.jl/stable)
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)](https://tpapp.github.io/Miter.jl/dev)
+[![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 A Julia plotting package using LaTeX/PGF for text (including equations) and Cairo for everything else.
 
