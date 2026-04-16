@@ -2,8 +2,7 @@ module Coordinates
 
 export Interval, bounds_xy
 
-public is_nonzero, coordinate_x, coordinate_y, combine_bounds_xy, all_bounds_xy,
-    coordinate_bounds_xy, all_coordinate_bounds_xy
+public is_nonzero, combine_bounds_xy, coordinate_bounds_xy, all_coordinate_bounds_xy
 
 using ArgCheck: @argcheck
 using DocStringExtensions: SIGNATURES

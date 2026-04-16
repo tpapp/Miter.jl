@@ -13,6 +13,8 @@ using StatsBase: fit, Histogram
 
 import JET
 @test isempty(JET.get_reports(JET.report_package(Miter, target_modules = (Miter,))))
+import Aqua
+Aqua.test_all(Miter)
 
 ####
 #### test utilities

@@ -183,14 +183,16 @@ reverse(permutedims(split_matrix(...)); dims = 1)
 ```
 """
 function split_matrix(rectangle::Rectangle,
-                      x_divisions::Union{NTuple{N,Any},AbstractVector},
-                      y_divisions::Union{NTuple{M,Any},AbstractVector}) where {N,M}
+                      x_divisions::Union{Tuple,AbstractVector},
+                      y_divisions::Union{Tuple,AbstractVector})
     (; top, left, bottom, right) = rectangle
     x_intervals = split_interval(left, right, x_divisions)
     y_intervals = split_interval(bottom, top, y_divisions)
     if x_intervals isa Tuple && y_intervals isa Tuple
-        SMatrix{N,M}((Rectangle(; left, right, bottom, top)
-                      for (left, right) in x_intervals, (bottom, top) in y_intervals))
+        SMatrix{length(x_intervals),
+                length(y_intervals)}((Rectangle(; left, right, bottom, top)
+                                      for (left, right) in x_intervals,
+                                          (bottom, top) in y_intervals))
     else
         [Rectangle(; left, right, bottom, top)
          for (left, right) in x_intervals, (bottom, top) in y_intervals]
