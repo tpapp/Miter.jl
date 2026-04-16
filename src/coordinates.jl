@@ -87,6 +87,12 @@ different (eg overriding bounds), define [`combine_bounds_xy`](@ref).
 """
 bounds_xy(::Nothing) = (nothing, nothing)
 
+"""
+$(SIGNATURES)
+
+Invoke [`combine_bounds`](@ref) coordinatewise on the first arguments and the
+[`bounds_xy`](@ref) of the second argument.
+"""
 function combine_bounds_xy((ax, ay)::Tuple{CoordinateBounds,CoordinateBounds}, b)
     bx, by = bounds_xy(b)
     combine_bounds(ax, bx), combine_bounds(ay, by)
@@ -106,7 +112,7 @@ bounds_xy(itr) = foldl(combine_bounds_xy, itr; init = EMPTY_XY)
 """
 $(SIGNATURES)
 
-Coordinate bounds for a coordinate `xy`. Used only in [`all_coordinate_bounds`](@ref).
+Coordinate bounds for a coordinate `xy`. Used only in [`all_coordinate_bounds_xy`](@ref).
 
 Scalar-like quantities should define a method for `Base.extrema`, which has the right
 fallback for reals by default.

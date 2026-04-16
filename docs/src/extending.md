@@ -4,8 +4,8 @@
     This section is WIP.
 
 ```@docs
-Miter.combine_bounds_xy
-Miter.bounds_xy
+Miter.Coordinates.combine_bounds_xy
+Miter.Coordinates.bounds_xy
 Miter.Coordinates.coordinate_bounds_xy
 ```
 
