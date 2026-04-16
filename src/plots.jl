@@ -97,8 +97,8 @@ function Draw.render(sink::Draw.Sink, rectangle::Rectangle, plot::Plot)
     x_interval, y_interval = Coordinates.bounds_xy(contents)
     @argcheck x_interval ≢ nothing "empty x range"
     @argcheck y_interval ≢ nothing "empty y range"
-    finalized_x_axis = finalize(x_axis, x_interval)
-    finalized_y_axis = finalize(y_axis, y_interval)
+    finalized_x_axis = finalize(x_axis, x_interval::Interval)
+    finalized_y_axis = finalize(y_axis, y_interval::Interval)
     Draw.render(sink, x_axis_rectangle, finalized_x_axis; orientation = :x)
     Draw.render(sink, y_axis_rectangle, finalized_y_axis; orientation = :y)
     drawing_area = DrawingArea(; rectangle = plot_rectangle,

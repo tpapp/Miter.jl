@@ -155,7 +155,7 @@ function split_interval(a::Length, b::Length, divisions)
     @argcheck absolute_sum ≤ total
     spacer_sum = sum(d.factor for d in divisions if d isa Spacer; init = 0.0)
     remainder = total - absolute_sum
-    @argcheck spacer_sum > 0 || remainder ≈ 0
+    @argcheck spacer_sum > 0 || (remainder / mm) ≈ 0
     spacer_coefficient = remainder / spacer_sum
     function _resolve2(d)       # second pass
         if d isa Length

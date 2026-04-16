@@ -5,7 +5,7 @@ module Marks
 export MarkSymbol, Q5, MarkQ5
 
 using ArgCheck: @argcheck
-using DocStringExtensions: SIGNATURES
+using DocStringExtensions: FUNCTIONNAME, SIGNATURES
 using Statistics: quantile
 
 using ..Axis: DrawingArea, coordinates_to_point
@@ -38,7 +38,7 @@ struct MarkSymbol{S}
 end
 
 """
-$(SIGNATURES)
+$(FUNCTIONNAME)(sink::Draw.Sink, ::Val{K}, xy::Point, size::Length)
 
 Draw a mark of type `K` at the given point, with the given `size` (roughly the diameter of a
 circle/square that contains the mark). Caller should set color, line width, etc.
@@ -46,10 +46,7 @@ circle/square that contains the mark). Caller should set color, line width, etc.
 This is a helper function for `MarkSymbol` marks. It assumes that the line width, color,
 dash have been set by the caller.
 """
-function draw_mark_symbol(sink::Draw.Sink, ::Val{K}, xy::Point, size::Length) where K
-    @argcheck size > 0mm
-    mark(sink, Val(K), xy, size)
-end
+function draw_mark_symbol end
 
 function draw_mark_symbol(sink::Draw.Sink, ::Val{:+}, xy::Point, size::Length)
     (; x, y) = xy
