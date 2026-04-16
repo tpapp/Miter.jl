@@ -8,6 +8,15 @@ using Colors, ColorSchemes
 using StatsBase: fit, Histogram
 
 ####
+#### overall testing with JET
+####
+
+import JET
+@test isempty(JET.get_reports(JET.report_package(Miter, target_modules = (Miter,))))
+import Aqua
+Aqua.test_all(Miter)
+
+####
 #### test utilities
 ####
 
