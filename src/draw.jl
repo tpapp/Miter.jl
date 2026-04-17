@@ -250,7 +250,7 @@ Render `object` within `context` (a [`Rectangle`](@ref), or similar) using `sink
 
 Rendering `nothing` is a no-op.
 """
-render(sink::Sink, rectangle::Rectangle, object::Nothing) = nothing
+render(sink::Sink, context, object::Nothing) = nothing
 
 struct Canvas
     content::Any
