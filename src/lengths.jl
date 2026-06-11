@@ -44,6 +44,8 @@ end
 
 Length(scale::Real, unit::Symbol) = Length(Float64(scale), unit)
 
+Broadcast.broadcastable(l::Length) = Ref(l)
+
 "One millimeter."
 const mm = Length(1.0, :mm)
 
