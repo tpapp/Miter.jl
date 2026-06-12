@@ -9,3 +9,12 @@ Miter = "e2c39885-2134-4813-a274-cbd32ca8996e"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Aqua = "0.8"
+ColorSchemes = "3"
+ColorTypes = "0.12"
+Colors = "0.13"
+JET = "0.9, 0.10, 0.11"
+LaTeXEscapes = "0.2"
+StatsBase = "0.34"
