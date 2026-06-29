@@ -138,7 +138,9 @@ struct Tableau
 
     # Supported API
 
-    `contents` are exposed via the array interface as a matrix.
+    `contents` are exposed via the array interface as a matrix, supporting `size` and
+    `getindex` `tableau[::Int, ::Int]` returns a subplot in the grid, while all other
+    combinations return a `Tableau`.
 
     You can merge `Tableau`s with `hcat`, `vcat`, and `hvcat` (`[...; ...]`).
     """
@@ -201,7 +203,27 @@ function Base.hvcat(blocks_per_row::Tuple{Vararg{Int}}, tableaus::Tableau...)
             horizontal_divisions, vertical_divisions)
 end
 
+Base.size(tableau::Tableau, maybe_dim...) = size(tableau.contents, maybe_dim...)
 
+Base.axes(tableau::Tableau, maybe_dim...) = axes(tableau.contents, maybe_dim...)
+
+function Base.getindex(tableau::Tableau, row::Integer, col::Integer)
+    getindex(tableau.contents, row, col)
+end
+
+function Base.getindex(tableau::Tableau,
+                       rows::Union{Integer,Colon,UnitRange},
+                       cols::Union{Integer,Colon,UnitRange})
+    if rows isa Integer
+        rows = rows:rows
+    end
+    if cols isa Integer
+        cols = cols:cols
+    end
+    Tableau(tableau.contents[rows, cols],
+            vertical_divisions = tableau.vertical_divisions[rows],
+            horizontal_divisions = tableau.horizontal_divisions[cols])
+end
 
 ####
 #### plot elements

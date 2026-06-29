@@ -299,6 +299,16 @@ end
     @test [F; E E].contents == [F.contents; E.contents E.contents]
 end
 
+@testset "Tableau getindex" begin
+    contents = [:a :b :c;
+                :d :e :f]
+    t = Tableau(contents);
+    @test t[:, 3].contents == contents[:, 3:3]
+    @test t[end, 3] == :f
+    @test t[:, 3].contents == contents[:, 3:3]
+    @test t[1:2, 2:3].contents == contents[1:2, 2:3]
+end
+
 @testset "line_through_endpoints" begin
     I1 = Interval(0.0, 1.0)
     I2 = Interval(-1.0, 1.0)
