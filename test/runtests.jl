@@ -299,6 +299,13 @@ end
     @test [F; E E].contents == [F.contents; E.contents E.contents]
 end
 
+@testset "Tableau sync bounds" begin
+    contents = [Plot(Scatter([(rand(), rand())])) for _ in 1:3, _ in 1:2]
+    for tag ∈ [ :X, :Y, :XY, :x, :y, :xy]
+        @test bounds_xy.(sync_bounds(tag, Tableau(contents)).contents) == bounds_xy.(sync_bounds(tag, contents))
+    end
+end
+
 @testset "Tableau getindex" begin
     contents = [:a :b :c;
                 :d :e :f]
@@ -307,6 +314,7 @@ end
     @test t[end, 3] == :f
     @test t[:, 3].contents == contents[:, 3:3]
     @test t[1:2, 2:3].contents == contents[1:2, 2:3]
+    @test t[[1,2], [2,3]].contents == contents[[1,2], [2,3]]
 end
 
 @testset "line_through_endpoints" begin

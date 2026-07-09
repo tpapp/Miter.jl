@@ -212,8 +212,8 @@ function Base.getindex(tableau::Tableau, row::Integer, col::Integer)
 end
 
 function Base.getindex(tableau::Tableau,
-                       rows::Union{Integer,Colon,UnitRange},
-                       cols::Union{Integer,Colon,UnitRange})
+                       rows::Union{Integer,Colon,AbstractVector},
+                       cols::Union{Integer,Colon,AbstractVector})
     if rows isa Integer
         rows = rows:rows
     end
