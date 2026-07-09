@@ -306,7 +306,7 @@ end
     end
 end
 
-@testset "Tableau getindex" begin
+@testset "Tableau getindex and permutedims" begin
     contents = [:a :b :c;
                 :d :e :f]
     t = Tableau(contents);
@@ -315,6 +315,7 @@ end
     @test t[:, 3].contents == contents[:, 3:3]
     @test t[1:2, 2:3].contents == contents[1:2, 2:3]
     @test t[[1,2], [2,3]].contents == contents[[1,2], [2,3]]
+    @test permutedims(t).contents == permutedims(contents)
 end
 
 @testset "line_through_endpoints" begin
