@@ -225,6 +225,12 @@ function Base.getindex(tableau::Tableau,
             horizontal_divisions = tableau.horizontal_divisions[cols])
 end
 
+function Base.permutedims(tableau::Tableau)
+    Tableau(permutedims(tableau.contents);
+            horizontal_divisions = tableau.vertical_divisions,
+            vertical_divisions = tableau.horizontal_divisions)
+end
+
 ####
 #### plot elements
 ####
