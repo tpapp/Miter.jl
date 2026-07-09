@@ -51,12 +51,16 @@ function _add_invisible(x::CoordinateBounds, y::CoordinateBounds, itr)
 end
 
 """
+Types that the low-level [`sync_bounds`](@ref) can deal with. Internal, for organizing
+the implementation.
+"""
+const _SYNCABLE = Union{AbstractVector,AbstractMatrix}
+
+"""
 $(SIGNATURES)
 
 Make sure that axis bounds are the same for axes as determined
 by `tag` (see below).
-
-Tag can be given in the form of `Val(tag)` too, this is a convenience wrapper.
 
 Possible tags:
 
@@ -66,7 +70,9 @@ Possible tags:
 
 `:x`, `:y`, and `:xy` only work for matrix-like arguments.
 
-All methods return the (modified) first argument.
+All methods return the modified second argument, which can be an `AbstractMatrix`, a
+`Tableau`, or an `::AbstractVector` (the last only for some tags). Iterables are
+accepted, and collected first.
 
 # Explanation
 
@@ -86,44 +92,48 @@ t = Tableau([A C; B D])
 Then `$(FUNCTIONNAME)(:x, t)` would ensure that A and C have the same bounds for the
 x-axis, and similarly B and D.
 """
-@inline function sync_bounds(tag::Symbol, collection)
-    @argcheck tag ∈ (:x, :y, :xy, :X, :Y, :XY)
-    sync_bounds(Val(tag), collection)
+function sync_bounds(tag::Symbol, collection::_SYNCABLE)
+    _sync_bounds(Val(tag), collection)
 end
 
-sync_bounds(tag::Val) = Base.Fix1(sync_bounds, tag)
+sync_bounds(tag::Symbol, itr) = sync_bounds(tag, collect(itr))
 
-@inline sync_bounds(tag::Symbol) = sync_bounds(Val(tag))
+function sync_bounds(tag::Symbol, tableau::Tableau)
+    (; contents, horizontal_divisions, vertical_divisions) = tableau
+    Tableau(sync_bounds(tag, contents); horizontal_divisions, vertical_divisions)
+end
 
-function sync_bounds(tag::Val{:X}, collection)
+sync_bounds(tag::Symbol) = Base.Fix1(sync_bounds, tag)
+
+####
+#### implementation
+####
+
+function _sync_bounds(tag::Val{:X}, collection::_SYNCABLE)
     # vectors are treated like 1×N matrices, x axes are synced
     xb, _ = bounds_xy(collection)
     _add_invisible(xb, nothing, collection)
 end
 
-function sync_bounds(tag::Val{:Y}, collection)
+function _sync_bounds(tag::Val{:Y}, collection::_SYNCABLE)
     _, yb = bounds_xy(collection)
     _add_invisible(nothing, yb, collection)
 end
 
-function sync_bounds(tag::Val{:XY}, collection)
+function _sync_bounds(tag::Val{:XY}, collection::_SYNCABLE)
     _add_invisible(bounds_xy(collection)..., collection)
 end
 
-function sync_bounds(tag::Union{Val{:x},Val{:y},Val{:xy}}, collection::T) where T
-    if Base.IteratorSize(T) == Base.HasShape{2}()
-        sync_bounds(tag, collect(collection))
-    else
-        throw(ArgumentError("Tag $(tag) only works for matrix-like arguments."))
-    end
+function _sync_bounds(tag::Union{Val{:x},Val{:y},Val{:xy}}, collection::AbstractVector)
+    throw(ArgumentError("Tag $(tag) only works for matrix-like arguments."))
 end
 
-function sync_bounds(::Val{:x}, m::AbstractMatrix)
-    mapreduce(row -> permutedims(sync_bounds(Val(:X), row)), vcat, eachrow(m))
+function _sync_bounds(::Val{:x}, m::AbstractMatrix)
+    mapreduce(row -> permutedims(_sync_bounds(Val(:X), row)), vcat, eachrow(m))
 end
 
-function sync_bounds(::Val{:y}, m::AbstractMatrix)
-    mapreduce(col -> sync_bounds(Val(:Y), col), hcat, eachcol(m))
+function _sync_bounds(::Val{:y}, m::AbstractMatrix)
+    mapreduce(col -> _sync_bounds(Val(:Y), col), hcat, eachcol(m))
 end
 
-sync_bounds(::Val{:xy}, m::AbstractMatrix) = sync_bounds(Val(:x), sync_bounds(Val(:y), m))
+_sync_bounds(::Val{:xy}, m::AbstractMatrix) = _sync_bounds(Val(:x), _sync_bounds(Val(:y), m))
