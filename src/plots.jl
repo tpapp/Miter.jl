@@ -241,15 +241,34 @@ end
 
 struct Phantom
     object
+    kind::Symbol
     @doc """
     $(SIGNATURES)
 
     Wrap the argument so that it is not included in boundary calculations.
+
+    The optional second argument (`:x`, `:y`, `:xy` [the default]) determines which
+    coordinates to squash.
     """
-    Phantom(object) = new(object)
+    function Phantom(object, kind = :xy)
+        @argcheck kind ≡ :x || kind ≡ :y || kind ≡ :xy
+        new(object, kind)
+    end
 end
 
-Coordinates.bounds_xy(::Phantom) = (nothing, nothing)
+function Coordinates.bounds_xy(phantom::Phantom)
+    (; object, kind) = phantom
+    if kind ≡ :xy
+        (nothing, nothing)      # no need to calculate
+    else
+        x, y = Coordinates.bounds_xy(object)
+        if kind ≡ :x
+            nothing, y
+        else
+            x, nothing
+        end
+    end
+end
 
 function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, phantom::Phantom)
     Draw.render(sink, drawing_area, phantom.object)

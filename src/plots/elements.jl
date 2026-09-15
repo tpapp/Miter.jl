@@ -5,6 +5,20 @@
 export Lines, Scatter, Circles, RelativeBars, ColorMatrix
 
 ####
+#### recursive rendering of tuples and vectors
+####
+
+"Descend into these containers recursively."
+const DESCEND = Union{AbstractVector,Tuple}
+
+function Draw.render(sink::Draw.Sink, drawing_area::DrawingArea, plots::DESCEND)
+    for plot in plots
+        Draw.render(sink, drawing_area, plot)
+    end
+    nothing
+end
+
+####
 #### Lines
 ####
 
