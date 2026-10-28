@@ -1,0 +1,8 @@
+article#documenter-page pre {
+    line-height: 120%;
+}
+
+article#documenter-page img {
+    width: 60%;
+    background-color: white;
+}
