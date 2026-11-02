@@ -10,12 +10,3 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [sources]
 Miter = {path = ".."}
-
-[compat]
-Accessors = "0.1"
-ColorSchemes = "3.31"
-Colors = "0.13.1"
-Contour = "0.6"
-Documenter = "1"
-LaTeXEscapes = "0.2"
-StatsBase = "0.34"
